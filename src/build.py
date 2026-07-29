@@ -57,30 +57,17 @@ def render_members():
     with io.open(section_tpl, encoding="utf-8") as f:
         section = f.read()
 
-    # أيقونة لكل فئة عضوية
-    ICONS = {
-        "founder": ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
-                    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-                    '<path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>'),
-        "working": ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
-                    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-                    '<path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20"/>'
-                    '<circle cx="9.5" cy="7.5" r="3.5"/><path d="M16.5 11.5l1.8 1.8 3.2-3.6"/></svg>'),
-    }
-
     cards = []
-    for i, m in enumerate(members, 1):
+    for m in members:
         cat = m["cat"]
         title = (m.get("title") or "").strip()
-        title_html = ('<span class="mt">%s</span> ' % esc(title)) if title else ""
+        title_html = ('<span class="gm-title">%s</span> ' % esc(title)) if title else ""
         html = (card.rstrip("\n")
                 .replace("{{INITIAL}}", esc(initial_of(m["name"])))
                 .replace("{{TITLE_HTML}}", title_html)
                 .replace("{{NAME}}", esc(m["name"]))
-                .replace("{{CAT_ICON}}", ICONS.get(cat, ""))
                 .replace("{{CAT_LABEL}}", esc(cats[cat]["label"]))
-                .replace("{{CAT}}", esc(cat))
-                .replace("{{DELAY}}", str(min(i, 12) * 45)))
+                .replace("{{CAT}}", esc(cat)))
         cards.append(html)
 
     n_founder = sum(1 for m in members if m["cat"] == "founder")

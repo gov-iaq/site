@@ -537,172 +537,384 @@ section[id]{scroll-margin-top:92px}
 </div></div></header><div class="nav-overlay" id="navOverlay"></div>
 <section class="page-banner"><div class="pb-deco" aria-hidden="true"></div><div class="pb-emblem" aria-hidden="true"></div><div class="container"><div class="reveal"><nav class="breadcrumb" aria-label="مسار التنقل"><a href="index.html">الرئيسية</a><span class="sep">/</span><span>من نحن</span><span class="sep">/</span><span class="cur">الجمعية العمومية</span></nav><h1>الجمعية العمومية</h1><p class="lead">السلطة العليا للجمعية، وإليها يعود انتخاب مجلس الإدارة واعتماد الخطط والقوائم المالية.</p></div></div></section>
 <main id="main">
-<section class="section" id="memSec">
+<section class="section gm" id="memSec" aria-labelledby="gm-title">
 <style>
-/* ===== دليل أعضاء الجمعية العمومية ===== */
-#memSec{--mg-text:#8a6528;--mg-strong:#a97c37}
-.mem-head{text-align:center;max-width:760px;margin-inline:auto;margin-block-end:34px}
-.mem-stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-block-end:38px}
-.mem-stats .ms{flex:1 1 190px;max-width:250px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);padding:22px 18px 20px;position:relative;overflow:hidden}
-.mem-stats .ms::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;height:3px;background:linear-gradient(90deg,var(--teal),rgba(192,144,72,.75))}
-.mem-stats .stat-num{display:block;font-family:var(--font-display);font-weight:700;font-size:2.4rem;line-height:1.05;color:var(--teal)}
-.mem-stats .lbl{display:block;margin-block-start:8px;color:var(--muted);font-size:.97rem}
-
-.mem-toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-block-end:14px}
-.mem-filters{display:flex;flex-wrap:wrap;gap:8px}
-.mfilter{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body);font-weight:600;font-size:15.5px;color:var(--body);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:11px 19px;cursor:pointer;transition:background .22s var(--ease),color .22s,border-color .22s,box-shadow .22s}
-.mfilter:hover{border-color:var(--teal);color:var(--teal)}
-.mfilter .cnt{font-size:13px;font-weight:700;background:rgba(0,120,120,.08);color:var(--teal);border-radius:999px;padding:2px 9px;transition:background .22s,color .22s}
-.mfilter[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 8px 20px -10px rgba(0,120,120,.75)}
-.mfilter[aria-pressed="true"] .cnt{background:rgba(255,255,255,.22);color:#fff}
-.mfilter:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
-
-.mem-search{position:relative;flex:0 1 320px}
-.mem-search input{width:100%;font-family:var(--font-body);font-size:15.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding-block:12px;padding-inline-start:46px;padding-inline-end:18px;transition:border-color .2s,box-shadow .2s}
-.mem-search input::placeholder{color:var(--muted)}
-.mem-search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,120,120,.13)}
-.mem-search .si{position:absolute;inset-inline-start:17px;inset-block-start:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);pointer-events:none}
-
-.mem-live{color:var(--muted);font-size:14.5px;margin:0 0 22px}
-.mem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(278px,1fr));gap:20px}
-
-.mcard{position:relative;display:flex;align-items:center;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);padding:22px;overflow:hidden;transition:transform .32s var(--ease),box-shadow .32s var(--ease),border-color .32s}
-.mcard::before{content:"";position:absolute;inset-block-start:0;inset-inline-start:0;width:0;height:3px;background:linear-gradient(90deg,var(--teal),rgba(0,120,120,.2));transition:width .42s var(--ease)}
-.mcard[data-cat="working"]::before{background:linear-gradient(90deg,var(--gold),rgba(192,144,72,.2))}
-.mcard::after{content:"";position:absolute;inset-block-end:-32px;inset-inline-end:-32px;width:100px;height:100px;border-radius:24px;rotate:45deg;background:rgba(0,120,120,.035);transition:scale .55s var(--ease),background .3s;pointer-events:none}
-.mcard[data-cat="working"]::after{background:rgba(192,144,72,.055)}
-.mcard:hover{transform:translateY(-5px);border-color:rgba(0,120,120,.32);box-shadow:0 20px 36px -20px rgba(15,42,42,.30),0 4px 12px -8px rgba(15,42,42,.14)}
-.mcard[data-cat="working"]:hover{border-color:rgba(192,144,72,.42)}
-.mcard:hover::before{width:100%}
-.mcard:hover::after{scale:1.14}
-
-.mav{flex:0 0 auto;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1.7rem;line-height:1;color:var(--teal);background:linear-gradient(145deg,rgba(0,120,120,.11),rgba(0,120,120,.03));box-shadow:inset 0 0 0 1px rgba(0,120,120,.17),0 0 0 4px rgba(0,120,120,.045);transition:transform .35s var(--ease)}
-.mcard[data-cat="working"] .mav{color:var(--mg-strong);background:linear-gradient(145deg,rgba(192,144,72,.15),rgba(192,144,72,.04));box-shadow:inset 0 0 0 1px rgba(192,144,72,.24),0 0 0 4px rgba(192,144,72,.06)}
-.mcard:hover .mav{transform:scale(1.07)}
-
-.mbody{min-width:0}
-.mname{font-family:var(--font-display);font-weight:600;font-size:1.25rem;line-height:1.5;color:var(--ink);margin:0 0 10px;overflow-wrap:break-word}
-.mname .mt{color:var(--teal);font-weight:700;font-size:.92em;margin-inline-end:3px}
-.mcard[data-cat="working"] .mname .mt{color:var(--mg-text)}
-.mchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:13.5px;font-weight:600;border-radius:999px;padding:5px 12px;background:rgba(0,120,120,.075);color:var(--teal)}
-.mchip svg{width:13px;height:13px;flex:0 0 auto}
-.mcard[data-cat="working"] .mchip{background:rgba(192,144,72,.11);color:var(--mg-text)}
-
-.mcard.is-hidden{display:none}
-/* حركة الدخول مشروطة بتوفّر JavaScript: بدونه تظهر البطاقات كاملة (حماية للمحتوى) */
-#memSec.js-on .mem-grid .mcard{opacity:0}
-#memSec.js-on .mem-grid.in-view .mcard:not(.is-hidden){animation:memIn .6s var(--ease) both;animation-delay:var(--d,0ms)}
-@keyframes memIn{from{opacity:0;translate:0 18px}to{opacity:1;translate:0 0}}
-
-.mem-empty{text-align:center;padding:48px 22px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--card-radius);background:var(--surface)}
-.mem-empty svg{width:34px;height:34px;color:var(--line);margin-block-end:12px}
-.mem-note{margin-block-start:26px;color:var(--muted);font-size:14px;text-align:center}
-
-@media (max-width:900px){.mem-stats .stat-num{font-size:2.1rem}}
-@media (max-width:640px){
-  .mem-grid{grid-template-columns:1fr}
-  .mem-toolbar{flex-direction:column;align-items:stretch}
-  .mem-search{flex:1 1 auto}
-  .mem-stats .ms{flex:1 1 100%;max-width:none;padding:18px}
-  .mem-stats .stat-num{font-size:1.95rem}
-  .mname{font-size:1.16rem}
-  .mav{width:58px;height:58px;font-size:1.5rem}
+/* ============================================================
+   قسم أعضاء الجمعية العمومية — اتجاه «هندسي عربي»
+   ============================================================ */
+.gm{
+  position:relative;overflow:hidden;background:var(--bg);
+  --gm-dir:1;
+  --gm-lattice:rgba(0,120,120,.055);
+  --gm-teal-600:#0c6c6c;
+  --gm-gold-ink:#7a5518;
+  --gm-gold-line:rgba(192,144,72,.42);
+  --gm-teal-tint:#eef4f3;
+  --gm-teal-bd:#d6e5e3;
+  --gm-gold-tint:#f8efdb;
+  --gm-gold-bd:#ecdcbb;
+  --gm-shadow-h:0 14px 34px rgba(6,63,54,.10);
+  --gm-step:60ms;
+}
+/* شبكة معيّنية هندسية خفيفة كخلفية */
+.gm::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 43px,var(--gm-lattice) 43px 44px),
+    repeating-linear-gradient(-45deg,transparent 0 43px,var(--gm-lattice) 43px 44px);
+  -webkit-mask-image:radial-gradient(120% 85% at 100% 0%,#000 0%,transparent 72%);
+  mask-image:radial-gradient(120% 85% at 100% 0%,#000 0%,transparent 72%);
+}
+.gm > .container{position:relative;z-index:1}
+/* نجمة ثمانية مجرّدة تدور ببطء */
+.gm-orn{
+  position:absolute;inset-block-start:-70px;inset-inline-start:-70px;
+  width:280px;height:280px;color:var(--gold);opacity:.13;z-index:0;pointer-events:none;
+  animation:gmSpin 90s linear infinite;
+}
+@keyframes gmSpin{to{transform:rotate(360deg)}}
+/* ترويسة القسم */
+.gm-head{max-width:760px;margin-block-end:38px}
+.gm-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--font-display);font-size:.95rem;font-weight:700;letter-spacing:.06em;
+  color:var(--teal);margin-block-end:14px;
+}
+.gm-eyebrow i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.gm-head h2{font-size:clamp(1.7rem,3.2vw,2.5rem);margin-block-end:14px;color:var(--ink)}
+.gm-head p{font-size:1.1rem;color:var(--body);max-width:66ch}
+/* عدّادات إحصائية بأطراف هندسية */
+.gm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-block-end:34px}
+.gm-stat{
+  position:relative;background:var(--surface);border:1px solid var(--line);padding:22px 24px;
+  clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+  transition:border-color .3s var(--ease),background .3s var(--ease);
+}
+.gm-stat::after{
+  content:"";position:absolute;inset-block-end:0;inset-inline-start:0;
+  width:0;height:2px;background:var(--teal);transition:width .6s var(--ease);
+}
+.gm-stat:hover{border-color:var(--gm-teal-bd);background:var(--surface-2)}
+.gm-stat:hover::after{width:100%}
+.gm-stat b{
+  display:block;font-family:var(--font-display);font-weight:700;
+  font-size:clamp(1.9rem,3.4vw,2.6rem);line-height:1.15;color:var(--teal);
+  font-variant-numeric:tabular-nums;
+}
+.gm-stat span{display:block;font-size:1rem;font-weight:500;color:var(--muted);margin-block-start:4px}
+.gm-stat.is-gold b{color:var(--gm-gold-ink)}
+.gm-stat.is-gold::after{background:var(--gold)}
+/* شريط الأدوات: فلترة + بحث */
+.gm-bar{
+  display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+  padding-block:18px;border-block:1px solid var(--line);margin-block-end:12px;
+}
+.gm-seg{display:inline-flex;gap:6px;padding:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
+.gm-fil{
+  position:relative;display:inline-flex;align-items:center;gap:9px;
+  padding:11px 20px;border:0;border-radius:8px;cursor:pointer;background:transparent;
+  font-family:var(--font-body);font-size:1rem;font-weight:700;color:var(--body);
+  transition:color .25s,background .25s var(--ease),box-shadow .25s;
+}
+.gm-fil::before{
+  content:"";position:absolute;inset-block-start:50%;inset-inline-start:9px;
+  width:6px;height:6px;margin-block-start:-3px;background:var(--gold);
+  transform:rotate(45deg) scale(0);border-radius:1px;transition:transform .3s var(--ease);
+}
+.gm-fil:hover{color:var(--teal);background:#fff}
+.gm-fil[aria-pressed="true"]{background:var(--teal);color:#fff;box-shadow:0 8px 20px rgba(0,120,120,.20);padding-inline-start:28px}
+.gm-fil[aria-pressed="true"]::before{background:var(--gold);transform:rotate(45deg) scale(1)}
+.gm-fil .gm-c{
+  font-size:.85rem;font-weight:700;padding:1px 8px;border-radius:999px;
+  background:rgba(0,120,120,.10);color:var(--gm-teal-600);font-variant-numeric:tabular-nums;
+}
+.gm-fil[aria-pressed="true"] .gm-c{background:rgba(255,255,255,.22);color:#fff}
+.gm-fil:focus-visible,.gm-clear:focus-visible,.gm-reset:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.gm-search{position:relative;flex:1 1 260px;max-width:380px}
+.gm-search input{
+  width:100%;padding:13px 46px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--ink);font-family:var(--font-body);font-size:1rem;
+  transition:border-color .25s,box-shadow .25s;
+}
+.gm-search input::placeholder{color:var(--muted)}
+.gm-search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,120,120,.14)}
+.gm-search .gm-si{
+  position:absolute;inset-inline-start:15px;inset-block-start:50%;transform:translateY(-50%);
+  width:19px;height:19px;color:var(--muted);pointer-events:none;
+}
+.gm-clear{
+  position:absolute;inset-inline-end:8px;inset-block-start:50%;transform:translateY(-50%);
+  width:32px;height:32px;display:none;place-items:center;border:0;border-radius:8px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:background .2s,color .2s;
+}
+.gm-clear svg{width:15px;height:15px}
+.gm-clear:hover{background:var(--surface-2);color:var(--teal)}
+.gm-search.has-value .gm-clear{display:grid}
+.gm-live{font-size:.95rem;color:var(--muted);margin:0 0 26px}
+.gm-live b{color:var(--teal);font-weight:700;font-variant-numeric:tabular-nums}
+/* الشبكة والبطاقة */
+.gm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.gm-grid.is-busy{pointer-events:none}
+.gm-card{
+  position:relative;display:flex;align-items:center;gap:18px;
+  padding:20px 22px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--card-radius);
+  transition:
+    opacity .55s var(--ease) var(--gm-delay,0ms),
+    transform .55s var(--ease) var(--gm-delay,0ms),
+    border-color .3s var(--ease),box-shadow .35s var(--ease);
+}
+/* حركة الدخول القُطرية — مشروطة بتوفّر JavaScript حتى لا تختفي الأسماء بدونه */
+.gm.js-on .gm-card{opacity:0;transform:translate(calc(var(--gm-dir) * 14px),18px) scale(.985)}
+.gm.js-on .gm-card.is-in{opacity:1;transform:none}
+.gm-card[hidden]{display:none}
+.gm-card:hover{border-color:var(--teal);box-shadow:var(--gm-shadow-h);transform:translateY(-5px)}
+.gm-card:focus-within{border-color:var(--teal);box-shadow:var(--gm-shadow-h)}
+/* إطار داخلي مزدوج */
+.gm-card::after{
+  content:"";position:absolute;inset:5px;border:1px solid transparent;border-radius:8px;
+  pointer-events:none;transition:border-color .35s var(--ease);
+}
+.gm-card:hover::after{border-color:var(--gm-gold-line)}
+/* معيّن الزاوية */
+.gm-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:12px;height:12px;background:var(--gold);opacity:.28;transform:rotate(45deg);
+  border-radius:2px;transition:opacity .35s var(--ease),transform .5s var(--ease);
+}
+.gm-card:hover::before{opacity:1;transform:rotate(135deg)}
+/* الأفاتار: مثمّن + إطار معيّني يدور */
+.gm-av{position:relative;flex:none;width:92px;height:92px;display:grid;place-items:center}
+.gm-av-frame{
+  position:absolute;inset:7px;border:1.5px solid var(--gm-gold-line);border-radius:4px;
+  transform:rotate(45deg);transition:transform .6s var(--ease),border-color .35s var(--ease);
+}
+.gm-card:hover .gm-av-frame{transform:rotate(90deg);border-color:var(--gold)}
+.gm-av b{
+  position:relative;width:64px;height:64px;display:grid;place-items:center;
+  font-family:var(--font-display);font-size:2rem;font-weight:700;line-height:1;
+  background:var(--gm-teal-tint);color:var(--gm-teal-600);
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+  transition:background .35s var(--ease),color .35s var(--ease),transform .5s var(--ease);
+}
+.gm-card:hover .gm-av b{background:var(--teal);color:#fff;transform:scale(1.06)}
+.gm-card[data-cat="working"] .gm-av b{background:var(--gm-gold-tint);color:var(--gm-gold-ink)}
+.gm-card[data-cat="working"]:hover .gm-av b{background:var(--gold);color:#33240a}
+/* النصوص */
+.gm-body{min-width:0}
+.gm-name{
+  font-family:var(--font-display);font-size:1.32rem;font-weight:600;line-height:1.5;
+  color:var(--ink);margin:0 0 9px;overflow-wrap:break-word;
+}
+.gm-name .gm-title{font-size:.82em;font-weight:500;color:var(--muted);margin-inline-end:3px}
+.gm-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-body);font-size:.92rem;font-weight:700;padding:5px 13px;border-radius:7px;
+  color:var(--gm-teal-600);background:var(--gm-teal-tint);border:1px solid var(--gm-teal-bd);
+  transition:background .3s,border-color .3s;
+}
+.gm-chip .dm{width:7px;height:7px;background:currentColor;transform:rotate(45deg);border-radius:1px;flex:none}
+.gm-card[data-cat="working"] .gm-chip{color:var(--gm-gold-ink);background:var(--gm-gold-tint);border-color:var(--gm-gold-bd)}
+/* حالة لا نتائج */
+.gm-empty{
+  grid-column:1/-1;text-align:center;padding:64px 24px;
+  border:1px dashed var(--line);border-radius:var(--card-radius);background:var(--surface-2);
+  animation:gmFade .4s var(--ease) both;
+}
+@keyframes gmFade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.gm-empty svg{width:62px;height:62px;color:var(--teal);opacity:.42;margin-block-end:16px}
+.gm-empty h3{font-size:1.25rem;margin-block-end:8px;color:var(--ink)}
+.gm-empty p{color:var(--muted);margin-block-end:20px}
+.gm-reset{
+  border:1.6px solid var(--teal);background:transparent;color:var(--teal);
+  font-family:var(--font-body);font-weight:700;font-size:1rem;padding:11px 24px;
+  border-radius:10px;cursor:pointer;transition:background .25s,color .25s;
+}
+.gm-reset:hover{background:var(--teal);color:#fff}
+.gm-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* استجابة */
+@media (max-width:1024px){.gm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gm-name{font-size:1.26rem}}
+@media (max-width:760px){
+  .gm-stats{grid-template-columns:1fr;gap:12px}
+  .gm-bar{flex-direction:column;align-items:stretch}
+  .gm-seg{width:100%;justify-content:space-between}
+  .gm-fil{flex:1;justify-content:center;padding-inline:12px}
+  .gm-fil[aria-pressed="true"]{padding-inline-start:12px}
+  .gm-fil::before{display:none}
+  .gm-search{max-width:none}
+  .gm-orn{display:none}
+}
+@media (max-width:600px){
+  .gm-grid{grid-template-columns:1fr}
+  .gm-card{padding:18px}
+  .gm-av{width:76px;height:76px}
+  .gm-av b{width:54px;height:54px;font-size:1.7rem}
+  .gm-name{font-size:1.22rem}
 }
 @media (prefers-reduced-motion:reduce){
-  #memSec.js-on .mem-grid .mcard{opacity:1}
-  #memSec.js-on .mem-grid.in-view .mcard:not(.is-hidden){animation:none}
-  .mcard,.mav,.mcard::before,.mcard::after,.mfilter{transition:none!important}
-  .mcard:hover{transform:none}
+  .gm-orn{animation:none}
+  .gm-card,.gm-empty{transition:opacity .001s,border-color .2s;animation:none}
+  .gm.js-on .gm-card{opacity:1;transform:none}
+  .gm-card:hover{transform:none}
+  .gm-card:hover .gm-av-frame{transform:rotate(45deg)}
+  .gm-card:hover .gm-av b{transform:none}
+  .gm-card:hover::before{transform:rotate(45deg)}
+  .gm-av-frame,.gm-av b,.gm-stat::after,.gm-fil::before{transition:none}
 }
 </style>
+<svg class="gm-orn" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+  <rect x="20" y="20" width="60" height="60"/>
+  <rect x="20" y="20" width="60" height="60" transform="rotate(45 50 50)"/>
+  <circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="30"/>
+</svg>
 <div class="container">
-  <div class="mem-head reveal">
-    <span class="eyebrow">العضوية</span>
-    <h2>أعضاء الجمعية العمومية</h2>
-    <p>الأعضاء المستوفون لشروط العضوية، وهم أصحاب الحق في انتخاب مجلس الإدارة واعتماد الخطط والقوائم المالية.</p>
+  <header class="gm-head">
+    <p class="gm-eyebrow"><i aria-hidden="true"></i> الجمعية العمومية</p>
+    <h2 id="gm-title">أعضاء الجمعية العمومية</h2>
+    <p>تتكوّن الجمعية العمومية من الأعضاء المستوفين لشروط العضوية، وهي السلطة العليا في الجمعية.</p>
+  </header>
+
+  <div class="gm-stats" role="list">
+    <div class="gm-stat" role="listitem"><b data-count-to="21">0</b><span>إجمالي الأعضاء</span></div>
+    <div class="gm-stat" role="listitem"><b data-count-to="18">0</b><span>عضو مؤسس</span></div>
+    <div class="gm-stat is-gold" role="listitem"><b data-count-to="3">0</b><span>عضو عامل</span></div>
   </div>
 
-  <div class="mem-stats">
-    <div class="ms reveal"><b class="stat-num" data-target="21">0</b><span class="lbl">إجمالي الأعضاء</span></div>
-    <div class="ms reveal"><b class="stat-num" data-target="18">0</b><span class="lbl">أعضاء مؤسسون</span></div>
-    <div class="ms reveal"><b class="stat-num" data-target="3">0</b><span class="lbl">أعضاء عاملون</span></div>
-  </div>
-
-  <div class="mem-toolbar reveal">
-    <div class="mem-filters">
-      <button type="button" class="mfilter" data-filter="all" aria-pressed="true">الكل <span class="cnt">21</span></button>
-      <button type="button" class="mfilter" data-filter="founder" aria-pressed="false">أعضاء مؤسسون <span class="cnt">18</span></button>
-      <button type="button" class="mfilter" data-filter="working" aria-pressed="false">أعضاء عاملون <span class="cnt">3</span></button>
+  <div class="gm-bar">
+    <div class="gm-seg" role="group" aria-label="تصفية الأعضاء حسب فئة العضوية">
+      <button type="button" class="gm-fil" data-filter="all" aria-pressed="true">الكل <span class="gm-c">21</span></button>
+      <button type="button" class="gm-fil" data-filter="founder" aria-pressed="false">مؤسسون <span class="gm-c">18</span></button>
+      <button type="button" class="gm-fil" data-filter="working" aria-pressed="false">عاملون <span class="gm-c">3</span></button>
     </div>
-    <div class="mem-search">
-      <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
-      <input type="search" id="memSearch" placeholder="ابحث باسم العضو..." aria-label="ابحث باسم العضو" autocomplete="off" />
+    <div class="gm-search">
+      <label class="gm-sr" for="gm-q">البحث باسم العضو</label>
+      <svg class="gm-si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      <input type="search" id="gm-q" placeholder="ابحث باسم العضو…" autocomplete="off">
+      <button type="button" class="gm-clear" aria-label="مسح البحث"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
   </div>
 
-  <p class="mem-live" id="memLive" aria-live="polite" role="status"></p>
+  <p class="gm-live" id="gm-live" role="status" aria-live="polite" aria-atomic="true">يُعرض <b>21</b> من أصل <b>21</b> عضواً</p>
 
-  <div class="mem-grid reveal" id="memGrid"><article class="mcard" data-cat="founder" data-name="عبدالرحمن محمد الجمعة" style="--d:45ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالرحمن محمد الجمعة</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالرحمن إبراهيم الشدوخي" style="--d:90ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالرحمن إبراهيم الشدوخي</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالرحمن عبدالله الجمعة" style="--d:135ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالرحمن عبدالله الجمعة</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="علي صالح التويجري" style="--d:180ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> علي صالح التويجري</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="محمد علي النصار" style="--d:225ms"><div class="mav" aria-hidden="true">م</div><div class="mbody"><h3 class="mname"><span class="mt">د.</span> محمد علي النصار</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="سليمان فهد القفاري" style="--d:270ms"><div class="mav" aria-hidden="true">س</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> سليمان فهد القفاري</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالله صالح الركبان" style="--d:315ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالله صالح الركبان</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالسلام جربوع القفاري" style="--d:360ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">م.</span> عبدالسلام جربوع القفاري</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="علي صالح المحيميد" style="--d:405ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> علي صالح المحيميد</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="خالد يحى اليحى" style="--d:450ms"><div class="mav" aria-hidden="true">خ</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> خالد يحى اليحى</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="فواز يعقوب المطيري" style="--d:495ms"><div class="mav" aria-hidden="true">ف</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> فواز يعقوب المطيري</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="أحمد عبدالرحمن العميريني" style="--d:540ms"><div class="mav" aria-hidden="true">أ</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> أحمد عبدالرحمن العميريني</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عمر عبدالعزيز العيدان" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عمر عبدالعزيز العيدان</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="يوسف علي الطرباق" style="--d:540ms"><div class="mav" aria-hidden="true">ي</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> يوسف علي الطرباق</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="علي محمد الجمعة" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> علي محمد الجمعة</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عيسى صالح الشتيوي" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عيسى صالح الشتيوي</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالإله عبدالرحمن الطويان" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالإله عبدالرحمن الطويان</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="founder" data-name="عبدالرحمن إبراهيم العمران" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالرحمن إبراهيم العمران</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.5 9.1l5.9-.8Z"/></svg>عضو مؤسس</span></div></article><article class="mcard" data-cat="working" data-name="عبدالله محمد السواجي" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالله محمد السواجي</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M16.5 11.5l1.8 1.8 3.2-3.6"/></svg>عضو عامل</span></div></article><article class="mcard" data-cat="working" data-name="عبدالرحمن محمد الجمعة" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">د.</span> عبدالرحمن محمد الجمعة</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M16.5 11.5l1.8 1.8 3.2-3.6"/></svg>عضو عامل</span></div></article><article class="mcard" data-cat="working" data-name="عبدالعزيز صالح التويجري" style="--d:540ms"><div class="mav" aria-hidden="true">ع</div><div class="mbody"><h3 class="mname"><span class="mt">أ.</span> عبدالعزيز صالح التويجري</h3><span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M16.5 11.5l1.8 1.8 3.2-3.6"/></svg>عضو عامل</span></div></article></div>
-
-  <div class="mem-empty" id="memEmpty" hidden>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
-    <p style="margin:0">لا يوجد عضو مطابق لبحثك.</p>
-  </div>
+  <div class="gm-grid" id="gm-grid"><article class="gm-card" data-cat="founder" data-name="عبدالرحمن محمد الجمعة"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالرحمن محمد الجمعة</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالرحمن إبراهيم الشدوخي"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالرحمن إبراهيم الشدوخي</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالرحمن عبدالله الجمعة"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالرحمن عبدالله الجمعة</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="علي صالح التويجري"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> علي صالح التويجري</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="محمد علي النصار"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>م</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">د.</span> محمد علي النصار</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="سليمان فهد القفاري"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>س</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> سليمان فهد القفاري</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالله صالح الركبان"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالله صالح الركبان</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالسلام جربوع القفاري"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">م.</span> عبدالسلام جربوع القفاري</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="علي صالح المحيميد"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> علي صالح المحيميد</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="خالد يحى اليحى"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>خ</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> خالد يحى اليحى</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="فواز يعقوب المطيري"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ف</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> فواز يعقوب المطيري</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="أحمد عبدالرحمن العميريني"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>أ</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> أحمد عبدالرحمن العميريني</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عمر عبدالعزيز العيدان"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عمر عبدالعزيز العيدان</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="يوسف علي الطرباق"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ي</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> يوسف علي الطرباق</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="علي محمد الجمعة"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> علي محمد الجمعة</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عيسى صالح الشتيوي"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عيسى صالح الشتيوي</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالإله عبدالرحمن الطويان"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالإله عبدالرحمن الطويان</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="founder" data-name="عبدالرحمن إبراهيم العمران"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالرحمن إبراهيم العمران</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو مؤسس</span></div></article><article class="gm-card" data-cat="working" data-name="عبدالله محمد السواجي"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالله محمد السواجي</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو عامل</span></div></article><article class="gm-card" data-cat="working" data-name="عبدالرحمن محمد الجمعة"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">د.</span> عبدالرحمن محمد الجمعة</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو عامل</span></div></article><article class="gm-card" data-cat="working" data-name="عبدالعزيز صالح التويجري"><span class="gm-av" aria-hidden="true"><i class="gm-av-frame"></i><b>ع</b></span><div class="gm-body"><h3 class="gm-name"><span class="gm-title">أ.</span> عبدالعزيز صالح التويجري</h3><span class="gm-chip"><i class="dm" aria-hidden="true"></i> عضو عامل</span></div></article></div>
 </div>
 <script>
 (function(){
-  var sec=document.getElementById('memSec'); if(!sec) return;
-  var grid=document.getElementById('memGrid'),
-      search=document.getElementById('memSearch'),
-      live=document.getElementById('memLive'),
-      empty=document.getElementById('memEmpty'),
-      btns=[].slice.call(sec.querySelectorAll('.mfilter')),
-      cards=[].slice.call(grid.querySelectorAll('.mcard')),
-      reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-      cur='all', first=true;
+  var section=document.getElementById('memSec'); if(!section) return;
+  var grid=document.getElementById('gm-grid');
+  var live=document.getElementById('gm-live');
+  var input=document.getElementById('gm-q');
+  var wrap=input?input.closest('.gm-search'):null;
+  var clearBtn=section.querySelector('.gm-clear');
+  var fils=[].slice.call(section.querySelectorAll('.gm-fil'));
+  var cards=[].slice.call(grid.querySelectorAll('.gm-card'));
+  var total=cards.length;
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var rtl=(getComputedStyle(document.documentElement).direction==='rtl');
+  var state={cat:'all',q:''};
+  var timer=null,swap=null,first=true;
 
-  /* تفعيل حركة الدخول فقط عند توفّر JavaScript */
-  sec.classList.add('js-on');
-  /* متصفّح قديم بلا IntersectionObserver: أظهِر البطاقات فورًا */
-  if(!('IntersectionObserver' in window)) grid.classList.add('in-view');
+  section.classList.add('js-on');
 
-  /* توحيد الحروف العربية ليعمل البحث مع (أ/ا) و(ي/ى) و(ة/ه) والتشكيل */
   function norm(s){
-    return (s||'').replace(/[أإآ]/g,'ا')
-                  .replace(/ى/g,'ي').replace(/ة/g,'ه')
-                  .replace(/[ً-ْـ]/g,'')
-                  .replace(/\s+/g,' ').trim().toLowerCase();
+    return (s||'').replace(/[ً-ْٰـ]/g,'')
+      .replace(/[آأإٱ]/g,'ا')
+      .replace(/ى/g,'ي').replace(/ة/g,'ه')
+      .replace(/\s+/g,' ').trim().toLowerCase();
   }
-  function apply(){
-    var q=norm(search.value), shown=0;
-    cards.forEach(function(c){
-      var okCat = (cur==='all' || c.getAttribute('data-cat')===cur),
-          okQ   = (!q || norm(c.getAttribute('data-name')).indexOf(q)>-1),
-          show  = okCat && okQ;
-      c.classList.toggle('is-hidden', !show);
-      if(show){ c.style.setProperty('--d', (shown%12)*45+'ms'); shown++; }
+  cards.forEach(function(c){ c.dataset.key=norm(c.getAttribute('data-name')); });
+
+  var empty=document.createElement('div');
+  empty.className='gm-empty'; empty.hidden=true;
+  empty.innerHTML='<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="24" y="24" width="52" height="52"/><rect x="24" y="24" width="52" height="52" transform="rotate(45 50 50)"/></svg>'+
+    '<h3>لا توجد نتائج مطابقة</h3><p>لم نجد عضواً يطابق بحثك. جرّب اسماً آخر أو أعد ضبط التصفية.</p>'+
+    '<button type="button" class="gm-reset">إعادة التعيين</button>';
+  grid.appendChild(empty);
+  empty.querySelector('.gm-reset').addEventListener('click',function(){
+    state.cat='all'; state.q=''; input.value=''; wrap.classList.remove('has-value');
+    fils.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-filter')==='all'?'true':'false'); });
+    render(); input.focus();
+  });
+
+  function cols(){
+    var v=getComputedStyle(grid).gridTemplateColumns;
+    return v&&v!=='none' ? v.split(' ').filter(Boolean).length : 1;
+  }
+  function match(c){
+    var okCat=(state.cat==='all'||c.getAttribute('data-cat')===state.cat);
+    var okQ=(!state.q||c.dataset.key.indexOf(state.q)>-1);
+    return okCat&&okQ;
+  }
+  function paint(list){
+    var n=cols(), step=parseFloat(getComputedStyle(section).getPropertyValue('--gm-step'))||60;
+    cards.forEach(function(c){ c.hidden=true; c.classList.remove('is-in'); c.style.removeProperty('--gm-delay'); });
+    list.forEach(function(c,i){
+      c.hidden=false;
+      if(!reduce) c.style.setProperty('--gm-delay',(((i%n)+Math.floor(i/n))*step)+'ms');
     });
-    empty.hidden = shown>0;
-    live.textContent = shown
-      ? 'عرض ' + shown + ' من أصل ' + cards.length + ' عضوًا'
-      : 'لا نتائج مطابقة';
-    /* إعادة تشغيل حركة الظهور المتتالية عند تغيير الفلترة أو البحث */
-    if(!first && !reduce && shown){
-      grid.classList.remove('in-view'); void grid.offsetWidth; grid.classList.add('in-view');
-    }
-    first=false;
+    empty.hidden=list.length>0;
+    void grid.offsetWidth;
+    list.forEach(function(c){ c.classList.add('is-in'); });
+    live.innerHTML='يُعرض <b>'+list.length+'</b> من أصل <b>'+total+'</b> عضواً';
   }
-  btns.forEach(function(b){
-    b.addEventListener('click', function(){
-      btns.forEach(function(x){ x.setAttribute('aria-pressed','false'); });
-      b.setAttribute('aria-pressed','true');
-      cur=b.getAttribute('data-filter');
-      apply();
+  function render(){
+    var list=cards.filter(match);
+    if(reduce||first){ first=false; paint(list); return; }
+    grid.classList.add('is-busy');
+    cards.forEach(function(c){ if(!c.hidden) c.classList.remove('is-in'); });
+    clearTimeout(swap);
+    swap=setTimeout(function(){ paint(list); grid.classList.remove('is-busy'); },180);
+  }
+
+  fils.forEach(function(btn,i){
+    btn.addEventListener('click',function(){
+      if(btn.getAttribute('aria-pressed')==='true') return;
+      fils.forEach(function(b){ b.setAttribute('aria-pressed',b===btn?'true':'false'); });
+      state.cat=btn.getAttribute('data-filter'); render();
+    });
+    btn.addEventListener('keydown',function(e){
+      var d=0;
+      if(e.key==='ArrowLeft') d=rtl?1:-1;
+      else if(e.key==='ArrowRight') d=rtl?-1:1;
+      else if(e.key==='Home') d=-99; else if(e.key==='End') d=99; else return;
+      e.preventDefault();
+      var j=(d===-99)?0:(d===99)?fils.length-1:(i+d+fils.length)%fils.length;
+      fils[j].focus(); fils[j].click();
     });
   });
-  var t=null;
-  search.addEventListener('input', function(){ clearTimeout(t); t=setTimeout(apply,120); });
-  apply();
+
+  input.addEventListener('input',function(){
+    wrap.classList.toggle('has-value',input.value.length>0);
+    clearTimeout(timer);
+    timer=setTimeout(function(){ state.q=norm(input.value); render(); },140);
+  });
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&input.value){ e.preventDefault(); clearBtn.click(); }
+  });
+  clearBtn.addEventListener('click',function(){
+    input.value=''; wrap.classList.remove('has-value'); state.q=''; render(); input.focus();
+  });
+
+  function counters(){
+    section.querySelectorAll('[data-count-to]').forEach(function(el){
+      var to=parseInt(el.getAttribute('data-count-to'),10)||0;
+      if(reduce){ el.textContent=to; return; }
+      var t0=null,dur=1100;
+      requestAnimationFrame(function tick(ts){
+        if(t0===null) t0=ts;
+        var p=Math.min((ts-t0)/dur,1), e=1-Math.pow(1-p,3);
+        el.textContent=Math.round(to*e);
+        if(p<1) requestAnimationFrame(tick);
+      });
+    });
+  }
+
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(en){
+      en.forEach(function(x){ if(x.isIntersecting){ render(); counters(); io.disconnect(); } });
+    },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+    io.observe(section);
+  } else { render(); counters(); }
 })();
 </script>
 </section>
