@@ -18,7 +18,26 @@ python src/build.py
 > القاعدة: عدّل في `src/` ثم أعد البناء. لا تُعدّل ملفات `site/` مباشرةً.
 
 ## النشر
-Cloudflare Pages — **مجلد الإخراج (Build output directory): `site`**، بلا أمر بناء.
+
+النشر **تلقائي**: أي دفعة (push) إلى الفرع `main` تُطلق نشراً على Cloudflare.
+
+```bash
+python src/build.py          # 1) ابنِ الموقع في site/
+git add -A && git commit -m "..."   # 2) احفظ التغيير
+git push                     # 3) ارفع → Cloudflare ينشر تلقائيًا
+```
+
+- الرابط التجريبي: https://iaq.gov-15b.workers.dev
+- الإعداد في [wrangler.toml](wrangler.toml): الـWorker باسم `iaq`، والأصول من `./site`،
+  و`not_found_handling` يقدّم صفحة `404.html` المخصّصة.
+- **أمر البناء في Cloudflare يجب أن يبقى فارغًا** — لأن مجلد `site/` المبني مرفوع في المستودع.
+  لذلك: **أعد البناء دائمًا قبل الدفع**، وإلا نُشرت نسخة قديمة.
+- للنشر المباشر بدون GitHub (يتطلب `wrangler login` مسبقًا): `npm run ship`
+
+### قبل الإطلاق الرسمي على iaq.org.sa
+1. عدّل [src/static/robots.txt](src/static/robots.txt) ليسمح بالفهرسة (التعليمات داخل الملف).
+2. أعد البناء والدفع.
+3. أضف النطاق المخصّص في إعدادات الـWorker، ووجّه `www` إلى الجذر.
 
 ## المكدّس
 Cloudflare Pages (استضافة) · Supabase (قاعدة بيانات/مصادقة لاحقًا) · GitHub (المستودع).
