@@ -1,0 +1,17 @@
+{
+  "name": "iaq-site",
+  "private": true,
+  "version": "1.0.0",
+  "description": "موقع جمعية حاضنة الجمعيات — موقع ثابت يُبنى من مصدر واحد ويُنشر على Cloudflare",
+  "scripts": {
+    "build": "python src/build.py",
+    "ship": "python src/build.py && wrangler deploy",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev",
+    "whoami": "wrangler whoami",
+    "login": "wrangler login"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

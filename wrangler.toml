@@ -1,0 +1,12 @@
+# إعداد نشر موقع «جمعية حاضنة الجمعيات» على Cloudflare
+# النشر:  npm run deploy      (أو:  npx wrangler deploy)
+# ملاحظة: الاسم مطابق لمشروعك الحالي كي يُحدَّث نفس الرابط iaq.gov-15b.workers.dev
+
+name = "iaq"
+compatibility_date = "2026-07-01"
+
+[assets]
+# مجلد الموقع المبني (ناتج python src/build.py)
+directory = "./site"
+# تقديم صفحة 404 المخصّصة للمسارات غير الموجودة
+not_found_handling = "404-page"
