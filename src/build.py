@@ -22,6 +22,7 @@ CONTENT   = os.path.join(HERE, "content")
 STATIC    = os.path.join(HERE, "static")
 DATA      = os.path.join(HERE, "data", "pages.json")
 MEMBERS   = os.path.join(HERE, "data", "assembly-members.json")
+BOARD     = os.path.join(HERE, "data", "board-members.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -81,6 +82,61 @@ def render_members():
                .replace("{{LBL_WORKING}}", esc(cats["working"]["plural"])))
     return section.encode("utf-8")
 
+def render_board():
+    """يبني قسم «مجلس الإدارة» من ملف البيانات + قالبَي القسم والبطاقة."""
+    section_tpl = os.path.join(TEMPLATES, "board-section.html")
+    card_tpl    = os.path.join(TEMPLATES, "board-card.html")
+    if not (os.path.exists(section_tpl) and os.path.exists(card_tpl) and os.path.exists(BOARD)):
+        return b""
+
+    with io.open(BOARD, encoding="utf-8") as f:
+        data = json.load(f)
+    with io.open(card_tpl, encoding="utf-8") as f:
+        card = f.read().rstrip("\n")
+    with io.open(section_tpl, encoding="utf-8") as f:
+        section = f.read()
+
+    # أيقونة رمزية احترافية تُستخدم مؤقتًا مكان الصورة
+    SYMBOL = ('<div class="bd-sym" aria-hidden="true"><span class="fr"></span>'
+              '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.1" '
+              'stroke-linecap="round" stroke-linejoin="round">'
+              '<circle cx="32" cy="21" r="11"/>'
+              '<path d="M11 57c0-11.6 9.4-19 21-19s21 7.4 21 19"/>'
+              '</svg></div>')
+
+    def media_for(m):
+        photo = (m.get("photo") or "").strip()
+        if photo:
+            return '<img src="img/board/%s" alt="%s" loading="lazy" decoding="async" />' % (
+                esc(photo), esc((m.get("title", "") + " " + m["name"]).strip()))
+        return SYMBOL
+
+    def render_card(m):
+        title = (m.get("title") or "").strip()
+        title_html = ('<span class="bd-t">%s</span> ' % esc(title)) if title else ""
+        return (card
+                .replace("{{RANK}}", esc(m.get("rank", "member")))
+                .replace("{{MEDIA}}", media_for(m))
+                .replace("{{TITLE_HTML}}", title_html)
+                .replace("{{NAME}}", esc(m["name"]))
+                .replace("{{ROLE}}", esc(m.get("role", ""))))
+
+    members = data["members"]
+    lead = [m for m in members if m.get("rank") in ("chair", "vice")]
+    rest = [m for m in members if m.get("rank") not in ("chair", "vice")]
+    t = data.get("term", {})
+
+    section = (section
+               .replace("{{LEAD_CARDS}}", "".join(render_card(m) for m in lead))
+               .replace("{{MEMBER_CARDS}}", "".join(render_card(m) for m in rest))
+               .replace("{{TERM_LABEL}}", esc(t.get("label", "")))
+               .replace("{{TERM_NOTE}}",  esc(t.get("note", "")))
+               .replace("{{START_H}}", esc(t.get("start_h", "")))
+               .replace("{{START_G}}", esc(t.get("start_g", "")))
+               .replace("{{END_H}}",   esc(t.get("end_h", "")))
+               .replace("{{END_G}}",   esc(t.get("end_g", ""))))
+    return section.encode("utf-8")
+
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
     header_tpl = rb(os.path.join(TEMPLATES, "header.html"))
@@ -91,6 +147,7 @@ def build(out_dir):
 
     os.makedirs(out_dir, exist_ok=True)
     members_html = render_members()
+    board_html = render_board()
 
     # 1) الصفحات المُولّدة من القالب
     for pg in data["pages"]:
@@ -108,6 +165,7 @@ def build(out_dir):
         main   = rb(os.path.join(CONTENT, slug + ".main.html"))
         # حقن الأقسام المُولّدة من البيانات
         main = main.replace(b"{{ASSEMBLY_MEMBERS}}", members_html)
+        main = main.replace(b"{{BOARD_MEMBERS}}", board_html)
         page = head + body_tag + header + banner + main + footer
         with open(os.path.join(out_dir, slug + ".html"), "wb") as f:
             f.write(page)

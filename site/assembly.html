@@ -573,16 +573,6 @@ section[id]{scroll-margin-top:92px}
   animation:gmSpin 90s linear infinite;
 }
 @keyframes gmSpin{to{transform:rotate(360deg)}}
-/* ترويسة القسم */
-.gm-head{max-width:760px;margin-block-end:38px}
-.gm-eyebrow{
-  display:inline-flex;align-items:center;gap:10px;
-  font-family:var(--font-display);font-size:.95rem;font-weight:700;letter-spacing:.06em;
-  color:var(--teal);margin-block-end:14px;
-}
-.gm-eyebrow i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
-.gm-head h2{font-size:clamp(1.7rem,3.2vw,2.5rem);margin-block-end:14px;color:var(--ink)}
-.gm-head p{font-size:1.1rem;color:var(--body);max-width:66ch}
 /* عدّادات إحصائية بأطراف هندسية */
 .gm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-block-end:34px}
 .gm-stat{
@@ -768,11 +758,7 @@ section[id]{scroll-margin-top:92px}
   <circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="30"/>
 </svg>
 <div class="container">
-  <header class="gm-head">
-    <p class="gm-eyebrow"><i aria-hidden="true"></i> الجمعية العمومية</p>
-    <h2 id="gm-title">أعضاء الجمعية العمومية</h2>
-    <p>تتكوّن الجمعية العمومية من الأعضاء المستوفين لشروط العضوية، وهي السلطة العليا في الجمعية.</p>
-  </header>
+  <h2 id="gm-title" class="gm-sr">أعضاء الجمعية العمومية</h2>
 
   <div class="gm-stats" role="list">
     <div class="gm-stat" role="listitem"><b data-count-to="21">0</b><span>إجمالي الأعضاء</span></div>

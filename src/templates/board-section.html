@@ -1,0 +1,197 @@
+<section class="section bd" id="boardSec" aria-labelledby="bd-title">
+<style>
+/* ============================================================
+   مجلس الإدارة — امتداد للغة «الهندسي العربي» مع مكان للصورة
+   ============================================================ */
+.bd{
+  position:relative;overflow:hidden;
+  --bd-lattice:rgba(0,120,120,.05);
+  --bd-t6:#0c6c6c;
+  --bd-gold-ink:#7a5518;
+  --bd-gold-line:rgba(192,144,72,.42);
+  --bd-tt:#eef4f3;
+  --bd-tb:#d6e5e3;
+  --bd-gt:#f8efdb;
+  --bd-gb:#ecdcbb;
+  --bd-shadow-h:0 18px 40px rgba(6,63,54,.13);
+  --bd-cut:20px;
+  --bd-step:70ms;
+}
+.bd::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 46px,var(--bd-lattice) 46px 47px),
+    repeating-linear-gradient(-45deg,transparent 0 46px,var(--bd-lattice) 46px 47px);
+  -webkit-mask-image:radial-gradient(115% 80% at 0% 0%,#000 0%,transparent 70%);
+  mask-image:radial-gradient(115% 80% at 0% 0%,#000 0%,transparent 70%);
+}
+.bd > .container{position:relative;z-index:1}
+
+/* شريط دورة المجلس */
+.bd-term{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:16px 20px;margin-block-end:36px;
+}
+.bd-term .dm{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.bd-term b{font-family:var(--font-display);color:var(--ink);font-weight:600;font-size:1.02rem}
+.bd-term span{color:var(--body);font-size:.98rem}
+.bd-term time{color:var(--teal);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* الشبكات: القيادة ثم الأعضاء */
+.bd-lead{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-block-end:22px}
+.bd-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+
+/* البطاقة */
+.bd-card{
+  position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:18px;
+  transition:
+    opacity .6s var(--ease) var(--bd-delay,0ms),
+    transform .6s var(--ease) var(--bd-delay,0ms),
+    border-color .3s var(--ease),box-shadow .35s var(--ease);
+}
+.bd.js-on .bd-card{opacity:0;transform:translateY(22px) scale(.985)}
+.bd.js-on .bd-card.is-in{opacity:1;transform:none}
+.bd-card:hover{border-color:var(--teal);box-shadow:var(--bd-shadow-h);transform:translateY(-6px)}
+.bd-card:focus-within{border-color:var(--teal);box-shadow:var(--bd-shadow-h)}
+/* إطار داخلي ومعيّن الزاوية */
+.bd-card::after{
+  content:"";position:absolute;inset:6px;border:1px solid transparent;border-radius:9px;
+  pointer-events:none;transition:border-color .35s var(--ease);
+}
+.bd-card:hover::after{border-color:var(--bd-gold-line)}
+.bd-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:13px;height:13px;background:var(--gold);opacity:.3;transform:rotate(45deg);
+  border-radius:2px;transition:opacity .35s var(--ease),transform .55s var(--ease);
+}
+.bd-card:hover::before{opacity:1;transform:rotate(135deg)}
+
+/* مكان الصورة — أطراف مقطوعة هندسيًا */
+.bd-ph{
+  position:relative;aspect-ratio:1;overflow:hidden;margin-block-end:16px;
+  background:linear-gradient(160deg,var(--bd-tt),#fbfdfd);
+  clip-path:polygon(var(--bd-cut) 0,100% 0,100% calc(100% - var(--bd-cut)),calc(100% - var(--bd-cut)) 100%,0 100%,0 var(--bd-cut));
+}
+.bd-ph::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 15px,rgba(0,120,120,.05) 15px 16px),
+    repeating-linear-gradient(-45deg,transparent 0 15px,rgba(0,120,120,.05) 15px 16px);
+}
+.bd-card[data-rank="chair"] .bd-ph,
+.bd-card[data-rank="vice"] .bd-ph{background:linear-gradient(160deg,var(--bd-gt),#fefcf7)}
+.bd-card[data-rank="chair"] .bd-ph::before,
+.bd-card[data-rank="vice"] .bd-ph::before{
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 15px,rgba(192,144,72,.07) 15px 16px),
+    repeating-linear-gradient(-45deg,transparent 0 15px,rgba(192,144,72,.07) 15px 16px);
+}
+/* صورة حقيقية عند توفّرها */
+.bd-ph img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;
+  transition:transform .7s var(--ease);
+}
+.bd-card:hover .bd-ph img{transform:scale(1.05)}
+/* الأيقونة الرمزية المؤقتة + إطار معيّني يدور */
+.bd-sym{position:absolute;inset:0;display:grid;place-items:center}
+.bd-sym .fr{
+  position:absolute;width:58%;aspect-ratio:1;border:1.5px solid var(--bd-gold-line);
+  border-radius:6px;transform:rotate(45deg);
+  transition:transform .7s var(--ease),border-color .35s var(--ease);
+}
+.bd-card:hover .bd-sym .fr{transform:rotate(90deg);border-color:var(--gold)}
+.bd-sym svg{
+  position:relative;width:42%;height:42%;color:var(--bd-t6);opacity:.55;
+  transition:transform .5s var(--ease),opacity .35s var(--ease),color .35s var(--ease);
+}
+.bd-card:hover .bd-sym svg{transform:scale(1.07);opacity:.85;color:var(--teal)}
+.bd-card[data-rank="chair"] .bd-sym svg,
+.bd-card[data-rank="vice"] .bd-sym svg{color:var(--bd-gold-ink);opacity:.5}
+.bd-card[data-rank="chair"]:hover .bd-sym svg,
+.bd-card[data-rank="vice"]:hover .bd-sym svg{opacity:.8}
+
+/* النصوص */
+.bd-name{
+  font-family:var(--font-display);font-weight:600;line-height:1.5;color:var(--ink);
+  font-size:1.12rem;margin:0 0 10px;overflow-wrap:break-word;
+}
+.bd-name .bd-t{font-size:.84em;font-weight:500;color:var(--muted);margin-inline-end:3px}
+.bd-role{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--font-body);font-size:.88rem;font-weight:700;
+  padding:5px 12px;border-radius:7px;
+  color:var(--bd-t6);background:var(--bd-tt);border:1px solid var(--bd-tb);
+}
+.bd-role .dm{width:7px;height:7px;background:currentColor;transform:rotate(45deg);border-radius:1px;flex:none}
+.bd-card[data-rank="chair"] .bd-role,
+.bd-card[data-rank="vice"] .bd-role{color:var(--bd-gold-ink);background:var(--bd-gt);border-color:var(--bd-gb)}
+/* بطاقات القيادة أكبر */
+.bd-lead .bd-card{padding:22px}
+.bd-lead .bd-name{font-size:1.3rem}
+.bd-lead .bd-role{font-size:.95rem;padding:6px 14px}
+.bd-lead .bd-ph{aspect-ratio:4/3}
+.bd-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media (max-width:1024px){.bd-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:760px){
+  .bd-lead{grid-template-columns:1fr;gap:16px}
+  .bd-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .bd-lead .bd-ph{aspect-ratio:1}
+  .bd-name{font-size:1.05rem}
+  .bd-lead .bd-name{font-size:1.16rem}
+}
+@media (max-width:460px){.bd-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){
+  .bd.js-on .bd-card{opacity:1;transform:none}
+  .bd-card,.bd-ph img,.bd-sym .fr,.bd-sym svg{transition:none!important}
+  .bd-card:hover{transform:none}
+  .bd-card:hover .bd-ph img{transform:none}
+  .bd-card:hover .bd-sym .fr{transform:rotate(45deg)}
+  .bd-card:hover .bd-sym svg{transform:none}
+  .bd-card:hover::before{transform:rotate(45deg)}
+}
+</style>
+<div class="container">
+  <h2 id="bd-title" class="bd-sr">أعضاء مجلس الإدارة</h2>
+
+  <div class="bd-term">
+    <i class="dm" aria-hidden="true"></i>
+    <b>{{TERM_LABEL}}</b>
+    <span>{{TERM_NOTE}} من <time>{{START_H}}</time> الموافق <time>{{START_G}}</time> حتى <time>{{END_H}}</time> الموافق <time>{{END_G}}</time></span>
+  </div>
+
+  <div class="bd-lead">{{LEAD_CARDS}}</div>
+  <div class="bd-grid">{{MEMBER_CARDS}}</div>
+</div>
+<script>
+(function(){
+  var sec=document.getElementById('boardSec'); if(!sec) return;
+  var cards=[].slice.call(sec.querySelectorAll('.bd-card'));
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sec.classList.add('js-on');
+
+  function step(el){
+    return parseFloat(getComputedStyle(sec).getPropertyValue('--bd-step'))||70;
+  }
+  function reveal(list){
+    var s=step();
+    list.forEach(function(c,i){
+      if(!reduce) c.style.setProperty('--bd-delay',(i*s)+'ms');
+      c.classList.add('is-in');
+    });
+  }
+  function run(){
+    reveal(cards.filter(function(c){return c.closest('.bd-lead');}));
+    reveal(cards.filter(function(c){return c.closest('.bd-grid');}));
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(en){
+      en.forEach(function(x){ if(x.isIntersecting){ run(); io.disconnect(); } });
+    },{threshold:.1,rootMargin:'0px 0px -8% 0px'});
+    io.observe(sec);
+  } else { run(); }
+})();
+</script>
+</section>
