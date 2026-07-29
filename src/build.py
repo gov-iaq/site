@@ -23,6 +23,8 @@ STATIC    = os.path.join(HERE, "static")
 DATA      = os.path.join(HERE, "data", "pages.json")
 MEMBERS   = os.path.join(HERE, "data", "assembly-members.json")
 BOARD     = os.path.join(HERE, "data", "board-members.json")
+TEAM      = os.path.join(HERE, "data", "team-members.json")
+DISCLOSURE= os.path.join(HERE, "data", "disclosure.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -137,6 +139,107 @@ def render_board():
                .replace("{{END_G}}",   esc(t.get("end_g", ""))))
     return section.encode("utf-8")
 
+def render_team():
+    """يبني قسم «فريق العمل التنفيذي» من ملف البيانات."""
+    section_tpl = os.path.join(TEMPLATES, "team-section.html")
+    card_tpl    = os.path.join(TEMPLATES, "team-card.html")
+    if not (os.path.exists(section_tpl) and os.path.exists(card_tpl) and os.path.exists(TEAM)):
+        return b""
+
+    with io.open(TEAM, encoding="utf-8") as f:
+        data = json.load(f)
+    with io.open(card_tpl, encoding="utf-8") as f:
+        card = f.read().rstrip("\n")
+    with io.open(section_tpl, encoding="utf-8") as f:
+        section = f.read()
+
+    SYMBOL = ('<div class="tm-sym" aria-hidden="true"><span class="fr"></span>'
+              '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.1" '
+              'stroke-linecap="round" stroke-linejoin="round">'
+              '<circle cx="32" cy="21" r="11"/>'
+              '<path d="M11 57c0-11.6 9.4-19 21-19s21 7.4 21 19"/></svg></div>')
+    IC_PHONE = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<path d="M6.2 3.5h3l1.5 3.8-2 1.4a11.6 11.6 0 0 0 5.6 5.6l1.4-2 3.8 1.5v3a1.8 1.8 0 0 1-2 1.8'
+                'A15.6 15.6 0 0 1 4.4 5.5a1.8 1.8 0 0 1 1.8-2Z"/></svg>')
+    IC_MAIL = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+               'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+               '<rect x="2.8" y="5" width="18.4" height="14" rx="2.4"/><path d="M3.4 6.6 12 12.8l8.6-6.2"/></svg>')
+
+    cards = []
+    for m in data["members"]:
+        title = (m.get("title") or "").strip()
+        title_html = ('<span class="tm-t">%s</span> ' % esc(title)) if title else ""
+        photo = (m.get("photo") or "").strip()
+        if photo:
+            media = ('<img src="img/team/%s" alt="%s" loading="lazy" decoding="async" />'
+                     % (esc(photo), esc((title + " " + m["name"]).strip())))
+        else:
+            media = SYMBOL
+
+        rows = []
+        phone = (m.get("phone") or "").strip()
+        if phone:
+            digits = "".join(ch for ch in phone if ch.isdigit())
+            rows.append('<a href="tel:%s">%s<bdi>%s</bdi></a>' % (esc(digits), IC_PHONE, esc(phone)))
+        email = (m.get("email") or "").strip()
+        if email:
+            rows.append('<a href="mailto:%s">%s%s</a>' % (esc(email), IC_MAIL, esc(email)))
+        contact = ('<div class="tm-contact">%s</div>' % "".join(rows)) if rows else ""
+
+        cards.append(card
+                     .replace("{{RANK}}", esc(m.get("rank", "member")))
+                     .replace("{{MEDIA}}", media)
+                     .replace("{{TITLE_HTML}}", title_html)
+                     .replace("{{NAME}}", esc(m["name"]))
+                     .replace("{{ROLE}}", esc(m.get("role", "")))
+                     .replace("{{CONTACT}}", contact))
+
+    return section.replace("{{TEAM_CARDS}}", "".join(cards)).encode("utf-8")
+
+def _disclosure_data():
+    if not os.path.exists(DISCLOSURE):
+        return None
+    with io.open(DISCLOSURE, encoding="utf-8") as f:
+        return json.load(f)
+
+def render_disclosure():
+    """يبني كتلة «إقرار الإفصاح»."""
+    tpl = os.path.join(TEMPLATES, "disclosure-block.html")
+    data = _disclosure_data()
+    if not (os.path.exists(tpl) and data):
+        return b""
+    d = data["declaration"]
+    with io.open(tpl, encoding="utf-8") as f:
+        block = f.read()
+    items = "".join('<li><span class="dn">%d</span><span>%s</span></li>' % (i, esc(x))
+                    for i, x in enumerate(d["items"], 1))
+    intro = esc(d["intro"]).replace("(%s)" % data["registry_no"],
+                                   "(<b>%s</b>)" % data["registry_no"])
+    return (block
+            .replace("{{EYEBROW}}", esc(d.get("eyebrow", "")))
+            .replace("{{TITLE}}", esc(d.get("title", "")))
+            .replace("{{INTRO}}", intro)
+            .replace("{{ITEMS}}", items)
+            .replace("{{CLOSING}}", esc(d.get("closing", "")))).encode("utf-8")
+
+def render_notice(key):
+    """يبني قسم «لا يوجد حاليًا» لصفحة معيّنة (اللجان / الأوقاف)."""
+    tpl = os.path.join(TEMPLATES, "notice-section.html")
+    data = _disclosure_data()
+    if not (os.path.exists(tpl) and data):
+        return b""
+    n = data.get("notices", {}).get(key)
+    if not n:
+        return b""
+    with io.open(tpl, encoding="utf-8") as f:
+        section = f.read()
+    paras = "".join("<p>%s</p>" % esc(p) for p in n.get("paragraphs", []))
+    return (section
+            .replace("{{EYEBROW}}", esc(n.get("eyebrow", "")))
+            .replace("{{TITLE}}", esc(n.get("title", "")))
+            .replace("{{PARAGRAPHS}}", paras)).encode("utf-8")
+
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
     header_tpl = rb(os.path.join(TEMPLATES, "header.html"))
@@ -148,6 +251,10 @@ def build(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     members_html = render_members()
     board_html = render_board()
+    team_html = render_team()
+    disclosure_html = render_disclosure()
+    notice_committees = render_notice("committees")
+    notice_endowments = render_notice("endowments")
 
     # 1) الصفحات المُولّدة من القالب
     for pg in data["pages"]:
@@ -166,6 +273,10 @@ def build(out_dir):
         # حقن الأقسام المُولّدة من البيانات
         main = main.replace(b"{{ASSEMBLY_MEMBERS}}", members_html)
         main = main.replace(b"{{BOARD_MEMBERS}}", board_html)
+        main = main.replace(b"{{TEAM_MEMBERS}}", team_html)
+        main = main.replace(b"{{DISCLOSURE}}", disclosure_html)
+        main = main.replace(b"{{NOTICE_COMMITTEES}}", notice_committees)
+        main = main.replace(b"{{NOTICE_ENDOWMENTS}}", notice_endowments)
         page = head + body_tag + header + banner + main + footer
         with open(os.path.join(out_dir, slug + ".html"), "wb") as f:
             f.write(page)

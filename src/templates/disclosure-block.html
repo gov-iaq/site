@@ -1,0 +1,62 @@
+<div class="dc">
+<style>
+/* ============================================================
+   إقرار الإفصاح
+   ============================================================ */
+.dc{--dc-gold-line:rgba(192,144,72,.42);--dc-tt:#eef4f3;--dc-t6:#0c6c6c}
+.dc-card{
+  position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:30px 32px;
+}
+.dc-card::after{
+  content:"";position:absolute;inset:6px;border:1px solid var(--dc-gold-line);
+  border-radius:9px;pointer-events:none;opacity:.55;
+}
+.dc-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:13px;height:13px;background:var(--gold);opacity:.45;transform:rotate(45deg);border-radius:2px;
+}
+.dc-eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--font-display);font-size:.95rem;font-weight:700;letter-spacing:.05em;
+  color:var(--teal);margin-block-end:10px;
+}
+.dc-eyebrow i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.dc-card h3{font-family:var(--font-display);font-size:1.5rem;color:var(--ink);margin:0 0 16px}
+.dc-intro{color:var(--body);font-size:1.04rem;line-height:1.95;margin:0 0 22px}
+.dc-intro b{color:var(--teal);font-weight:700;font-variant-numeric:tabular-nums}
+.dc-list{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.dc-list li{
+  position:relative;display:flex;gap:14px;align-items:flex-start;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+  padding:15px 18px;color:var(--body);line-height:1.85;
+  transition:border-color .3s var(--ease),background .3s var(--ease);
+}
+.dc-list li:hover{border-color:var(--dc-gold-line);background:var(--surface)}
+.dc-list .dn{
+  flex:none;width:30px;height:30px;display:grid;place-items:center;
+  font-family:var(--font-display);font-weight:700;font-size:.95rem;line-height:1;
+  color:var(--dc-t6);background:var(--dc-tt);border:1px solid #d6e5e3;
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+  font-variant-numeric:tabular-nums;transition:background .3s,color .3s;
+}
+.dc-list li:hover .dn{background:var(--teal);color:#fff;border-color:var(--teal)}
+.dc-closing{
+  margin-block-start:22px;padding-block-start:20px;border-block-start:1px solid var(--line);
+  color:var(--body);line-height:1.95;font-size:1rem;
+}
+@media (max-width:600px){
+  .dc-card{padding:22px 18px}
+  .dc-card h3{font-size:1.28rem}
+  .dc-list li{padding:13px 14px;gap:11px}
+}
+@media (prefers-reduced-motion:reduce){.dc-list li,.dc-list .dn{transition:none}}
+</style>
+<div class="dc-card reveal">
+  <p class="dc-eyebrow"><i aria-hidden="true"></i> {{EYEBROW}}</p>
+  <h3>{{TITLE}}</h3>
+  <p class="dc-intro">{{INTRO}}</p>
+  <ol class="dc-list">{{ITEMS}}</ol>
+  <p class="dc-closing">{{CLOSING}}</p>
+</div>
+</div>

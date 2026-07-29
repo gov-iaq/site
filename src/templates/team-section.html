@@ -1,0 +1,139 @@
+<section class="section tm" id="teamSec" aria-labelledby="tm-title">
+<style>
+/* ============================================================
+   فريق العمل التنفيذي — لغة «الهندسي العربي» مع بيانات التواصل
+   ============================================================ */
+.tm{
+  position:relative;overflow:hidden;
+  --tm-t6:#0c6c6c;--tm-gold-ink:#7a5518;--tm-gold-line:rgba(192,144,72,.42);
+  --tm-tt:#eef4f3;--tm-tb:#d6e5e3;--tm-gt:#f8efdb;--tm-gb:#ecdcbb;
+  --tm-shadow-h:0 18px 40px rgba(6,63,54,.13);--tm-cut:20px;--tm-step:90ms;
+}
+.tm::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px),
+    repeating-linear-gradient(-45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px);
+  -webkit-mask-image:radial-gradient(115% 80% at 100% 0%,#000 0%,transparent 70%);
+  mask-image:radial-gradient(115% 80% at 100% 0%,#000 0%,transparent 70%);
+}
+.tm > .container{position:relative;z-index:1}
+.tm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.tm-card{
+  position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:20px;
+  transition:
+    opacity .6s var(--ease) var(--tm-delay,0ms),
+    transform .6s var(--ease) var(--tm-delay,0ms),
+    border-color .3s var(--ease),box-shadow .35s var(--ease);
+}
+.tm.js-on .tm-card{opacity:0;transform:translateY(22px) scale(.985)}
+.tm.js-on .tm-card.is-in{opacity:1;transform:none}
+.tm-card:hover{border-color:var(--teal);box-shadow:var(--tm-shadow-h);transform:translateY(-6px)}
+.tm-card:focus-within{border-color:var(--teal);box-shadow:var(--tm-shadow-h)}
+.tm-card::after{
+  content:"";position:absolute;inset:6px;border:1px solid transparent;border-radius:9px;
+  pointer-events:none;transition:border-color .35s var(--ease);
+}
+.tm-card:hover::after{border-color:var(--tm-gold-line)}
+.tm-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:13px;height:13px;background:var(--gold);opacity:.3;transform:rotate(45deg);
+  border-radius:2px;transition:opacity .35s var(--ease),transform .55s var(--ease);
+}
+.tm-card:hover::before{opacity:1;transform:rotate(135deg)}
+/* مكان الصورة */
+.tm-ph{
+  position:relative;aspect-ratio:1;overflow:hidden;margin-block-end:16px;
+  background:linear-gradient(160deg,var(--tm-tt),#fbfdfd);
+  clip-path:polygon(var(--tm-cut) 0,100% 0,100% calc(100% - var(--tm-cut)),calc(100% - var(--tm-cut)) 100%,0 100%,0 var(--tm-cut));
+}
+.tm-ph::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 15px,rgba(0,120,120,.05) 15px 16px),
+    repeating-linear-gradient(-45deg,transparent 0 15px,rgba(0,120,120,.05) 15px 16px);
+}
+.tm-card[data-rank="lead"] .tm-ph{background:linear-gradient(160deg,var(--tm-gt),#fefcf7)}
+.tm-card[data-rank="lead"] .tm-ph::before{
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 15px,rgba(192,144,72,.07) 15px 16px),
+    repeating-linear-gradient(-45deg,transparent 0 15px,rgba(192,144,72,.07) 15px 16px);
+}
+.tm-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .7s var(--ease)}
+.tm-card:hover .tm-ph img{transform:scale(1.05)}
+.tm-sym{position:absolute;inset:0;display:grid;place-items:center}
+.tm-sym .fr{
+  position:absolute;width:56%;aspect-ratio:1;border:1.5px solid var(--tm-gold-line);
+  border-radius:6px;transform:rotate(45deg);
+  transition:transform .7s var(--ease),border-color .35s var(--ease);
+}
+.tm-card:hover .tm-sym .fr{transform:rotate(90deg);border-color:var(--gold)}
+.tm-sym svg{
+  position:relative;width:40%;height:40%;color:var(--tm-t6);opacity:.55;
+  transition:transform .5s var(--ease),opacity .35s var(--ease),color .35s var(--ease);
+}
+.tm-card:hover .tm-sym svg{transform:scale(1.07);opacity:.85;color:var(--teal)}
+.tm-card[data-rank="lead"] .tm-sym svg{color:var(--tm-gold-ink);opacity:.5}
+.tm-card[data-rank="lead"]:hover .tm-sym svg{opacity:.8;color:var(--tm-gold-ink)}
+/* النصوص */
+.tm-name{
+  font-family:var(--font-display);font-weight:600;line-height:1.5;color:var(--ink);
+  font-size:1.18rem;margin:0 0 10px;overflow-wrap:break-word;
+}
+.tm-name .tm-t{font-size:.84em;font-weight:500;color:var(--muted);margin-inline-end:3px}
+.tm-role{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--font-body);font-size:.9rem;font-weight:700;padding:5px 12px;border-radius:7px;
+  color:var(--tm-t6);background:var(--tm-tt);border:1px solid var(--tm-tb);
+}
+.tm-role .dm{width:7px;height:7px;background:currentColor;transform:rotate(45deg);border-radius:1px;flex:none}
+.tm-card[data-rank="lead"] .tm-role{color:var(--tm-gold-ink);background:var(--tm-gt);border-color:var(--tm-gb)}
+/* بيانات التواصل */
+.tm-contact{margin-block-start:16px;padding-block-start:14px;border-block-start:1px solid var(--line);display:grid;gap:9px}
+.tm-contact a{
+  display:inline-flex;align-items:center;gap:9px;color:var(--body);font-size:.95rem;
+  transition:color .25s;overflow-wrap:anywhere;
+}
+.tm-contact a:hover{color:var(--teal)}
+.tm-contact svg{width:16px;height:16px;flex:none;color:var(--teal);opacity:.85}
+.tm-contact a bdi{font-variant-numeric:tabular-nums}
+.tm-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (max-width:900px){.tm-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
+@media (max-width:560px){.tm-grid{grid-template-columns:1fr}.tm-name{font-size:1.1rem}}
+@media (prefers-reduced-motion:reduce){
+  .tm.js-on .tm-card{opacity:1;transform:none}
+  .tm-card,.tm-ph img,.tm-sym .fr,.tm-sym svg{transition:none!important}
+  .tm-card:hover{transform:none}
+  .tm-card:hover .tm-ph img{transform:none}
+  .tm-card:hover .tm-sym .fr{transform:rotate(45deg)}
+  .tm-card:hover .tm-sym svg{transform:none}
+  .tm-card:hover::before{transform:rotate(45deg)}
+}
+</style>
+<div class="container">
+  <h2 id="tm-title" class="tm-sr">فريق العمل التنفيذي</h2>
+  <div class="tm-grid">{{TEAM_CARDS}}</div>
+</div>
+<script>
+(function(){
+  var sec=document.getElementById('teamSec'); if(!sec) return;
+  var cards=[].slice.call(sec.querySelectorAll('.tm-card'));
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sec.classList.add('js-on');
+  function run(){
+    var s=parseFloat(getComputedStyle(sec).getPropertyValue('--tm-step'))||90;
+    cards.forEach(function(c,i){
+      if(!reduce) c.style.setProperty('--tm-delay',(i*s)+'ms');
+      c.classList.add('is-in');
+    });
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(en){
+      en.forEach(function(x){ if(x.isIntersecting){ run(); io.disconnect(); } });
+    },{threshold:.1,rootMargin:'0px 0px -8% 0px'});
+    io.observe(sec);
+  } else { run(); }
+})();
+</script>
+</section>

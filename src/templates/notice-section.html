@@ -1,0 +1,59 @@
+<section class="section nt-sec">
+<style>
+/* ============================================================
+   بلاغ «لا يوجد حاليًا» — إفصاح شفّاف بديل عن محتوى غير قائم
+   ============================================================ */
+.nt-sec{position:relative;overflow:hidden}
+.nt-sec::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px),
+    repeating-linear-gradient(-45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px);
+  -webkit-mask-image:radial-gradient(110% 75% at 50% 0%,#000 0%,transparent 70%);
+  mask-image:radial-gradient(110% 75% at 50% 0%,#000 0%,transparent 70%);
+}
+.nt-sec > .container{position:relative;z-index:1}
+.nt-card{
+  position:relative;max-width:760px;margin-inline:auto;text-align:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);
+  padding:48px 40px;
+}
+.nt-card::after{
+  content:"";position:absolute;inset:6px;border:1px solid rgba(192,144,72,.42);
+  border-radius:9px;pointer-events:none;opacity:.55;
+}
+.nt-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:13px;height:13px;background:var(--gold);opacity:.45;transform:rotate(45deg);border-radius:2px;
+}
+.nt-ic{position:relative;width:92px;height:92px;margin:0 auto 22px;display:grid;place-items:center}
+.nt-ic .fr{
+  position:absolute;inset:4px;border:1.5px solid rgba(192,144,72,.42);border-radius:6px;
+  transform:rotate(45deg);animation:ntSpin 26s linear infinite;
+}
+@keyframes ntSpin{to{transform:rotate(405deg)}}
+.nt-ic svg{position:relative;width:40px;height:40px;color:var(--teal);opacity:.6}
+.nt-eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--font-display);font-size:.95rem;font-weight:700;letter-spacing:.05em;
+  color:var(--teal);margin-block-end:10px;
+}
+.nt-eyebrow i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.nt-card h2{font-family:var(--font-display);font-size:clamp(1.4rem,2.6vw,1.85rem);color:var(--ink);margin:0 0 16px}
+.nt-card p{color:var(--body);line-height:1.95;font-size:1.04rem;margin:0 0 12px;max-width:62ch;margin-inline:auto}
+.nt-card p:last-child{margin-block-end:0}
+@media (max-width:600px){.nt-card{padding:34px 20px}.nt-ic{width:76px;height:76px}.nt-ic svg{width:32px;height:32px}}
+@media (prefers-reduced-motion:reduce){.nt-ic .fr{animation:none}}
+</style>
+<div class="container">
+  <div class="nt-card reveal">
+    <div class="nt-ic" aria-hidden="true">
+      <span class="fr"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 8.2v.01M12 11.4v4.4"/></svg>
+    </div>
+    <p class="nt-eyebrow"><i aria-hidden="true"></i> {{EYEBROW}}</p>
+    <h2>{{TITLE}}</h2>
+    {{PARAGRAPHS}}
+  </div>
+</div>
+</section>

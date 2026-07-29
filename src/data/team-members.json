@@ -1,0 +1,33 @@
+{
+  "_ملاحظة": "المصدر الوحيد لفريق العمل التنفيذي. عدّل هنا ثم أعد البناء: python src/build.py",
+  "_الصور": "ضع الصورة في site/img/team/ واكتب اسم الملف في photo — تحلّ مكان الأيقونة تلقائيًا.",
+  "members": [
+    {
+      "title": "د.",
+      "name": "منصور بن ناصر القباع",
+      "role": "المدير التنفيذي",
+      "rank": "lead",
+      "phone": "0504145311",
+      "email": "info@iaq.org.sa",
+      "photo": ""
+    },
+    {
+      "title": "أ.",
+      "name": "مهند سعيد عالي الضبيطي",
+      "role": "المدير المالي",
+      "rank": "member",
+      "phone": "",
+      "email": "mohannad@iaq.org.sa",
+      "photo": ""
+    },
+    {
+      "title": "أ.",
+      "name": "حسام عبدالكريم عبدالله السيف",
+      "role": "مدير إدارة المشاريع",
+      "rank": "member",
+      "phone": "",
+      "email": "hossam@iaq.org.sa",
+      "photo": ""
+    }
+  ]
+}
