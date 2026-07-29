@@ -1,0 +1,169 @@
+<section class="section alt" id="memSec">
+<style>
+/* ===== دليل أعضاء الجمعية العمومية ===== */
+#memSec{--mg-text:#8a6528;--mg-strong:#a97c37}
+.mem-head{text-align:center;max-width:760px;margin-inline:auto;margin-block-end:34px}
+.mem-stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-block-end:38px}
+.mem-stats .ms{flex:1 1 190px;max-width:250px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);padding:22px 18px 20px;position:relative;overflow:hidden}
+.mem-stats .ms::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;height:3px;background:linear-gradient(90deg,var(--teal),rgba(192,144,72,.75))}
+.mem-stats .stat-num{display:block;font-family:var(--font-display);font-weight:700;font-size:2.4rem;line-height:1.05;color:var(--teal)}
+.mem-stats .lbl{display:block;margin-block-start:8px;color:var(--muted);font-size:.97rem}
+
+.mem-toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-block-end:14px}
+.mem-filters{display:flex;flex-wrap:wrap;gap:8px}
+.mfilter{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body);font-weight:600;font-size:15.5px;color:var(--body);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:11px 19px;cursor:pointer;transition:background .22s var(--ease),color .22s,border-color .22s,box-shadow .22s}
+.mfilter:hover{border-color:var(--teal);color:var(--teal)}
+.mfilter .cnt{font-size:13px;font-weight:700;background:rgba(0,120,120,.08);color:var(--teal);border-radius:999px;padding:2px 9px;transition:background .22s,color .22s}
+.mfilter[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 8px 20px -10px rgba(0,120,120,.75)}
+.mfilter[aria-pressed="true"] .cnt{background:rgba(255,255,255,.22);color:#fff}
+.mfilter:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+
+.mem-search{position:relative;flex:0 1 320px}
+.mem-search input{width:100%;font-family:var(--font-body);font-size:15.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding-block:12px;padding-inline-start:46px;padding-inline-end:18px;transition:border-color .2s,box-shadow .2s}
+.mem-search input::placeholder{color:var(--muted)}
+.mem-search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,120,120,.13)}
+.mem-search .si{position:absolute;inset-inline-start:17px;inset-block-start:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);pointer-events:none}
+
+.mem-live{color:var(--muted);font-size:14.5px;margin:0 0 22px}
+.mem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(278px,1fr));gap:20px}
+
+.mcard{position:relative;display:flex;align-items:center;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);padding:22px;overflow:hidden;transition:transform .32s var(--ease),box-shadow .32s var(--ease),border-color .32s}
+.mcard::before{content:"";position:absolute;inset-block-start:0;inset-inline-start:0;width:0;height:3px;background:linear-gradient(90deg,var(--teal),rgba(0,120,120,.2));transition:width .42s var(--ease)}
+.mcard[data-cat="working"]::before{background:linear-gradient(90deg,var(--gold),rgba(192,144,72,.2))}
+.mcard::after{content:"";position:absolute;inset-block-end:-32px;inset-inline-end:-32px;width:100px;height:100px;border-radius:24px;rotate:45deg;background:rgba(0,120,120,.035);transition:scale .55s var(--ease),background .3s;pointer-events:none}
+.mcard[data-cat="working"]::after{background:rgba(192,144,72,.055)}
+.mcard:hover{transform:translateY(-5px);border-color:rgba(0,120,120,.32);box-shadow:0 20px 36px -20px rgba(15,42,42,.30),0 4px 12px -8px rgba(15,42,42,.14)}
+.mcard[data-cat="working"]:hover{border-color:rgba(192,144,72,.42)}
+.mcard:hover::before{width:100%}
+.mcard:hover::after{scale:1.14}
+
+.mav{flex:0 0 auto;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1.7rem;line-height:1;color:var(--teal);background:linear-gradient(145deg,rgba(0,120,120,.11),rgba(0,120,120,.03));box-shadow:inset 0 0 0 1px rgba(0,120,120,.17),0 0 0 4px rgba(0,120,120,.045);transition:transform .35s var(--ease)}
+.mcard[data-cat="working"] .mav{color:var(--mg-strong);background:linear-gradient(145deg,rgba(192,144,72,.15),rgba(192,144,72,.04));box-shadow:inset 0 0 0 1px rgba(192,144,72,.24),0 0 0 4px rgba(192,144,72,.06)}
+.mcard:hover .mav{transform:scale(1.07)}
+
+.mbody{min-width:0}
+.mname{font-family:var(--font-display);font-weight:600;font-size:1.25rem;line-height:1.5;color:var(--ink);margin:0 0 10px;overflow-wrap:break-word}
+.mname .mt{color:var(--teal);font-weight:700;font-size:.92em;margin-inline-end:3px}
+.mcard[data-cat="working"] .mname .mt{color:var(--mg-text)}
+.mchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:13.5px;font-weight:600;border-radius:999px;padding:5px 12px;background:rgba(0,120,120,.075);color:var(--teal)}
+.mchip svg{width:13px;height:13px;flex:0 0 auto}
+.mcard[data-cat="working"] .mchip{background:rgba(192,144,72,.11);color:var(--mg-text)}
+
+.mcard.is-hidden{display:none}
+/* حركة الدخول مشروطة بتوفّر JavaScript: بدونه تظهر البطاقات كاملة (حماية للمحتوى) */
+#memSec.js-on .mem-grid .mcard{opacity:0}
+#memSec.js-on .mem-grid.in-view .mcard:not(.is-hidden){animation:memIn .6s var(--ease) both;animation-delay:var(--d,0ms)}
+@keyframes memIn{from{opacity:0;translate:0 18px}to{opacity:1;translate:0 0}}
+
+.mem-empty{text-align:center;padding:48px 22px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--card-radius);background:var(--surface)}
+.mem-empty svg{width:34px;height:34px;color:var(--line);margin-block-end:12px}
+.mem-note{margin-block-start:26px;color:var(--muted);font-size:14px;text-align:center}
+
+@media (max-width:900px){.mem-stats .stat-num{font-size:2.1rem}}
+@media (max-width:640px){
+  .mem-grid{grid-template-columns:1fr}
+  .mem-toolbar{flex-direction:column;align-items:stretch}
+  .mem-search{flex:1 1 auto}
+  .mem-stats .ms{flex:1 1 100%;max-width:none;padding:18px}
+  .mem-stats .stat-num{font-size:1.95rem}
+  .mname{font-size:1.16rem}
+  .mav{width:58px;height:58px;font-size:1.5rem}
+}
+@media (prefers-reduced-motion:reduce){
+  #memSec.js-on .mem-grid .mcard{opacity:1}
+  #memSec.js-on .mem-grid.in-view .mcard:not(.is-hidden){animation:none}
+  .mcard,.mav,.mcard::before,.mcard::after,.mfilter{transition:none!important}
+  .mcard:hover{transform:none}
+}
+</style>
+<div class="container">
+  <div class="mem-head reveal">
+    <span class="eyebrow">العضوية</span>
+    <h2>أعضاء الجمعية العمومية</h2>
+    <p>الأعضاء المستوفون لشروط العضوية، وهم أصحاب الحق في انتخاب مجلس الإدارة واعتماد الخطط والقوائم المالية.</p>
+  </div>
+
+  <div class="mem-stats">
+    <div class="ms reveal"><b class="stat-num" data-target="{{N_ALL}}">0</b><span class="lbl">إجمالي الأعضاء</span></div>
+    <div class="ms reveal"><b class="stat-num" data-target="{{N_FOUNDER}}">0</b><span class="lbl">{{LBL_FOUNDER}}</span></div>
+    <div class="ms reveal"><b class="stat-num" data-target="{{N_WORKING}}">0</b><span class="lbl">{{LBL_WORKING}}</span></div>
+  </div>
+
+  <div class="mem-toolbar reveal">
+    <div class="mem-filters">
+      <button type="button" class="mfilter" data-filter="all" aria-pressed="true">الكل <span class="cnt">{{N_ALL}}</span></button>
+      <button type="button" class="mfilter" data-filter="founder" aria-pressed="false">{{LBL_FOUNDER}} <span class="cnt">{{N_FOUNDER}}</span></button>
+      <button type="button" class="mfilter" data-filter="working" aria-pressed="false">{{LBL_WORKING}} <span class="cnt">{{N_WORKING}}</span></button>
+    </div>
+    <div class="mem-search">
+      <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      <input type="search" id="memSearch" placeholder="ابحث باسم العضو..." aria-label="ابحث باسم العضو" autocomplete="off" />
+    </div>
+  </div>
+
+  <p class="mem-live" id="memLive" aria-live="polite" role="status"></p>
+
+  <div class="mem-grid reveal" id="memGrid">{{CARDS}}</div>
+
+  <div class="mem-empty" id="memEmpty" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+    <p style="margin:0">لا يوجد عضو مطابق لبحثك.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var sec=document.getElementById('memSec'); if(!sec) return;
+  var grid=document.getElementById('memGrid'),
+      search=document.getElementById('memSearch'),
+      live=document.getElementById('memLive'),
+      empty=document.getElementById('memEmpty'),
+      btns=[].slice.call(sec.querySelectorAll('.mfilter')),
+      cards=[].slice.call(grid.querySelectorAll('.mcard')),
+      reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      cur='all', first=true;
+
+  /* تفعيل حركة الدخول فقط عند توفّر JavaScript */
+  sec.classList.add('js-on');
+  /* متصفّح قديم بلا IntersectionObserver: أظهِر البطاقات فورًا */
+  if(!('IntersectionObserver' in window)) grid.classList.add('in-view');
+
+  /* توحيد الحروف العربية ليعمل البحث مع (أ/ا) و(ي/ى) و(ة/ه) والتشكيل */
+  function norm(s){
+    return (s||'').replace(/[أإآ]/g,'ا')
+                  .replace(/ى/g,'ي').replace(/ة/g,'ه')
+                  .replace(/[ً-ْـ]/g,'')
+                  .replace(/\s+/g,' ').trim().toLowerCase();
+  }
+  function apply(){
+    var q=norm(search.value), shown=0;
+    cards.forEach(function(c){
+      var okCat = (cur==='all' || c.getAttribute('data-cat')===cur),
+          okQ   = (!q || norm(c.getAttribute('data-name')).indexOf(q)>-1),
+          show  = okCat && okQ;
+      c.classList.toggle('is-hidden', !show);
+      if(show){ c.style.setProperty('--d', (shown%12)*45+'ms'); shown++; }
+    });
+    empty.hidden = shown>0;
+    live.textContent = shown
+      ? 'عرض ' + shown + ' من أصل ' + cards.length + ' عضوًا'
+      : 'لا نتائج مطابقة';
+    /* إعادة تشغيل حركة الظهور المتتالية عند تغيير الفلترة أو البحث */
+    if(!first && !reduce && shown){
+      grid.classList.remove('in-view'); void grid.offsetWidth; grid.classList.add('in-view');
+    }
+    first=false;
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){
+      btns.forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+      b.setAttribute('aria-pressed','true');
+      cur=b.getAttribute('data-filter');
+      apply();
+    });
+  });
+  var t=null;
+  search.addEventListener('input', function(){ clearTimeout(t); t=setTimeout(apply,120); });
+  apply();
+})();
+</script>
+</section>
