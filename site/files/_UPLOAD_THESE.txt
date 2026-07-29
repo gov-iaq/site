@@ -1,0 +1,28 @@
+ضع ملفات الـPDF بهذه الأسماء والمسارات بالضبط ليعمل زر التحميل في الموقع.
+Place your PDF files at EXACTLY these paths so the download buttons work.
+-----------------------------------------------------------------------
+files/annual/annual-report-2023.pdf
+files/annual/annual-report-2024.pdf
+files/annual/annual-report-2025.pdf
+files/disclosure/board-disclosure.pdf
+files/disclosure/financial-disclosure-2025.pdf
+files/disclosure/transparency-report-2025.pdf
+files/financials/auditor-report-2025.pdf
+files/financials/financial-statements-2024.pdf
+files/financials/financial-statements-2025.pdf
+files/licenses/donation-permit-ehsan.pdf
+files/licenses/establishment-license.pdf
+files/licenses/gosi-certificate.pdf
+files/licenses/governance-accreditation.pdf
+files/licenses/volunteer-platform-registration.pdf
+files/licenses/zakat-certificate.pdf
+files/minutes/board-meeting-2026-01.pdf
+files/minutes/board-meeting-2026-02.pdf
+files/minutes/board-meeting-2026-03.pdf
+files/minutes/extraordinary-meeting-2026-01.pdf
+files/policies/bylaws.pdf
+files/policies/conflict-of-interest-policy.pdf
+files/policies/hr-policy.pdf
+files/policies/privacy-policy.pdf
+files/policies/risk-management-policy.pdf
+files/policies/whistleblower-policy.pdf

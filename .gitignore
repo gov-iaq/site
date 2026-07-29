@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# نظام التشغيل
+.DS_Store
+Thumbs.db
+
+# مؤقّت/محلي
+_verify_build/
+*.local
+
+# النسخة الاحتياطية الأصلية (محفوظة محليًا فقط، لا تُرفع)
+_archive/
+
+# حزم النشر المؤقتة
+iaq-site-beta.zip
