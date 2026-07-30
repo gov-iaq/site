@@ -22,3 +22,7 @@ node_modules/
 package-lock.json
 .dev.vars
 .env
+
+# مجلد استقبال الصور (الملفات الخام لا تُرفع، والتعليمات تبقى)
+_incoming/*/*
+!_incoming/news/اقرأني.txt
