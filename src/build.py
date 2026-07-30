@@ -266,9 +266,14 @@ def render_about():
         chain_html.append('<div class="ab-node lvl%d">%s</div>' % (i, esc(node)))
         if i < len(chain):
             chain_html.append('<div class="ab-drop" aria-hidden="true"></div>')
-    depts = "".join('<div class="ab-unit">%s</div>' % esc(x) for x in org.get("departments", []))
     sup = org.get("support", {})
-    sup_units = "".join("<span>%s</span>" % esc(x) for x in sup.get("units", []))
+    sup_label = sup.get("label", "")
+    depts = "".join(
+        '<div class="ab-col"><div class="ab-unit%s">%s</div></div>'
+        % (" is-support" if x == sup_label else "", esc(x))
+        for x in org.get("departments", []))
+    sup_units = "".join('<div class="ab-scol"><span>%s</span></div>' % esc(x)
+                        for x in sup.get("units", []))
 
     return (s
             .replace("{{VISION}}", esc(d.get("vision", "")))
@@ -295,6 +300,10 @@ def _file_rows(items):
     DL = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
           'stroke-linecap="round" stroke-linejoin="round">'
           '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>')
+    EYE = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+           'stroke-linecap="round" stroke-linejoin="round">'
+           '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>'
+           '<circle cx="12" cy="12" r="3"/></svg>')
     rows = []
     for it in items:
         meta = []
@@ -304,13 +313,56 @@ def _file_rows(items):
         if it.get("pages"):
             size += " · %d صفحة" % it["pages"]
         meta.append("<span>%s</span>" % size)
+        dl_attr = ' download="%s"' % esc(it["dl_name"]) if it.get("dl_name") else " download"
         rows.append(
             '<div class="file-row reveal" data-title="%s">%s'
             '<div class="fmain"><div class="ftitle">%s</div>'
             '<div class="fmeta">%s</div></div>'
-            '<a href="%s" class="file-dl" download>%s تحميل</a></div>'
-            % (esc(it["title"]), IC, esc(it["title"]), "".join(meta), esc(it["file"]), DL))
+            '<div class="factions">'
+            '<a href="%s" class="file-view" target="_blank" rel="noopener" '
+            'title="معاينة في المتصفّح">%s معاينة</a>'
+            '<a href="%s" class="file-dl"%s>%s تحميل</a>'
+            '</div></div>'
+            % (esc(it["title"]), IC, esc(it["title"]), "".join(meta),
+               esc(it["file"]), EYE, esc(it["file"]), dl_attr, DL))
     return "".join(rows)
+
+def render_licenses_gallery():
+    """معرض التراخيص: صورة الشهادة في إطار + بياناتها + معاينة وتحميل."""
+    tpl = os.path.join(TEMPLATES, "licenses-gallery.html")
+    if not (os.path.exists(tpl) and os.path.exists(FILES_J)):
+        return b""
+    with io.open(FILES_J, encoding="utf-8") as f:
+        items = json.load(f).get("categories", {}).get("licenses", [])
+    with io.open(tpl, encoding="utf-8") as f:
+        section = f.read()
+
+    cards = []
+    for i, it in enumerate(items, 1):
+        facts = "".join('<div class="lc-fact"><dt>%s</dt><dd>%s</dd></div>'
+                        % (esc(k), esc(v)) for k, v in it.get("facts", []))
+        img = it.get("img", "")
+        media = ('<img src="%s" alt="%s" loading="lazy" decoding="async" />' % (esc(img), esc(it["title"]))
+                 if img else '<div class="lc-noimg" aria-hidden="true"></div>')
+        dl_attr = ' download="%s"' % esc(it["dl_name"]) if it.get("dl_name") else " download"
+        cards.append(
+            '<article class="lc-card reveal" style="--lc-d:%dms">'
+            '<button type="button" class="lc-media" data-zoom="%s" data-caption="%s" '
+            'aria-label="تكبير %s">%s<span class="lc-zoom" aria-hidden="true">'
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+            'stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.4v5.2M8.4 11h5.2"/>'
+            '</svg></span></button>'
+            '<div class="lc-body"><h3 class="lc-title">%s</h3>'
+            '<p class="lc-valid">%s</p><dl class="lc-facts">%s</dl>'
+            '<div class="lc-actions">'
+            '<a href="%s" class="lc-btn lc-btn-ghost" target="_blank" rel="noopener">معاينة الشهادة</a>'
+            '<a href="%s" class="lc-btn lc-btn-solid"%s>تحميل PDF</a>'
+            '</div></div></article>'
+            % (i * 110, esc(img), esc(it["title"]), esc(it["title"]), media,
+               esc(it["title"]), esc(it.get("date", "")), facts,
+               esc(it["file"]), esc(it["file"]), dl_attr))
+
+    return section.replace("{{LICENSE_CARDS}}", "".join(cards)).encode("utf-8")
 
 def files_map():
     """خريطة استبدال قوائم ملفات الحوكمة من المانيفست."""
@@ -369,6 +421,7 @@ def build(out_dir):
     notice_committees = render_notice("committees")
     notice_endowments = render_notice("endowments")
     about_html = render_about()
+    lic_gallery = render_licenses_gallery()
     cmap = contact_map()
     cmap.update(files_map())
 
@@ -394,6 +447,7 @@ def build(out_dir):
         main = main.replace(b"{{NOTICE_COMMITTEES}}", notice_committees)
         main = main.replace(b"{{NOTICE_ENDOWMENTS}}", notice_endowments)
         main = main.replace(b"{{ABOUT_TABS}}", about_html)
+        main = main.replace(b"{{LICENSES_GALLERY}}", lic_gallery)
         page = head + body_tag + header + banner + main + footer
         for k, v in cmap.items():
             page = page.replace(k, v)
