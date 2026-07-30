@@ -157,6 +157,29 @@
     "size": "103 KB",
     "pages": 3
    }
+  ],
+  "licenses": [
+   {
+    "title": "شهادة ترخيص الجمعية",
+    "file": "files/licenses/association-license.pdf",
+    "date": "سارية حتى 2031/06/22م",
+    "size": "89 KB",
+    "pages": 1
+   },
+   {
+    "title": "شهادة ترخيص حملة جمع التبرعات",
+    "file": "files/licenses/fundraising-campaign-license.pdf",
+    "date": "صادرة 2026/02/08م — تنتهي 2026/12/31م",
+    "size": "870 KB",
+    "pages": 1
+   },
+   {
+    "title": "شهادة ترخيص موقع التبرعات الإلكتروني",
+    "file": "files/licenses/online-donation-site-license.pdf",
+    "date": "",
+    "size": "360 KB",
+    "pages": 1
+   }
   ]
  }
 }

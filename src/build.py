@@ -322,7 +322,7 @@ def files_map():
     out = {}
     for key, marker in (("policies", b"{{FILES_POLICIES}}"), ("minutes", b"{{FILES_MINUTES}}"),
                         ("financials", b"{{FILES_FINANCIALS}}"), ("annual", b"{{FILES_ANNUAL}}"),
-                        ("surveys", b"{{FILES_SURVEYS}}")):
+                        ("surveys", b"{{FILES_SURVEYS}}"), ("licenses", b"{{FILES_LICENSES}}")):
         out[marker] = _file_rows(cats.get(key, [])).encode("utf-8")
     return out
 
