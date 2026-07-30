@@ -1,19 +1,21 @@
 {
-  "_ملاحظة": "المصدر الوحيد لبيانات التواصل والعنوان وروابط التواصل. عدّل هنا ثم أعد البناء — تسري على كل الصفحات.",
-  "license_no": "2253",
-  "city": "بريدة",
-  "country": "المملكة العربية السعودية",
-  "address_short": "مدينة بريدة، المملكة العربية السعودية",
-  "address_line": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان",
-  "phone_display": "0505144421",
-  "phone_tel": "+966505144421",
-  "email": "info@iaq.org.sa",
-  "hours": "الأحد - الخميس، ٨:٠٠ ص - ٤:٠٠ م",
-  "socials": {
-    "x": "https://x.com/iaq_ksa",
-    "youtube": "https://www.youtube.com/@iaq_ksa",
-    "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/",
-    "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E",
-    "instagram": ""
-  }
+ "_ملاحظة": "المصدر الوحيد لبيانات التواصل والعنوان وروابط التواصل. عدّل هنا ثم أعد البناء — تسري على كل الصفحات.",
+ "license_no": "2253",
+ "city": "بريدة",
+ "country": "المملكة العربية السعودية",
+ "address_short": "مدينة بريدة، المملكة العربية السعودية",
+ "address_line": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان",
+ "phone_display": "0505144421",
+ "phone_tel": "+966505144421",
+ "email": "info@iaq.org.sa",
+ "hours": "الأحد - الخميس، ٨:٠٠ ص - ٤:٠٠ م",
+ "socials": {
+  "x": "https://x.com/iaq_ksa",
+  "youtube": "https://www.youtube.com/@iaq_ksa",
+  "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/",
+  "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E",
+  "instagram": ""
+ },
+ "donate_url": "https://iaq.sa",
+ "_نطاقان": "iaq.org.sa = الموقع التعريفي | iaq.sa = متجر جمع التبرعات (زر ادعمنا)"
 }

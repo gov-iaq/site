@@ -29,6 +29,7 @@ ABOUT     = os.path.join(HERE, "data", "about.json")
 CONTACT_F = os.path.join(HERE, "data", "contact.json")
 FILES_J   = os.path.join(HERE, "data", "files.json")
 PARTNERS_J= os.path.join(HERE, "data", "partners.json")
+NEWS_J    = os.path.join(HERE, "data", "news.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -402,6 +403,103 @@ def render_partners():
                 out.append('<div class="plogo"%s>%s</div>' % (attrs, inner))
     return "".join(out).encode("utf-8")
 
+CAL_IC = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'
+          '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>')
+X_IC = ('<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 3h3.3l-7.2 8.2L23.5 21h-6.6'
+        'l-5.2-6.8L5.8 21H2.5l7.7-8.8L1.6 3h6.8l4.7 6.2L18.9 3Zm-1.2 16h1.8L7 4.9H5.1L17.7 19Z"/></svg>')
+
+def _news_items():
+    if not os.path.exists(NEWS_J):
+        return []
+    with io.open(NEWS_J, encoding="utf-8") as f:
+        items = json.load(f).get("news", [])
+    # الأحدث أولًا
+    return sorted(items, key=lambda x: x.get("date", ""), reverse=True)
+
+def render_news():
+    """صفحة المركز الإعلامي: بطاقات كاملة + فلترة بالوسوم."""
+    tpl = os.path.join(TEMPLATES, "news-section.html")
+    items = _news_items()
+    if not (os.path.exists(tpl) and items):
+        return b""
+    with io.open(tpl, encoding="utf-8") as f:
+        section = f.read()
+
+    SYM = ('<div class="nw-sym" aria-hidden="true"><span class="fr"></span>'
+           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" '
+           'stroke-linecap="round" stroke-linejoin="round">'
+           '<path d="M4 5.5h11a2 2 0 0 1 2 2V19H6a2 2 0 0 1-2-2V5.5Z"/>'
+           '<path d="M17 9h1.6A1.4 1.4 0 0 1 20 10.4V17a2 2 0 0 1-2 2"/>'
+           '<path d="M7.5 9h4M7.5 12h6M7.5 15h4"/></svg></div>')
+    ARROW = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+             'stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>')
+
+    cards = []
+    for i, n in enumerate(items):
+        img = (n.get("image") or "").strip()
+        media = ('<img src="img/news/%s" alt="%s" loading="lazy" decoding="async" />'
+                 % (esc(img), esc(n["title"]))) if img else SYM
+        body = "".join("<p>%s</p>" % esc(p) for p in n.get("body", []))
+        facts = "".join('<div class="nw-fact"><dt>%s</dt><dd>%s</dd></div>' % (esc(k), esc(v))
+                        for k, v in n.get("facts", []) or [])
+        facts_html = '<dl class="nw-facts">%s</dl>' % facts if facts else ""
+        cta = n.get("cta")
+        cta_html = ('<div class="nw-actions"><a class="nw-btn" href="%s" target="_blank" '
+                    'rel="noopener">%s %s</a></div>'
+                    % (esc(cta["url"]), esc(cta["label"]), ARROW)) if cta else ""
+        lead = '<p class="nw-lead">%s</p>' % esc(n["lead"]) if n.get("lead") else ""
+        cards.append(
+            '<article class="nw-card" data-tag="%s" style="--nw-d:%dms">'
+            '<div class="nw-media"><span class="nw-tag">%s</span>%s</div>'
+            '<div class="nw-body">'
+            '<div class="nw-date">%s<time datetime="%s">%s</time></div>'
+            '<h3 class="nw-title">%s</h3>%s<div class="nw-text">%s</div>%s%s'
+            '<p class="nw-src">%s نُشر عبر حساب الجمعية في منصّة إكس</p>'
+            '</div></article>'
+            % (esc(n["tag"]), i * 70, esc(n["tag"]), media, CAL_IC, esc(n["date"]),
+               esc(n["date_ar"]), esc(n["title"]), lead, body, facts_html, cta_html, X_IC))
+
+    tags = []
+    seen = []
+    for n in items:
+        if n["tag"] not in seen:
+            seen.append(n["tag"])
+    filters = ['<button type="button" class="nw-fil" data-tag="all" aria-pressed="true">'
+               'كل الأخبار <span class="c">%d</span></button>' % len(items)]
+    for t in seen:
+        c = sum(1 for n in items if n["tag"] == t)
+        filters.append('<button type="button" class="nw-fil" data-tag="%s" aria-pressed="false">'
+                       '%s <span class="c">%d</span></button>' % (esc(t), esc(t), c))
+
+    return (section
+            .replace("{{NEWS_CARDS}}", "".join(cards))
+            .replace("{{NEWS_FILTERS}}", "".join(filters))).encode("utf-8")
+
+def render_news_strip(limit=4):
+    """شريط أحدث الأخبار في الصفحة الرئيسية (بنفس ترميز الموقع الحالي)."""
+    items = _news_items()[:limit]
+    if not items:
+        return b""
+    MORE = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>')
+    out = []
+    for n in items:
+        img = (n.get("image") or "").strip()
+        img_html = ('<div class="news-img"><img src="img/news/%s" alt="%s" loading="lazy" '
+                    'decoding="async" /><span class="news-tag">%s</span></div>'
+                    % (esc(img), esc(n["title"]), esc(n["tag"]))
+                    if img else
+                    '<div class="news-img"><span class="news-tag">%s</span></div>' % esc(n["tag"]))
+        excerpt = n.get("lead") or (n.get("body") or [""])[0]
+        out.append(
+            '<article class="news-card">%s<div class="news-body">'
+            '<div class="news-date">%s%s</div><h3>%s</h3><p>%s</p>'
+            '<div class="news-foot"><span class="news-src">%sعبر منصة إكس</span>'
+            '<a href="news.html" class="news-more">اقرأ المزيد%s</a></div>'
+            '</div></article>'
+            % (img_html, CAL_IC, esc(n["date_ar"]), esc(n["title"]), esc(excerpt), X_IC, MORE))
+    return "".join(out).encode("utf-8")
+
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
     if not os.path.exists(CONTACT_F):
@@ -421,6 +519,7 @@ def contact_map():
         b"{{PHONE_DISPLAY}}": c.get("phone_display", "").encode("utf-8"),
         b"{{PHONE_TEL}}":     c.get("phone_tel", "").encode("utf-8"),
         b"{{EMAIL}}":         c.get("email", "").encode("utf-8"),
+        b"{{DONATE_URL}}":    (c.get("donate_url") or "contact.html").encode("utf-8"),
         b"{{HOURS}}":         c.get("hours", "").encode("utf-8"),
         b"{{SOC_X}}":         soc("x").encode("utf-8"),
         b"{{SOC_YOUTUBE}}":   soc("youtube").encode("utf-8"),
@@ -447,6 +546,8 @@ def build(out_dir):
     about_html = render_about()
     lic_gallery = render_licenses_gallery()
     partners_html = render_partners()
+    news_html = render_news()
+    news_strip = render_news_strip()
     cmap = contact_map()
     cmap.update(files_map())
 
@@ -474,6 +575,8 @@ def build(out_dir):
         main = main.replace(b"{{ABOUT_TABS}}", about_html)
         main = main.replace(b"{{LICENSES_GALLERY}}", lic_gallery)
         main = main.replace(b"{{PARTNERS}}", partners_html)
+        main = main.replace(b"{{NEWS_SECTION}}", news_html)
+        main = main.replace(b"{{NEWS_STRIP}}", news_strip)
         page = head + body_tag + header + banner + main + footer
         for k, v in cmap.items():
             page = page.replace(k, v)

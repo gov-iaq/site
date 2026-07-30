@@ -1,0 +1,175 @@
+<section class="section nw" id="newsSec" aria-labelledby="nw-h">
+<style>
+/* ============================================================
+   المركز الإعلامي — بطاقات أخبار بمكان مخصّص للصورة
+   ============================================================ */
+.nw{position:relative;overflow:hidden;--nw-t6:#0c6c6c;--nw-gi:#7a5518;--nw-gl:rgba(192,144,72,.42);--nw-tt:#eef4f3;--nw-tb:#d6e5e3;--nw-gt:#f8efdb;--nw-gb:#ecdcbb;--nw-cut:20px}
+.nw::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px),
+    repeating-linear-gradient(-45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px);
+  -webkit-mask-image:radial-gradient(115% 78% at 100% 0%,#000 0%,transparent 70%);
+  mask-image:radial-gradient(115% 78% at 100% 0%,#000 0%,transparent 70%);
+}
+.nw > .container{position:relative;z-index:1}
+/* فلترة الوسوم */
+.nw-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:16px;border-block:1px solid var(--line);margin-block-end:26px}
+.nw-fil{
+  position:relative;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border:0;border-radius:999px;
+  cursor:pointer;background:var(--surface);border:1px solid var(--line);
+  font-family:var(--font-body);font-size:.96rem;font-weight:700;color:var(--body);
+  transition:background .25s var(--ease),color .25s,border-color .25s,box-shadow .25s;
+}
+.nw-fil:hover{color:var(--teal);border-color:var(--teal)}
+.nw-fil[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 8px 20px -10px rgba(0,120,120,.7)}
+.nw-fil .c{font-size:.8rem;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(0,120,120,.1);color:var(--nw-t6);font-variant-numeric:tabular-nums}
+.nw-fil[aria-pressed="true"] .c{background:rgba(255,255,255,.24);color:#fff}
+.nw-fil:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.nw-live{color:var(--muted);font-size:.92rem;margin:0 0 22px}
+/* البطاقة */
+.nw-list{display:grid;gap:24px}
+.nw-card{
+  display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--card-radius);
+  overflow:hidden;position:relative;
+  transition:opacity .6s var(--ease) var(--nw-d,0ms),transform .6s var(--ease) var(--nw-d,0ms),
+             border-color .3s var(--ease),box-shadow .35s var(--ease);
+}
+.nw.js-on .nw-card{opacity:0;transform:translateY(20px)}
+.nw.js-on .nw-card.is-in{opacity:1;transform:none}
+.nw-card[hidden]{display:none}
+.nw-card:hover{border-color:var(--teal);box-shadow:0 20px 44px rgba(6,63,54,.12)}
+.nw-card::before{
+  content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;z-index:3;
+  width:13px;height:13px;background:var(--gold);opacity:.32;transform:rotate(45deg);border-radius:2px;
+  transition:opacity .35s,transform .55s var(--ease);
+}
+.nw-card:hover::before{opacity:1;transform:rotate(135deg)}
+/* مكان الصورة */
+.nw-media{
+  position:relative;overflow:hidden;min-height:250px;
+  background:linear-gradient(155deg,var(--nw-tt),#fbfdfd);
+  border-inline-end:1px solid var(--line);
+}
+.nw-media::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 16px,rgba(0,120,120,.055) 16px 17px),
+    repeating-linear-gradient(-45deg,transparent 0 16px,rgba(0,120,120,.055) 16px 17px);
+}
+.nw-card[data-tag="إنجازات"] .nw-media{background:linear-gradient(155deg,var(--nw-gt),#fefcf7)}
+.nw-card[data-tag="إنجازات"] .nw-media::before{
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 16px,rgba(192,144,72,.07) 16px 17px),
+    repeating-linear-gradient(-45deg,transparent 0 16px,rgba(192,144,72,.07) 16px 17px);
+}
+.nw-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .7s var(--ease)}
+.nw-card:hover .nw-media img{transform:scale(1.04)}
+.nw-sym{position:absolute;inset:0;display:grid;place-items:center}
+.nw-sym .fr{
+  position:absolute;width:44%;aspect-ratio:1;max-width:150px;border:1.5px solid var(--nw-gl);
+  border-radius:6px;transform:rotate(45deg);transition:transform .7s var(--ease),border-color .35s var(--ease);
+}
+.nw-card:hover .nw-sym .fr{transform:rotate(90deg);border-color:var(--gold)}
+.nw-sym svg{position:relative;width:56px;height:56px;color:var(--nw-t6);opacity:.5;transition:opacity .35s,transform .5s var(--ease)}
+.nw-card:hover .nw-sym svg{opacity:.8;transform:scale(1.06)}
+.nw-card[data-tag="إنجازات"] .nw-sym svg{color:var(--nw-gi)}
+.nw-tag{
+  position:absolute;inset-block-start:14px;inset-inline-start:14px;z-index:2;
+  font-size:.82rem;font-weight:700;padding:5px 13px;border-radius:999px;
+  background:var(--teal);color:#fff;box-shadow:0 6px 16px -8px rgba(0,120,120,.8);
+}
+.nw-card[data-tag="إنجازات"] .nw-tag{background:var(--gold);color:#33240a}
+/* المتن */
+.nw-body{padding:26px 28px;display:flex;flex-direction:column;min-width:0}
+.nw-date{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem;margin-block-end:10px}
+.nw-date svg{width:15px;height:15px}
+.nw-date time{font-variant-numeric:tabular-nums}
+.nw-title{font-family:var(--font-display);font-size:1.3rem;font-weight:600;line-height:1.55;color:var(--ink);margin:0 0 10px}
+.nw-lead{color:var(--nw-t6);font-weight:700;font-size:1.02rem;line-height:1.8;margin:0 0 14px}
+.nw-text p{color:var(--body);line-height:1.95;margin:0 0 12px;font-size:.99rem}
+.nw-text p:last-child{margin-block-end:0}
+.nw-facts{margin:16px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;border-block-start:1px solid var(--line);padding-block-start:14px}
+.nw-fact{display:flex;gap:8px;padding:7px 0;font-size:.93rem;border-block-end:1px solid var(--line)}
+.nw-fact dt{color:var(--muted);flex:none}
+.nw-fact dd{margin:0;color:var(--ink);font-weight:700;overflow-wrap:anywhere}
+.nw-actions{margin-block-start:20px}
+.nw-btn{
+  display:inline-flex;align-items:center;gap:9px;font-family:var(--font-body);font-size:.96rem;font-weight:700;
+  padding:11px 22px;border-radius:9px;background:var(--teal);color:#fff;border:1px solid var(--teal);
+  transition:background .25s,transform .25s var(--ease);
+}
+.nw-btn:hover{background:#00615f;transform:translateY(-2px)}
+.nw-btn svg{width:16px;height:16px}
+.nw-btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.nw-src{margin-block-start:14px;color:var(--muted);font-size:.85rem;display:flex;align-items:center;gap:7px}
+.nw-src svg{width:14px;height:14px}
+.nw-empty{text-align:center;padding:56px 22px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--card-radius);background:var(--surface-2)}
+@media (max-width:900px){
+  .nw-card{grid-template-columns:1fr}
+  .nw-media{min-height:210px;border-inline-end:0;border-block-end:1px solid var(--line)}
+  .nw-body{padding:22px}
+  .nw-title{font-size:1.16rem}
+  .nw-facts{grid-template-columns:1fr;gap:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .nw.js-on .nw-card{opacity:1;transform:none}
+  .nw-card,.nw-media img,.nw-sym .fr,.nw-sym svg,.nw-btn,.nw-fil{transition:none!important}
+  .nw-card:hover .nw-media img{transform:none}
+  .nw-card:hover .nw-sym .fr{transform:rotate(45deg)}
+  .nw-card:hover::before{transform:rotate(45deg)}
+}
+</style>
+<div class="container">
+  <h2 id="nw-h" class="nw-sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">أخبار الجمعية</h2>
+  <div class="nw-bar" role="group" aria-label="تصفية الأخبار حسب النوع">{{NEWS_FILTERS}}</div>
+  <p class="nw-live" id="nwLive" role="status" aria-live="polite"></p>
+  <div class="nw-list" id="nwList">{{NEWS_CARDS}}</div>
+  <div class="nw-empty" id="nwEmpty" hidden>لا توجد أخبار في هذا التصنيف.</div>
+</div>
+<script>
+(function(){
+  var sec=document.getElementById('newsSec'); if(!sec) return;
+  var cards=[].slice.call(sec.querySelectorAll('.nw-card')),
+      btns=[].slice.call(sec.querySelectorAll('.nw-fil')),
+      live=document.getElementById('nwLive'),
+      empty=document.getElementById('nwEmpty'),
+      reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      cur='all', first=true;
+  sec.classList.add('js-on');
+
+  function apply(){
+    var n=0;
+    cards.forEach(function(c){
+      var show=(cur==='all'||c.getAttribute('data-tag')===cur);
+      c.hidden=!show;
+      if(show){ if(!reduce) c.style.setProperty('--nw-d',(n%8)*70+'ms'); n++; }
+    });
+    empty.hidden=n>0;
+    live.textContent = n ? ('عرض '+n+' من أصل '+cards.length+' خبرًا') : '';
+    if(!reduce){
+      cards.forEach(function(c){ if(!c.hidden) c.classList.remove('is-in'); });
+      void sec.offsetWidth;
+      cards.forEach(function(c){ if(!c.hidden) c.classList.add('is-in'); });
+    } else {
+      cards.forEach(function(c){ c.classList.add('is-in'); });
+    }
+    first=false;
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      if(b.getAttribute('aria-pressed')==='true') return;
+      btns.forEach(function(x){ x.setAttribute('aria-pressed', x===b?'true':'false'); });
+      cur=b.getAttribute('data-tag'); apply();
+    });
+  });
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(en){
+      en.forEach(function(x){ if(x.isIntersecting){ apply(); io.disconnect(); } });
+    },{threshold:.05,rootMargin:'0px 0px -5% 0px'});
+    io.observe(sec);
+  } else { apply(); }
+})();
+</script>
+</section>
