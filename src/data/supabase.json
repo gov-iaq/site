@@ -1,0 +1,8 @@
+{
+  "_ملاحظة": "إعداد Supabase العلني. هذان المفتاحان مصمّمان للعمل في المتصفّح، والحماية الحقيقية تأتي من سياسات RLS في قاعدة البيانات.",
+  "_تحذير": "لا تضع هنا service_role key أو secret key إطلاقًا — سيصبح مكشوفًا لكل زائر.",
+  "url": "https://xolcbzmvqudgenenewug.supabase.co",
+  "publishable_key": "sb_publishable_MMuS5wmhzmKtyV3cbbiSKQ_fWFuExOx",
+  "anon_key_legacy": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbGNiem12cXVkZ2VuZW5ld3VnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU1MDAsImV4cCI6MjEwMDkyMTUwMH0.T9tqOSbNiJpffhdFrmpQq09FSQ22WWvfHUg0aGKZiXA",
+  "_أيّهما": "نستخدم publishable_key (الأحدث). الـanon القديم محفوظ كاحتياط إن لزم."
+}

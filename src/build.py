@@ -31,6 +31,7 @@ FILES_J   = os.path.join(HERE, "data", "files.json")
 PARTNERS_J= os.path.join(HERE, "data", "partners.json")
 NEWS_J    = os.path.join(HERE, "data", "news.json")
 LEGAL_J   = os.path.join(HERE, "data", "legal.json")
+SUPA_J    = os.path.join(HERE, "data", "supabase.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -547,6 +548,25 @@ def render_legal(key):
             .replace("{{UPDATED}}", esc(data.get("updated", "")))
             .replace("{{NOTE}}", esc(data.get("_تنبيه", "")))).encode("utf-8")
 
+def admin_map():
+    """إعداد Supabase العلني + رابط اللوحة، يُحقن في صفحات اللوحة فقط."""
+    cfg = {"url": "", "key": ""}
+    if os.path.exists(SUPA_J):
+        with io.open(SUPA_J, encoding="utf-8") as f:
+            d = json.load(f)
+        cfg = {"url": (d.get("url") or "").rstrip("/"),
+               "key": d.get("publishable_key") or d.get("anon_key_legacy") or ""}
+    login = "iaq-cp-9f4b21.html"
+    if os.path.exists(CONTACT_F):
+        with io.open(CONTACT_F, encoding="utf-8") as f:
+            login = json.load(f).get("admin_login_url") or login
+    panel = login.replace(".html", "-panel.html")
+    return {
+        b"{{SUPABASE_CFG}}": json.dumps(cfg, ensure_ascii=False).encode("utf-8"),
+        b"{{PANEL_URL}}":    panel.encode("utf-8"),
+        b"{{LOGIN_URL}}":    login.encode("utf-8"),
+    }
+
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
     if not os.path.exists(CONTACT_F):
@@ -598,6 +618,7 @@ def build(out_dir):
     privacy_html = render_legal("privacy")
     terms_html = render_legal("terms")
     cmap = contact_map()
+    amap = admin_map()
     cmap.update(files_map())
 
     # 1) الصفحات المُولّدة من القالب
@@ -640,7 +661,18 @@ def build(out_dir):
         dst_root = out_dir if rel == "." else os.path.join(out_dir, rel)
         os.makedirs(dst_root, exist_ok=True)
         for name in files:
-            shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
+            src_f = os.path.join(root, name)
+            dst_f = os.path.join(dst_root, name)
+            if name.endswith(".html"):
+                data_b = rb(src_f)
+                for k, v in cmap.items():
+                    data_b = data_b.replace(k, v)
+                for k, v in amap.items():
+                    data_b = data_b.replace(k, v)
+                with open(dst_f, "wb") as fh:
+                    fh.write(data_b)
+            else:
+                shutil.copy2(src_f, dst_f)
 
     # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة أو موجودة في static
     expected = set(pg["slug"] + ".html" for pg in data["pages"])
