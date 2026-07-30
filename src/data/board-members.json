@@ -16,35 +16,35 @@
    "name": "عبدالرحمن بن محمد الجمعة",
    "role": "رئيس الجمعية",
    "rank": "chair",
-   "photo": ""
+   "photo": "board-01.jpg"
   },
   {
    "title": "م.",
    "name": "عبدالسلام بن جربوع القفاري",
    "role": "نائب الرئيس",
    "rank": "vice",
-   "photo": ""
+   "photo": "board-02.jpg"
   },
   {
    "title": "أ.",
    "name": "عبدالرحمن بن عبدالله الجمعة",
    "role": "عضو المجلس",
    "rank": "member",
-   "photo": ""
+   "photo": "board-03.jpg"
   },
   {
    "title": "أ.",
    "name": "سليمان بن فهد القفاري",
    "role": "عضو المجلس",
    "rank": "member",
-   "photo": ""
+   "photo": "board-04.jpg"
   },
   {
    "title": "أ.",
    "name": "محمد بن علي النصار",
    "role": "عضو المجلس",
    "rank": "member",
-   "photo": ""
+   "photo": "board-05.jpg"
   },
   {
    "title": "أ.",
@@ -65,14 +65,14 @@
    "name": "عبدالإله بن عبدالرحمن الطويان",
    "role": "عضو المجلس",
    "rank": "member",
-   "photo": ""
+   "photo": "board-08.jpg"
   },
   {
    "title": "أ.",
    "name": "عبدالرحمن بن إبراهيم الشدوخي",
    "role": "عضو المجلس",
    "rank": "member",
-   "photo": ""
+   "photo": "board-09.jpg"
   }
  ]
 }
