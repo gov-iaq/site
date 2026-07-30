@@ -28,6 +28,7 @@ DISCLOSURE= os.path.join(HERE, "data", "disclosure.json")
 ABOUT     = os.path.join(HERE, "data", "about.json")
 CONTACT_F = os.path.join(HERE, "data", "contact.json")
 FILES_J   = os.path.join(HERE, "data", "files.json")
+PARTNERS_J= os.path.join(HERE, "data", "partners.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -378,6 +379,29 @@ def files_map():
         out[marker] = _file_rows(cats.get(key, [])).encode("utf-8")
     return out
 
+def render_partners():
+    """شعارات الشركاء في الشريط المتحرّك (مكرّرة صفّين لدوران سلس)."""
+    if not os.path.exists(PARTNERS_J):
+        return b""
+    with io.open(PARTNERS_J, encoding="utf-8") as f:
+        items = json.load(f).get("partners", [])
+    if not items:
+        return b""
+    out = []
+    for dup in (False, True):
+        for p in items:
+            logo = "img/partners/%s" % p["logo"]
+            inner = ('<img src="%s" alt="%s" loading="lazy" decoding="async" />'
+                     % (esc(logo), "" if dup else esc(p["name"])))
+            attrs = ' aria-hidden="true"' if dup else ' title="%s"' % esc(p["name"])
+            url = (p.get("url") or "").strip()
+            if url and not dup:
+                out.append('<a class="plogo" href="%s" target="_blank" rel="noopener"%s>%s</a>'
+                           % (esc(url), attrs, inner))
+            else:
+                out.append('<div class="plogo"%s>%s</div>' % (attrs, inner))
+    return "".join(out).encode("utf-8")
+
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
     if not os.path.exists(CONTACT_F):
@@ -422,6 +446,7 @@ def build(out_dir):
     notice_endowments = render_notice("endowments")
     about_html = render_about()
     lic_gallery = render_licenses_gallery()
+    partners_html = render_partners()
     cmap = contact_map()
     cmap.update(files_map())
 
@@ -448,6 +473,7 @@ def build(out_dir):
         main = main.replace(b"{{NOTICE_ENDOWMENTS}}", notice_endowments)
         main = main.replace(b"{{ABOUT_TABS}}", about_html)
         main = main.replace(b"{{LICENSES_GALLERY}}", lic_gallery)
+        main = main.replace(b"{{PARTNERS}}", partners_html)
         page = head + body_tag + header + banner + main + footer
         for k, v in cmap.items():
             page = page.replace(k, v)

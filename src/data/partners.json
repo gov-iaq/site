@@ -1,0 +1,14 @@
+{
+  "_ملاحظة": "شعارات الشركاء والجهات الداعمة. الشعارات في site/img/partners/ — عدّل هنا ثم أعد البناء.",
+  "_ترتيب": "الجهات الرسمية أولًا ثم المؤسسات والجمعيات الخيرية.",
+  "partners": [
+    { "name": "المركز الوطني لتنمية القطاع غير الربحي", "logo": "national-center-nonprofit.png", "url": "" },
+    { "name": "وزارة الموارد البشرية والتنمية الاجتماعية", "logo": "ministry-hrsd.png", "url": "" },
+    { "name": "مؤسسة عبدالله الراجحي الخيرية", "logo": "alrajhi-foundation.png", "url": "" },
+    { "name": "مؤسسة عبدالعزيز بن عبدالله الجميح الخيرية", "logo": "aljomaih-foundation.png", "url": "" },
+    { "name": "مؤسسة الحبيب الخيرية", "logo": "alhabib-foundation.png", "url": "" },
+    { "name": "السبيعي الخيرية", "logo": "alsubaie-charity.png", "url": "" },
+    { "name": "أوقاف الضحيان", "logo": "aldohyan-endowments.png", "url": "" },
+    { "name": "الحمدانية الخيرية", "logo": "alhamdaniyah-charity.png", "url": "" }
+  ]
+}

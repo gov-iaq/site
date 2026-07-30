@@ -197,6 +197,12 @@ section[id]{scroll-margin-top:92px}
 .partners{background:var(--news-bg)}
 .marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
 .marquee-track{display:flex;gap:22px;width:max-content;animation:marquee 34s linear infinite}
+.marquee-track .plogo{flex:none;width:190px;height:104px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease)}
+.marquee-track .plogo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:saturate(.92);transition:filter .3s var(--ease),transform .35s var(--ease)}
+.marquee-track .plogo:hover{border-color:rgba(0,120,120,.34);box-shadow:0 14px 30px -16px rgba(6,63,54,.3);transform:translateY(-3px)}
+.marquee-track .plogo:hover img{filter:saturate(1.06);transform:scale(1.04)}
+@media (max-width:640px){.marquee-track .plogo{width:158px;height:92px;padding:13px 15px}}
+@media (prefers-reduced-motion:reduce){.marquee-track .plogo,.marquee-track .plogo img{transition:none}.marquee-track .plogo:hover{transform:none}.marquee-track .plogo:hover img{transform:none}}
 .marquee:hover .marquee-track{animation-play-state:paused}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .partner{flex:none;width:190px;height:104px;border:1px solid var(--card-bd);border-radius:var(--card-radius);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--surface);color:var(--muted);filter:grayscale(1);opacity:.72;transition:all .35s}
@@ -794,11 +800,7 @@ section[id]{scroll-margin-top:92px}
     var nt=null;function na(){if(reduce)return;nt=setInterval(function(){var m=strip.scrollWidth-strip.clientWidth;if(Math.abs(strip.scrollLeft)>=m-4)strip.scrollTo({left:0,behavior:'smooth'});else strip.scrollBy({left:-stp(),behavior:'smooth'});},4500);}
     strip.addEventListener('mouseenter',function(){if(nt)clearInterval(nt);});strip.addEventListener('mouseleave',na);na();}
 
-  // partners marquee (guarded)
-  var track=$('#partnersTrack');
-  if(track){var marks=['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12h8M12 8v8"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 17l-5.5 2.8 1-6.3L3 8.9 9 8l3-6Z"/></svg>','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>'];
-    var names=['جهة داعمة','المركز الوطني','شريك تدريبي','شريك تقني','مؤسسة مانحة','شريك إعلامي','غرفة تجارية','جامعة'];var html='';
-    for(var r=0;r<2;r++){for(var i=0;i<names.length;i++){html+='<div class="partner" aria-hidden="'+(r===1?'true':'false')+'">'+marks[i%marks.length]+'<span>'+names[i]+'</span></div>';}}track.innerHTML=html;}
+  // partners marquee: الشعارات تُولَّد من partners.json عند البناء
 
   // counters + reveal
   function count(el){var t=parseFloat(el.getAttribute('data-target')),s=el.getAttribute('data-suffix')||'';if(reduce){el.innerHTML=t.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');return;}var d=1600,st=null;function tk(ts){if(!st)st=ts;var p=Math.min((ts-st)/d,1),e=1-Math.pow(1-p,3),v=Math.round(t*e);el.innerHTML=v.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');if(p<1)requestAnimationFrame(tk);}requestAnimationFrame(tk);}
