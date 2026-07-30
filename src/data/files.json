@@ -1,0 +1,162 @@
+{
+ "_ملاحظة": "مانيفست ملفات الحوكمة — يُبنى منه جدول الملفات في الموقع. الأحجام والصفحات مقروءة من الملفات فعليًا.",
+ "categories": {
+  "financials": [
+   {
+    "title": "القوائم المالية المدققة 2024",
+    "file": "files/financials/financial-statements-2024.pdf",
+    "date": "2024",
+    "size": "1.1 MB",
+    "pages": 14
+   },
+   {
+    "title": "القوائم المالية المدققة 2023",
+    "file": "files/financials/financial-statements-2023.pdf",
+    "date": "2023",
+    "size": "2.7 MB",
+    "pages": 14
+   },
+   {
+    "title": "القوائم المالية المدققة 2022",
+    "file": "files/financials/financial-statements-2022.pdf",
+    "date": "2022",
+    "size": "1.8 MB",
+    "pages": 11
+   }
+  ],
+  "annual": [
+   {
+    "title": "التقرير السنوي 2024",
+    "file": "files/annual/annual-report-2024.pdf",
+    "date": "2024",
+    "size": "1.9 MB",
+    "pages": 17
+   }
+  ],
+  "surveys": [
+   {
+    "title": "تقرير تحليل وتقييم قياس الرضا",
+    "file": "files/surveys/satisfaction-analysis-report.pdf",
+    "date": "",
+    "size": "642 KB",
+    "pages": 8
+   }
+  ],
+  "minutes": [
+   {
+    "title": "محضر الجمعية العمومية العادية (ع1-24)",
+    "file": "files/minutes/ga-ordinary-1-24.pdf",
+    "date": "19/11/1445هـ",
+    "size": "499 KB",
+    "pages": 1
+   },
+   {
+    "title": "محضر الجمعية العمومية غير العادية (ع2-24)",
+    "file": "files/minutes/ga-extraordinary-2-24.pdf",
+    "date": "19/11/1445هـ",
+    "size": "482 KB",
+    "pages": 1
+   },
+   {
+    "title": "محضر الجمعية العمومية العادية (ع1-25)",
+    "file": "files/minutes/ga-ordinary-1-25.pdf",
+    "date": "17/09/1446هـ",
+    "size": "516 KB",
+    "pages": 1
+   },
+   {
+    "title": "محضر الجمعية العمومية غير العادية (ع2-25)",
+    "file": "files/minutes/ga-extraordinary-2-25.pdf",
+    "date": "17/09/1446هـ",
+    "size": "490 KB",
+    "pages": 1
+   },
+   {
+    "title": "محضر الجمعية العمومية العادية (ع1-26)",
+    "file": "files/minutes/ga-ordinary-1-26.pdf",
+    "date": "10/10/1447هـ  (29/03/2026م)",
+    "size": "701 KB",
+    "pages": 3
+   },
+   {
+    "title": "محضر الجمعية العمومية غير العادية (ع2-26)",
+    "file": "files/minutes/ga-extraordinary-2-26.pdf",
+    "date": "10/10/1447هـ  (29/03/2026م)",
+    "size": "752 KB",
+    "pages": 3
+   },
+   {
+    "title": "محضر الجمعية العمومية غير العادية (ع3-26)",
+    "file": "files/minutes/ga-extraordinary-3-26.pdf",
+    "date": "26/01/1448هـ  (11/07/2026م)",
+    "size": "637 KB",
+    "pages": 2
+   }
+  ],
+  "policies": [
+   {
+    "title": "اللائحة الأساسية للجمعية",
+    "file": "files/policies/bylaws.pdf",
+    "date": "16/05/1445هـ  (30/11/2023م)",
+    "size": "712 KB",
+    "pages": 37
+   },
+   {
+    "title": "آلية إدارة المتطوعين",
+    "file": "files/policies/volunteers-management.pdf",
+    "date": "",
+    "size": "404 KB",
+    "pages": 4
+   },
+   {
+    "title": "سياسة الاحتفاظ بالوثائق وإتلافها",
+    "file": "files/policies/document-retention-policy.pdf",
+    "date": "",
+    "size": "408 KB",
+    "pages": 4
+   },
+   {
+    "title": "سياسة الإبلاغ عن المخالفات وحماية مقدمي البلاغات",
+    "file": "files/policies/whistleblower-policy.pdf",
+    "date": "",
+    "size": "436 KB",
+    "pages": 6
+   },
+   {
+    "title": "سياسة تضارب المصالح",
+    "file": "files/policies/conflict-of-interest-policy.pdf",
+    "date": "",
+    "size": "656 KB",
+    "pages": 11
+   },
+   {
+    "title": "سياسة تنظيم العلاقة مع المستفيدين وتقديم الخدمات",
+    "file": "files/policies/beneficiaries-relations-policy.pdf",
+    "date": "",
+    "size": "278 KB",
+    "pages": 5
+   },
+   {
+    "title": "سياسة جمع التبرعات",
+    "file": "files/policies/fundraising-policy.pdf",
+    "date": "",
+    "size": "428 KB",
+    "pages": 4
+   },
+   {
+    "title": "سياسة خصوصية البيانات",
+    "file": "files/policies/data-privacy-policy.pdf",
+    "date": "",
+    "size": "432 KB",
+    "pages": 6
+   },
+   {
+    "title": "سياسة توجيه مبلغ التبرع إلى مشروع آخر",
+    "file": "files/policies/donation-redirection-policy.pdf",
+    "date": "27/01/1447هـ  (21/07/2025م)",
+    "size": "103 KB",
+    "pages": 3
+   }
+  ]
+ }
+}

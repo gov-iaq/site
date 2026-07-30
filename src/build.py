@@ -26,6 +26,8 @@ BOARD     = os.path.join(HERE, "data", "board-members.json")
 TEAM      = os.path.join(HERE, "data", "team-members.json")
 DISCLOSURE= os.path.join(HERE, "data", "disclosure.json")
 ABOUT     = os.path.join(HERE, "data", "about.json")
+CONTACT_F = os.path.join(HERE, "data", "contact.json")
+FILES_J   = os.path.join(HERE, "data", "files.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -281,6 +283,76 @@ def render_about():
             .replace("{{SUPPORT_LABEL}}", esc(sup.get("label", "")))
             .replace("{{SUPPORT_UNITS}}", sup_units)).encode("utf-8")
 
+def _file_rows(items):
+    """يبني صفوف الملفات بنفس ترميز الموقع (متوافق مع البحث الفوري)."""
+    IC = ('<div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+          'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+          '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
+          '<path d="M14 3v5h5"/><path d="M8.5 13.5h1a1 1 0 0 1 0 2h-1v-2Zm0 2v1.5"/>'
+          '<path d="M12.5 13.5h1.2M12.5 13.5v3M12.5 15h1"/></svg></div>')
+    CLK = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'
+           '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>')
+    DL = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+          'stroke-linecap="round" stroke-linejoin="round">'
+          '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>')
+    rows = []
+    for it in items:
+        meta = []
+        if it.get("date"):
+            meta.append("<span>%s%s</span>" % (CLK, esc(it["date"])))
+        size = "PDF · %s" % esc(it.get("size", ""))
+        if it.get("pages"):
+            size += " · %d صفحة" % it["pages"]
+        meta.append("<span>%s</span>" % size)
+        rows.append(
+            '<div class="file-row reveal" data-title="%s">%s'
+            '<div class="fmain"><div class="ftitle">%s</div>'
+            '<div class="fmeta">%s</div></div>'
+            '<a href="%s" class="file-dl" download>%s تحميل</a></div>'
+            % (esc(it["title"]), IC, esc(it["title"]), "".join(meta), esc(it["file"]), DL))
+    return "".join(rows)
+
+def files_map():
+    """خريطة استبدال قوائم ملفات الحوكمة من المانيفست."""
+    if not os.path.exists(FILES_J):
+        return {}
+    with io.open(FILES_J, encoding="utf-8") as f:
+        data = json.load(f)
+    cats = data.get("categories", {})
+    out = {}
+    for key, marker in (("policies", b"{{FILES_POLICIES}}"), ("minutes", b"{{FILES_MINUTES}}"),
+                        ("financials", b"{{FILES_FINANCIALS}}"), ("annual", b"{{FILES_ANNUAL}}"),
+                        ("surveys", b"{{FILES_SURVEYS}}")):
+        out[marker] = _file_rows(cats.get(key, [])).encode("utf-8")
+    return out
+
+def contact_map():
+    """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
+    if not os.path.exists(CONTACT_F):
+        return {}
+    with io.open(CONTACT_F, encoding="utf-8") as f:
+        c = json.load(f)
+    s = c.get("socials", {})
+    def soc(key):
+        # الروابط الفارغة تعود إلى صفحة التواصل بدل رابط معطّل
+        return s.get(key) or "contact.html"
+    return {
+        b"{{LICENSE}}":       c.get("license_no", "").encode("utf-8"),
+        b"{{CITY}}":          c.get("city", "").encode("utf-8"),
+        b"{{COUNTRY}}":       c.get("country", "").encode("utf-8"),
+        b"{{ADDR_SHORT}}":    c.get("address_short", "").encode("utf-8"),
+        b"{{ADDR_LINE}}":     c.get("address_line", "").encode("utf-8"),
+        b"{{PHONE_DISPLAY}}": c.get("phone_display", "").encode("utf-8"),
+        b"{{PHONE_TEL}}":     c.get("phone_tel", "").encode("utf-8"),
+        b"{{EMAIL}}":         c.get("email", "").encode("utf-8"),
+        b"{{HOURS}}":         c.get("hours", "").encode("utf-8"),
+        b"{{SOC_X}}":         soc("x").encode("utf-8"),
+        b"{{SOC_YOUTUBE}}":   soc("youtube").encode("utf-8"),
+        b"{{SOC_LINKEDIN}}":  soc("linkedin").encode("utf-8"),
+        b"{{SOC_WHATSAPP}}":  soc("whatsapp").encode("utf-8"),
+        b"{{SOC_INSTAGRAM}}": soc("instagram").encode("utf-8"),
+    }
+
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
     header_tpl = rb(os.path.join(TEMPLATES, "header.html"))
@@ -297,6 +369,8 @@ def build(out_dir):
     notice_committees = render_notice("committees")
     notice_endowments = render_notice("endowments")
     about_html = render_about()
+    cmap = contact_map()
+    cmap.update(files_map())
 
     # 1) الصفحات المُولّدة من القالب
     for pg in data["pages"]:
@@ -321,6 +395,8 @@ def build(out_dir):
         main = main.replace(b"{{NOTICE_ENDOWMENTS}}", notice_endowments)
         main = main.replace(b"{{ABOUT_TABS}}", about_html)
         page = head + body_tag + header + banner + main + footer
+        for k, v in cmap.items():
+            page = page.replace(k, v)
         with open(os.path.join(out_dir, slug + ".html"), "wb") as f:
             f.write(page)
 
