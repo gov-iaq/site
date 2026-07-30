@@ -5,3 +5,6 @@
 #    Sitemap: https://iaq.org.sa/sitemap.xml
 User-agent: *
 Disallow: /
+# لوحة التحكّم — لا تُفهرَس
+Disallow: /iaq-cp-9f4b21.html
+Disallow: /iaq-cp-9f4b21-panel.html

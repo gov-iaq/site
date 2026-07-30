@@ -382,27 +382,32 @@ def files_map():
     return out
 
 def render_partners():
-    """شعارات الشركاء في الشريط المتحرّك (مكرّرة صفّين لدوران سلس)."""
+    """شعارات الشركاء في مجموعتين متطابقتين تمامًا لتمرير متصل بلا قفزة."""
     if not os.path.exists(PARTNERS_J):
         return b""
     with io.open(PARTNERS_J, encoding="utf-8") as f:
         items = json.load(f).get("partners", [])
     if not items:
         return b""
-    out = []
+
+    def one(p, dup):
+        logo = "img/partners/%s" % p["logo"]
+        inner = ('<img src="%s" alt="%s" loading="lazy" decoding="async" />'
+                 % (esc(logo), "" if dup else esc(p["name"])))
+        url = (p.get("url") or "").strip()
+        if url and not dup:
+            return ('<a class="plogo" href="%s" target="_blank" rel="noopener" title="%s">%s</a>'
+                    % (esc(url), esc(p["name"]), inner))
+        attrs = ' aria-hidden="true"' if dup else ' title="%s"' % esc(p["name"])
+        return '<div class="plogo"%s>%s</div>' % (attrs, inner)
+
+    sets = []
     for dup in (False, True):
-        for p in items:
-            logo = "img/partners/%s" % p["logo"]
-            inner = ('<img src="%s" alt="%s" loading="lazy" decoding="async" />'
-                     % (esc(logo), "" if dup else esc(p["name"])))
-            attrs = ' aria-hidden="true"' if dup else ' title="%s"' % esc(p["name"])
-            url = (p.get("url") or "").strip()
-            if url and not dup:
-                out.append('<a class="plogo" href="%s" target="_blank" rel="noopener"%s>%s</a>'
-                           % (esc(url), attrs, inner))
-            else:
-                out.append('<div class="plogo"%s>%s</div>' % (attrs, inner))
-    return "".join(out).encode("utf-8")
+        sets.append('<div class="mq-set"%s>%s</div>'
+                    % (' aria-hidden="true"' if dup else '',
+                       "".join(one(p, dup) for p in items)))
+
+    return "".join(sets).encode("utf-8")
 
 CAL_IC = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'
           '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>')
@@ -636,6 +641,18 @@ def build(out_dir):
         os.makedirs(dst_root, exist_ok=True)
         for name in files:
             shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
+
+    # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة أو موجودة في static
+    expected = set(pg["slug"] + ".html" for pg in data["pages"])
+    for root, dirs, files in os.walk(STATIC):
+        if os.path.relpath(root, STATIC) == ".":
+            expected |= {f for f in files if f.endswith(".html")}
+    removed = []
+    for f in os.listdir(out_dir):
+        if f.endswith(".html") and f not in expected:
+            os.remove(os.path.join(out_dir, f)); removed.append(f)
+    if removed:
+        print("حُذفت صفحات قديمة: %s" % "، ".join(removed))
 
     count = len(data["pages"])
     print("بُنيت %d صفحة من القالب + الأصول الثابتة إلى: %s" % (count, out_dir))

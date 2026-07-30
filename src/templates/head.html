@@ -126,6 +126,7 @@ section[id]{scroll-margin-top:92px}
 .hero-dots button.active{background:var(--hero-accent);width:30px;border-radius:999px}
 .section-head{text-align:center;max-width:680px;margin:0 auto 56px}
 .eyebrow{display:inline-block;font-family:var(--font-display);font-weight:600;color:var(--gold-600);font-size:14.5px;margin-block-end:14px}
+.section-head .eyebrow{display:block}
 .section-head h2{font-size:var(--h2);font-weight:700;margin-block-end:16px}
 .section-head p{color:var(--muted);font-size:1.08rem}
 .on-dark .eyebrow{color:var(--gold)}
@@ -196,7 +197,8 @@ section[id]{scroll-margin-top:92px}
 .testi-role{font-size:.87rem;color:var(--muted)}
 .partners{background:var(--news-bg)}
 .marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
-.marquee-track{display:flex;gap:22px;width:max-content;animation:marquee 34s linear infinite}
+.marquee-track{display:flex;width:max-content;animation:marquee 34s linear infinite;will-change:transform}
+.marquee-track .mq-set{display:flex;gap:22px;padding-inline-end:22px}
 .marquee-track .plogo{flex:none;width:190px;height:104px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease)}
 .marquee-track .plogo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:saturate(.92);transition:filter .3s var(--ease),transform .35s var(--ease)}
 .marquee-track .plogo:hover{border-color:rgba(0,120,120,.34);box-shadow:0 14px 30px -16px rgba(6,63,54,.3);transform:translateY(-3px)}
