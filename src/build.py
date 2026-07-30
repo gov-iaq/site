@@ -30,6 +30,7 @@ CONTACT_F = os.path.join(HERE, "data", "contact.json")
 FILES_J   = os.path.join(HERE, "data", "files.json")
 PARTNERS_J= os.path.join(HERE, "data", "partners.json")
 NEWS_J    = os.path.join(HERE, "data", "news.json")
+LEGAL_J   = os.path.join(HERE, "data", "legal.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -434,11 +435,14 @@ def render_news():
     ARROW = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
              'stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>')
 
+    ZOOM = ('<span class="nw-zoom" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/>'
+            '<path d="M20 20l-3.6-3.6M11 8.4v5.2M8.4 11h5.2"/></svg></span>')
     cards = []
     for i, n in enumerate(items):
         img = (n.get("image") or "").strip()
-        media = ('<img src="img/news/%s" alt="%s" loading="lazy" decoding="async" />'
-                 % (esc(img), esc(n["title"]))) if img else SYM
+        media = ('<img src="img/news/%s" alt="%s" loading="lazy" decoding="async" />%s'
+                 % (esc(img), esc(n["title"]), ZOOM)) if img else SYM
         body = "".join("<p>%s</p>" % esc(p) for p in n.get("body", []))
         facts = "".join('<div class="nw-fact"><dt>%s</dt><dd>%s</dd></div>' % (esc(k), esc(v))
                         for k, v in n.get("facts", []) or [])
@@ -448,16 +452,21 @@ def render_news():
                     'rel="noopener">%s %s</a></div>'
                     % (esc(cta["url"]), esc(cta["label"]), ARROW)) if cta else ""
         lead = '<p class="nw-lead">%s</p>' % esc(n["lead"]) if n.get("lead") else ""
+        if img:
+            media_attrs = (' class="nw-media is-photo" role="button" tabindex="0" '
+                           'data-zoom="img/news/%s" data-caption="%s" aria-label="تكبير صورة الخبر"'
+                           % (esc(img), esc(n["title"])))
+        else:
+            media_attrs = ' class="nw-media"'
         cards.append(
             '<article class="nw-card" data-tag="%s" style="--nw-d:%dms">'
-            '<div class="nw-media"><span class="nw-tag">%s</span>%s</div>'
+            '<div%s><span class="nw-tag">%s</span>%s</div>'
             '<div class="nw-body">'
             '<div class="nw-date">%s<time datetime="%s">%s</time></div>'
             '<h3 class="nw-title">%s</h3>%s<div class="nw-text">%s</div>%s%s'
-            '<p class="nw-src">%s نُشر عبر حساب الجمعية في منصّة إكس</p>'
             '</div></article>'
-            % (esc(n["tag"]), i * 70, esc(n["tag"]), media, CAL_IC, esc(n["date"]),
-               esc(n["date_ar"]), esc(n["title"]), lead, body, facts_html, cta_html, X_IC))
+            % (esc(n["tag"]), i * 70, media_attrs, esc(n["tag"]), media, CAL_IC, esc(n["date"]),
+               esc(n["date_ar"]), esc(n["title"]), lead, body, facts_html, cta_html))
 
     tags = []
     seen = []
@@ -499,6 +508,39 @@ def render_news_strip(limit=4):
             '</div></article>'
             % (img_html, CAL_IC, esc(n["date_ar"]), esc(n["title"]), esc(excerpt), X_IC, MORE))
     return "".join(out).encode("utf-8")
+
+def render_legal(key):
+    """يبني صفحة نظامية (privacy / terms) من legal.json."""
+    tpl = os.path.join(TEMPLATES, "legal-section.html")
+    if not (os.path.exists(tpl) and os.path.exists(LEGAL_J)):
+        return b""
+    with io.open(LEGAL_J, encoding="utf-8") as f:
+        data = json.load(f)
+    d = data.get(key)
+    if not d:
+        return b""
+    with io.open(tpl, encoding="utf-8") as f:
+        s = f.read()
+
+    TK = ('<span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+          'stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+          '<path d="M20 6L9 17l-5-5"/></svg></span>')
+    toc, secs = [], []
+    for i, sec in enumerate(d.get("sections", []), 1):
+        sid = "%s-s%d" % (key, i)
+        toc.append('<li><a href="#%s">%s</a></li>' % (sid, esc(sec["h"])))
+        lis = "".join("<li>%s<span>%s</span></li>" % (TK, esc(x)) for x in sec.get("items", []))
+        secs.append('<section class="lg-sec" id="%s"><h3><span class="n">%d</span>%s</h3>'
+                    '<ul>%s</ul></section>' % (sid, i, esc(sec["h"]), lis))
+
+    return (s
+            .replace("{{TOC}}", "".join(toc))
+            .replace("{{SECTIONS}}", "".join(secs))
+            .replace("{{EYEBROW}}", esc(d.get("eyebrow", "")))
+            .replace("{{TITLE}}", esc(d.get("title", "")))
+            .replace("{{INTRO}}", esc(d.get("intro", "")))
+            .replace("{{UPDATED}}", esc(data.get("updated", "")))
+            .replace("{{NOTE}}", esc(data.get("_تنبيه", "")))).encode("utf-8")
 
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
@@ -548,6 +590,8 @@ def build(out_dir):
     partners_html = render_partners()
     news_html = render_news()
     news_strip = render_news_strip()
+    privacy_html = render_legal("privacy")
+    terms_html = render_legal("terms")
     cmap = contact_map()
     cmap.update(files_map())
 
@@ -577,6 +621,8 @@ def build(out_dir):
         main = main.replace(b"{{PARTNERS}}", partners_html)
         main = main.replace(b"{{NEWS_SECTION}}", news_html)
         main = main.replace(b"{{NEWS_STRIP}}", news_strip)
+        main = main.replace(b"{{PRIVACY}}", privacy_html)
+        main = main.replace(b"{{TERMS}}", terms_html)
         page = head + body_tag + header + banner + main + footer
         for k, v in cmap.items():
             page = page.replace(k, v)

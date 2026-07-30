@@ -1,0 +1,81 @@
+<section class="section lg" id="legalSec">
+<style>
+/* ============================================================
+   الصفحات النظامية — سياسة الخصوصية وشروط الاستخدام
+   ============================================================ */
+.lg{position:relative;overflow:hidden;--lg-t6:#0c6c6c;--lg-gi:#7a5518;--lg-gl:rgba(192,144,72,.42);--lg-tt:#eef4f3;--lg-tb:#d6e5e3}
+.lg::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px),
+    repeating-linear-gradient(-45deg,transparent 0 46px,rgba(0,120,120,.05) 46px 47px);
+  -webkit-mask-image:radial-gradient(110% 75% at 100% 0%,#000 0%,transparent 70%);
+  mask-image:radial-gradient(110% 75% at 100% 0%,#000 0%,transparent 70%);
+}
+.lg > .container{position:relative;z-index:1}
+.lg-wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:30px;align-items:start}
+/* فهرس جانبي لاصق */
+.lg-toc{position:sticky;inset-block-start:96px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:18px}
+.lg-toc h3{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-size:1rem;
+  color:var(--lg-t6);margin:0 0 12px}
+.lg-toc h3 i{width:8px;height:8px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.lg-toc ol{list-style:none;margin:0;padding:0;counter-reset:t;display:grid;gap:2px}
+.lg-toc a{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:8px;
+  color:var(--body);font-size:.93rem;line-height:1.6;transition:background .2s,color .2s}
+.lg-toc a::before{counter-increment:t;content:counter(t);flex:none;width:20px;height:20px;
+  display:grid;place-items:center;font-size:.75rem;font-weight:700;color:var(--lg-t6);
+  background:var(--lg-tt);border-radius:5px}
+.lg-toc a:hover{background:var(--surface-2);color:var(--teal)}
+/* المتن */
+.lg-card{position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:32px 34px}
+.lg-card::before{content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;
+  width:13px;height:13px;background:var(--gold);opacity:.42;transform:rotate(45deg);border-radius:2px}
+.lg-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-display);
+  font-size:.93rem;font-weight:700;letter-spacing:.05em;color:var(--teal);margin-block-end:10px}
+.lg-eyebrow i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.lg-card h2{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.1rem);color:var(--ink);margin:0 0 14px}
+.lg-updated{display:inline-flex;align-items:center;gap:7px;font-size:.86rem;font-weight:700;
+  padding:5px 12px;border-radius:7px;color:var(--lg-t6);background:var(--lg-tt);
+  border:1px solid var(--lg-tb);margin-block-end:20px}
+.lg-intro{color:var(--body);line-height:2;font-size:1.05rem;margin:0 0 8px;
+  padding-block-end:22px;border-block-end:1px solid var(--line)}
+.lg-sec{padding-block-start:26px;scroll-margin-block-start:96px}
+.lg-sec h3{display:flex;align-items:flex-start;gap:12px;font-family:var(--font-display);
+  font-size:1.22rem;color:var(--ink);margin:0 0 14px}
+.lg-sec h3 .n{flex:none;width:30px;height:30px;display:grid;place-items:center;
+  font-size:.9rem;font-weight:700;color:var(--lg-t6);background:var(--lg-tt);
+  border:1px solid var(--lg-tb);
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%)}
+.lg-sec ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.lg-sec li{display:flex;gap:12px;align-items:flex-start;color:var(--body);line-height:1.95;font-size:1rem}
+.lg-sec li .tk{flex:none;width:20px;height:20px;margin-block-start:4px;display:grid;place-items:center;
+  border-radius:5px;background:rgba(0,120,120,.09);color:var(--teal)}
+.lg-sec li .tk svg{width:12px;height:12px}
+.lg-note{margin-block-start:28px;padding:16px 18px;border:1px dashed var(--lg-gl);border-radius:10px;
+  background:var(--surface-2);color:var(--muted);font-size:.9rem;line-height:1.8}
+@media (max-width:900px){
+  .lg-wrap{grid-template-columns:1fr;gap:20px}
+  .lg-toc{position:static}
+  .lg-card{padding:24px 20px}
+}
+@media (prefers-reduced-motion:reduce){.lg-toc a{transition:none}}
+</style>
+<div class="container">
+  <div class="lg-wrap">
+    <nav class="lg-toc reveal" aria-label="محتويات الصفحة">
+      <h3><i aria-hidden="true"></i>المحتويات</h3>
+      <ol>{{TOC}}</ol>
+    </nav>
+    <div class="lg-card reveal">
+      <p class="lg-eyebrow"><i aria-hidden="true"></i>{{EYEBROW}}</p>
+      <h2>{{TITLE}}</h2>
+      <p class="lg-updated">آخر تحديث: {{UPDATED}}</p>
+      <p class="lg-intro">{{INTRO}}</p>
+      {{SECTIONS}}
+      <p class="lg-note">{{NOTE}}</p>
+    </div>
+  </div>
+</div>
+</section>
