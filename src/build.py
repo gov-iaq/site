@@ -25,6 +25,7 @@ MEMBERS   = os.path.join(HERE, "data", "assembly-members.json")
 BOARD     = os.path.join(HERE, "data", "board-members.json")
 TEAM      = os.path.join(HERE, "data", "team-members.json")
 DISCLOSURE= os.path.join(HERE, "data", "disclosure.json")
+ABOUT     = os.path.join(HERE, "data", "about.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 def rb(path):
@@ -240,6 +241,46 @@ def render_notice(key):
             .replace("{{TITLE}}", esc(n.get("title", "")))
             .replace("{{PARAGRAPHS}}", paras)).encode("utf-8")
 
+def render_about():
+    """يبني تبويبات صفحة «عن الجمعية» من ملف البيانات."""
+    tpl = os.path.join(TEMPLATES, "about-tabs.html")
+    if not (os.path.exists(tpl) and os.path.exists(ABOUT)):
+        return b""
+    with io.open(ABOUT, encoding="utf-8") as f:
+        d = json.load(f)
+    with io.open(tpl, encoding="utf-8") as f:
+        s = f.read()
+
+    pillars = "".join('<span><i aria-hidden="true"></i>%s</span>' % esc(p)
+                      for p in d.get("vision_pillars", []))
+    def li(items):
+        return "".join('<li><span class="n">%d</span><span>%s</span></li>' % (i, esc(x))
+                       for i, x in enumerate(items, 1))
+
+    org = d.get("org", {})
+    chain_html = []
+    chain = org.get("chain", [])
+    for i, node in enumerate(chain, 1):
+        chain_html.append('<div class="ab-node lvl%d">%s</div>' % (i, esc(node)))
+        if i < len(chain):
+            chain_html.append('<div class="ab-drop" aria-hidden="true"></div>')
+    depts = "".join('<div class="ab-unit">%s</div>' % esc(x) for x in org.get("departments", []))
+    sup = org.get("support", {})
+    sup_units = "".join("<span>%s</span>" % esc(x) for x in sup.get("units", []))
+
+    return (s
+            .replace("{{VISION}}", esc(d.get("vision", "")))
+            .replace("{{PILLARS}}", pillars)
+            .replace("{{MISSION}}", esc(d.get("mission", "")))
+            .replace("{{STRATEGIC}}", li(d.get("strategic", [])))
+            .replace("{{OPERATIONAL}}", li(d.get("operational", [])))
+            .replace("{{N_STRATEGIC}}", str(len(d.get("strategic", []))))
+            .replace("{{N_OPERATIONAL}}", str(len(d.get("operational", []))))
+            .replace("{{CHAIN}}", "".join(chain_html))
+            .replace("{{DEPARTMENTS}}", depts)
+            .replace("{{SUPPORT_LABEL}}", esc(sup.get("label", "")))
+            .replace("{{SUPPORT_UNITS}}", sup_units)).encode("utf-8")
+
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
     header_tpl = rb(os.path.join(TEMPLATES, "header.html"))
@@ -255,6 +296,7 @@ def build(out_dir):
     disclosure_html = render_disclosure()
     notice_committees = render_notice("committees")
     notice_endowments = render_notice("endowments")
+    about_html = render_about()
 
     # 1) الصفحات المُولّدة من القالب
     for pg in data["pages"]:
@@ -277,6 +319,7 @@ def build(out_dir):
         main = main.replace(b"{{DISCLOSURE}}", disclosure_html)
         main = main.replace(b"{{NOTICE_COMMITTEES}}", notice_committees)
         main = main.replace(b"{{NOTICE_ENDOWMENTS}}", notice_endowments)
+        main = main.replace(b"{{ABOUT_TABS}}", about_html)
         page = head + body_tag + header + banner + main + footer
         with open(os.path.join(out_dir, slug + ".html"), "wb") as f:
             f.write(page)

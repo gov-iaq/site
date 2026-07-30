@@ -1,0 +1,187 @@
+<section class="section ab">
+<style>
+/* ============================================================
+   عن الجمعية — الرؤية والرسالة والأهداف والهيكل التنظيمي
+   ============================================================ */
+.ab{--ab-t6:#0c6c6c;--ab-gold-ink:#7a5518;--ab-gold-line:rgba(192,144,72,.42);--ab-tt:#eef4f3;--ab-tb:#d6e5e3;--ab-gt:#f8efdb;--ab-gb:#ecdcbb}
+/* بطاقتا الرؤية والرسالة */
+.ab-vm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.ab-box{
+  position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--card-radius);padding:28px 30px;
+  transition:border-color .3s var(--ease),box-shadow .35s var(--ease),transform .35s var(--ease);
+}
+.ab-box:hover{border-color:var(--teal);box-shadow:0 16px 36px rgba(6,63,54,.11);transform:translateY(-4px)}
+.ab-box::after{content:"";position:absolute;inset:6px;border:1px solid transparent;border-radius:9px;pointer-events:none;transition:border-color .35s var(--ease)}
+.ab-box:hover::after{border-color:var(--ab-gold-line)}
+.ab-box::before{content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-4px;width:13px;height:13px;background:var(--gold);opacity:.3;transform:rotate(45deg);border-radius:2px;transition:opacity .35s,transform .55s var(--ease)}
+.ab-box:hover::before{opacity:1;transform:rotate(135deg)}
+.ab-ic{
+  width:58px;height:58px;display:grid;place-items:center;margin-block-end:18px;
+  color:var(--ab-t6);background:var(--ab-tt);border:1px solid var(--ab-tb);
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+  transition:background .35s var(--ease),color .35s var(--ease);
+}
+.ab-box:hover .ab-ic{background:var(--teal);color:#fff;border-color:var(--teal)}
+.ab-ic svg{width:26px;height:26px}
+.ab-box h3{font-family:var(--font-display);font-size:1.4rem;color:var(--ink);margin:0 0 12px}
+.ab-box p{color:var(--body);line-height:1.95;font-size:1.05rem;margin:0}
+/* أعمدة الرؤية */
+.ab-pillars{display:flex;flex-wrap:wrap;gap:10px;margin-block-start:18px}
+.ab-pillars span{
+  display:inline-flex;align-items:center;gap:8px;font-size:.92rem;font-weight:700;
+  padding:6px 14px;border-radius:999px;color:var(--ab-t6);background:var(--ab-tt);border:1px solid var(--ab-tb);
+}
+.ab-pillars i{width:7px;height:7px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+/* الأهداف */
+.ab-goals{display:grid;gap:34px}
+.ab-gh{display:flex;align-items:center;gap:12px;margin-block-end:16px}
+.ab-gh i{width:10px;height:10px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.ab-gh h3{font-family:var(--font-display);font-size:1.32rem;color:var(--teal);margin:0}
+.ab-gh .cnt{
+  font-size:.82rem;font-weight:700;padding:2px 10px;border-radius:999px;
+  background:rgba(0,120,120,.09);color:var(--ab-t6);font-variant-numeric:tabular-nums;
+}
+.ab-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.ab-list li{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  color:var(--body);line-height:1.9;
+  transition:border-color .3s var(--ease),background .3s var(--ease),transform .3s var(--ease);
+}
+.ab-list li:hover{border-color:var(--ab-gold-line);transform:translateX(calc(-1 * 4px))}
+.ab-list .n{
+  flex:none;width:31px;height:31px;display:grid;place-items:center;
+  font-family:var(--font-display);font-weight:700;font-size:.95rem;line-height:1;
+  color:var(--ab-t6);background:var(--ab-tt);border:1px solid var(--ab-tb);
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+  font-variant-numeric:tabular-nums;transition:background .3s,color .3s,border-color .3s;
+}
+.ab-list li:hover .n{background:var(--teal);color:#fff;border-color:var(--teal)}
+.ab-goals .op .n{color:var(--ab-gold-ink);background:var(--ab-gt);border-color:var(--ab-gb)}
+.ab-goals .op li:hover .n{background:var(--gold);color:#33240a;border-color:var(--gold)}
+.ab-goals .op .ab-gh h3{color:var(--ab-gold-ink)}
+.ab-goals .op .ab-gh .cnt{background:var(--ab-gt);color:var(--ab-gold-ink)}
+/* الهيكل التنظيمي */
+.ab-org{--ab-line:#cfdedb}
+.ab-chain{display:grid;justify-items:center;gap:0}
+.ab-node{
+  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:14px 26px;font-family:var(--font-display);font-weight:600;font-size:1.08rem;color:var(--ink);
+  text-align:center;min-width:min(280px,86vw);
+  transition:border-color .3s var(--ease),box-shadow .3s var(--ease);
+}
+.ab-node:hover{border-color:var(--teal);box-shadow:0 10px 26px rgba(6,63,54,.1)}
+.ab-node.lvl1{background:var(--ab-tt);border-color:var(--ab-tb);color:var(--ab-t6)}
+.ab-node.lvl2{background:var(--ab-gt);border-color:var(--ab-gb);color:var(--ab-gold-ink)}
+.ab-node.lvl3{background:var(--teal);border-color:var(--teal);color:#fff}
+.ab-drop{width:1px;height:26px;background:var(--ab-line)}
+.ab-dept{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-block-start:0}
+.ab-unit{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 12px;
+  text-align:center;font-family:var(--font-body);font-weight:700;font-size:.96rem;color:var(--body);
+  line-height:1.6;transition:border-color .3s var(--ease),color .3s,background .3s,transform .3s var(--ease);
+}
+.ab-unit:hover{border-color:var(--teal);color:var(--teal);background:var(--surface-2);transform:translateY(-3px)}
+.ab-support{
+  position:relative;margin-block-start:12px;background:var(--surface);
+  border:1px solid var(--ab-gb);border-radius:var(--card-radius);padding:20px;
+}
+.ab-support > h4{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--font-display);font-size:1.1rem;color:var(--ab-gold-ink);margin:0 0 16px;text-align:center;
+}
+.ab-support > h4 i{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);border-radius:1px;flex:none}
+.ab-sub{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ab-sub span{
+  background:var(--ab-gt);border:1px solid var(--ab-gb);border-radius:9px;padding:12px 10px;
+  text-align:center;font-size:.92rem;font-weight:700;color:var(--ab-gold-ink);line-height:1.55;
+  transition:background .3s,transform .3s var(--ease);
+}
+.ab-sub span:hover{background:#f3e3c4;transform:translateY(-3px)}
+.ab-note{margin-block-start:18px;color:var(--muted);font-size:.92rem;text-align:center}
+@media (max-width:980px){
+  .ab-vm{grid-template-columns:1fr}
+  .ab-dept{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ab-sub{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  .ab-box{padding:22px 20px}
+  .ab-dept{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ab-sub{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ab-node{font-size:1rem;padding:12px 18px}
+  .ab-list li{padding:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ab-box,.ab-list li,.ab-unit,.ab-sub span,.ab-node,.ab-ic{transition:none!important}
+  .ab-box:hover,.ab-list li:hover,.ab-unit:hover,.ab-sub span:hover{transform:none}
+}
+</style>
+<div class="container">
+  <div class="tabs" data-tabs="about" role="tablist">
+    <button class="tab active" role="tab" data-tab="intro" aria-selected="true">نبذة</button>
+    <button class="tab" role="tab" data-tab="vm" aria-selected="false">الرؤية والرسالة</button>
+    <button class="tab" role="tab" data-tab="goals" aria-selected="false">الأهداف</button>
+    <button class="tab" role="tab" data-tab="org" aria-selected="false">الهيكل التنظيمي</button>
+  </div>
+
+  <div class="tab-panel active" data-group="about" data-panel="intro" role="tabpanel">
+    <div class="ab-vm">
+      <article class="ab-box reveal">
+        <div class="ab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg></div>
+        <h3>من نحن</h3>
+        <p>جمعية حاضنة الجمعيات جمعية غير ربحية مرخّصة، مسجّلة لدى المركز الوطني لتنمية القطاع غير الربحي برقم <b style="color:var(--teal);font-variant-numeric:tabular-nums">2253</b>، تُعنى باحتضان المنظمات غير الربحية وتمكينها مؤسسيًا.</p>
+      </article>
+      <article class="ab-box reveal">
+        <div class="ab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>نطاق عملنا</h3>
+        <p>نرافق المنظمات غير الربحية في البناء المؤسسي والتطوير التنموي، عبر الدعم الفني والإداري والاحتضان والإرشاد، وبناء القدرات، والشراكات، وقياس الأثر.</p>
+      </article>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-group="about" data-panel="vm" role="tabpanel">
+    <div class="ab-vm">
+      <article class="ab-box reveal">
+        <div class="ab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>رؤيتنا</h3>
+        <p>{{VISION}}</p>
+        <div class="ab-pillars">{{PILLARS}}</div>
+      </article>
+      <article class="ab-box reveal">
+        <div class="ab-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H7l-3 4V4Z"/><path d="M8 9h8M8 12.5h5"/></svg></div>
+        <h3>رسالتنا</h3>
+        <p>{{MISSION}}</p>
+      </article>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-group="about" data-panel="goals" role="tabpanel">
+    <div class="ab-goals">
+      <div class="reveal">
+        <div class="ab-gh"><i aria-hidden="true"></i><h3>أهدافنا الاستراتيجية</h3><span class="cnt">{{N_STRATEGIC}}</span></div>
+        <ol class="ab-list">{{STRATEGIC}}</ol>
+      </div>
+      <div class="op reveal">
+        <div class="ab-gh"><i aria-hidden="true"></i><h3>أهدافنا التشغيلية</h3><span class="cnt">{{N_OPERATIONAL}}</span></div>
+        <ol class="ab-list">{{OPERATIONAL}}</ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" data-group="about" data-panel="org" role="tabpanel">
+    <div class="ab-org reveal">
+      <div class="ab-chain">
+        {{CHAIN}}
+      </div>
+      <div class="ab-drop" style="margin-inline:auto" aria-hidden="true"></div>
+      <div class="ab-dept">{{DEPARTMENTS}}</div>
+      <div class="ab-support">
+        <h4><i aria-hidden="true"></i>{{SUPPORT_LABEL}}</h4>
+        <div class="ab-sub">{{SUPPORT_UNITS}}</div>
+      </div>
+      <p class="ab-note">الهيكل التنظيمي المعتمد للجمعية</p>
+    </div>
+  </div>
+</div>
+</section>
