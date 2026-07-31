@@ -42,17 +42,19 @@
     other: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>'
   };
 
-  /* صيغة المفعول به في الجملة العربية */
-  var ENT_ACC = {
-    news: 'خبرًا',
-    documents: 'وثيقة',
-    submissions: 'طلبًا واردًا',
-    survey_responses: 'استجابة استبيان',
-    settings: 'إعدادًا',
-    content_overrides: 'تعديل محتوى',
-    media: 'ملف وسائط',
-    admins: 'حسابًا إداريًا',
-    audit_log: 'سطر سجلّ'
+  /* اسم الكيان داخل الجملة. صيغة مُعرَّفة مقصودة: هذا الاسم يقع مرّة مفعولًا به
+     («حدّث الخبر») ومرّة مجرورًا («على الخبر» و«أوقف نشر الخبر»)، والصيغة المُعرَّفة
+     تصحّ في الموضعين بلا تشكيل، بخلاف «خبرًا» التي تُنتج «على خبرًا». */
+  var ENT_OBJ = {
+    news: 'الخبر',
+    documents: 'الوثيقة',
+    submissions: 'الطلب الوارد',
+    survey_responses: 'استجابة الاستبيان',
+    settings: 'الإعداد',
+    content_overrides: 'تعديل المحتوى',
+    media: 'ملف الوسائط',
+    admins: 'الحساب الإداري',
+    audit_log: 'سطر السجلّ'
   };
   /* اسم الكيان في أزرار التصفية */
   var ENT_NAME = {
@@ -112,7 +114,7 @@
     var e = entOf(r);
     var raw = String(r.action == null ? '' : r.action);
     var actor = '<b>' + U.esc(r.actor_email || 'حساب غير معروف') + '</b>';
-    var obj = e ? (U.esc(dict(ENT_ACC, e) || ('سجلًّا في «' + e + '»'))) : '';
+    var obj = e ? (U.esc(dict(ENT_OBJ, e) || ('الصفّ في جدول «' + e + '»'))) : '';
     var idPart = '';
     if (r.entity_id != null && String(r.entity_id) !== '') {
       idPart = ' رقم <span class="mono">' + U.esc(String(r.entity_id)) + '</span>';
@@ -127,7 +129,7 @@
       return txt;                       // لا نُكرّر الإجراء الخام مرّتين
     } else {
       txt = actor + ' ' + (dict(VERB, kind) || 'نفّذ إجراءً على') + ' ' +
-            (obj || 'سجلًّا غير محدّد الجدول') + idPart;
+            (obj || 'الصفّ (جدوله غير مُسجَّل)') + idPart;
     }
     if (raw) txt += ' <span class="mono">· ' + U.esc(raw) + '</span>';
     return txt;
@@ -277,16 +279,21 @@
 
   /* -------------------------------- القراءة -------------------------------- */
 
-  /* منطقة العرض (#viewArea) واحدة لكل الشاشات: لو غادر المستخدم هذه الشاشة قبل وصول
-     البيانات فالرسم سيمحو شاشة غيرها. وعند تعذّر معرفة الشاشة الحالية نرسم كالمعتاد. */
+  var WAIT = 'جارٍ قراءة سجلّ العمليات…';
+
+  /* منطقة العرض (#viewArea) واحدة لكل الشاشات: لو انتقل المستخدم إلى شاشة أخرى قبل
+     وصول البيانات، فرسمُنا سيمحو تلك الشاشة. نتعرّف على ذلك من محتوى المنطقة نفسها:
+     إن لم يكن فيها انتظارُنا ولا أزرارُنا فقد رسم غيرُنا فيها، فنمتنع عن الرسم.
+     (لا نعتمد على location.hash: تعذّر ضبطه يجعل الشاشة لا تُرسم أبدًا.) */
   function gone() {
-    var k = String(location.hash || '').replace('#', '');
-    return k !== '' && k !== KEY;
+    if (!mountEl) return true;
+    var h = String(mountEl.innerHTML || '');
+    return h.indexOf('data-act="audit') < 0 && h.indexOf(WAIT) < 0;
   }
 
   function load() {
     loadErr = '';
-    if (mountEl) mountEl.innerHTML = U.spinner('جارٍ قراءة سجلّ العمليات…');
+    if (mountEl) mountEl.innerHTML = U.spinner(WAIT);
     /* id.desc ثانويًّا: عدّة سطور قد تحمل الطابع الزمني نفسه، وبدون مفتاح ثانٍ
        يصبح ترتيب أوّل 200 سطر غير مستقرّ بين قراءة وأخرى. */
     return A.select('audit_log',

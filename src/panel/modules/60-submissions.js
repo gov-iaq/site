@@ -13,9 +13,10 @@
   var LIMIT = 200;
 
   /* ------------------------------ خرائط العرض ------------------------------ */
-  var KIND = { 'contact': 'تواصل', 'volunteer': 'تطوّع', 'membership': 'عضوية', 'jobs': 'وظائف' };
+  /* newsletter مسموح في schema-v2.sql ويُرسله زرّ النشرة في تذييل الموقع، فلا نُخفيه */
+  var KIND = { 'contact': 'تواصل', 'volunteer': 'تطوّع', 'membership': 'عضوية', 'jobs': 'وظائف', 'newsletter': 'اشتراك نشرة' };
   var KIND_CLS = { 'contact': 't-تواصل', 'volunteer': 't-تطوّع', 'membership': 't-عضوية', 'jobs': 't-توظيف' };
-  var KIND_ORDER = ['contact', 'volunteer', 'membership', 'jobs'];
+  var KIND_ORDER = ['contact', 'volunteer', 'membership', 'jobs', 'newsletter'];
 
   var ST = { 'new': 'جديد', 'in_progress': 'قيد المعالجة', 'closed': 'مُغلق', 'archived': 'مؤرشف' };
   var ST_CLS = { 'new': 'nw', 'in_progress': 'pr', 'closed': 'rp', 'archived': 'cl' };
@@ -23,6 +24,13 @@
 
   var PR = { 'low': 'منخفضة', 'normal': 'عادية', 'high': 'عالية' };
   var PR_ORDER = ['low', 'normal', 'high'];
+
+  /* مفاتيح الحمولة كما ترسلها نماذج الموقع فعلًا: التذييل يبني الحمولة من نصّ
+     الـlabel العربي (labelOf في footer.html)، لا من اسم الحقل الإنجليزي.
+     نُبقي البدائل الإنجليزية أيضًا إن وصل طلب من مصدر آخر. */
+  var K_WHO = ['الاسم الكامل', 'الاسم', 'البريد الإلكتروني', 'البريد', 'name', 'full_name', 'email'];
+  var K_MSG = ['الرسالة', 'نبذة عنك ومهاراتك', 'نبذة عنك', 'رسالة تعريفية', 'الموضوع',
+               'message', 'notes', 'comment', 'details'];
 
   var IC_EYE = '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>';
   var IC_DEL = '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>';
@@ -37,16 +45,33 @@
     return '<div class="kv"><span>' + esc(k) + '</span><b style="word-break:break-word">' + esc(v) + '</b></div>';
   }
 
-  function stLabel(s) { return ST[s] || (s ? String(s) : '—'); }
-  function stCls(s) { return ST_CLS[s] || 'cl'; }
-  function prLabel(p) { return PR[p] || (p ? String(p) : '—'); }
-  function kindLabel(k) { return KIND[k] || (k ? String(k) : '—'); }
+  /* مفتاح مملوك فعلًا — بدون هذا الفحص يُرجع مثل ST_CLS['constructor'] دالةً من
+     سلسلة النماذج (prototype) فتُحقن في سمة class بلا تهذيب */
+  function own(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
+
+  function stLabel(s) { return own(ST, s) ? ST[s] : (s ? String(s) : '—'); }
+  function stCls(s) { return own(ST_CLS, s) ? ST_CLS[s] : 'cl'; }
+  function prLabel(p) { return own(PR, p) ? PR[p] : (p ? String(p) : '—'); }
+  function kindLabel(k) { return own(KIND, k) ? KIND[k] : (k ? String(k) : '—'); }
+  function kindCls(k) { return own(KIND_CLS, k) ? ' ' + KIND_CLS[k] : ''; }
 
   /* أوّل مفتاح موجود فعلًا — لا نفترض أن أيّ حقل موجود في الحمولة */
   function firstOf(p, names) {
     if (!p || typeof p !== 'object') return '';
     for (var i = 0; i < names.length; i++) {
+      if (!own(p, names[i])) continue;
       var v = p[names[i]];
+      if (v != null && typeof v !== 'object' && String(v).length) return String(v);
+    }
+    return '';
+  }
+
+  /* آخر ملاذ للملخّص: أوّل قيمة نصّية فعلية في الحمولة — قيمة حقيقية لا تخمين */
+  function firstAny(p) {
+    if (!p || typeof p !== 'object') return '';
+    var ks = Object.keys(p);
+    for (var i = 0; i < ks.length; i++) {
+      var v = p[ks[i]];
       if (v != null && typeof v !== 'object' && String(v).length) return String(v);
     }
     return '';
@@ -129,8 +154,8 @@
         cache[String(row.id)] = row;
 
         var p = row.payload;
-        var who = firstOf(p, ['name', 'full_name', 'email']);
-        var msg = firstOf(p, ['message', 'notes']);
+        var who = firstOf(p, K_WHO) || firstAny(p);
+        var msg = firstOf(p, K_MSG);
         var sum = '';
         if (who) sum += '<b>' + esc(F.cut(who, 42)) + '</b>';
         if (msg) sum += (sum ? '<br>' : '') + '<span class="small muted">' + esc(F.cut(msg, 64)) + '</span>';
@@ -138,7 +163,7 @@
 
         h += '<tr data-act="subsOpen" data-id="' + esc(row.id) + '">' +
           '<td><span class="small">' + esc(F.date(row.created_at)) + '</span></td>' +
-          '<td><span class="tchip' + (KIND_CLS[row.kind] ? ' ' + KIND_CLS[row.kind] : '') + '">' +
+          '<td><span class="tchip' + kindCls(row.kind) + '">' +
           esc(kindLabel(row.kind)) + '</span></td>' +
           '<td>' + sum + '</td>' +
           '<td><span class="stbadge ' + stCls(row.status) + '">' + esc(stLabel(row.status)) + '</span></td>' +
@@ -158,7 +183,8 @@
       U.head('الطلبات والرسائل', 'الوارد من نماذج الموقع — ' + F.num(counts[0]) + ' طلبًا جديدًا') +
       U.notice('<b>هذه الشاشة تقرأ جدول <span class="mono">submissions</span> في قاعدة البيانات فقط.</b><br>' +
         'لا تُرسل اللوحة بريدًا إلكترونيًا: الردّ على أي طلب يُكتب ويُرسل يدويًا من بريد الجمعية، ثم تُحدَّث الحالة هنا لتسجيل ما تمّ. ' +
-        'وإن لم تكن نماذج الموقع العامّ موصولة بقاعدة البيانات فلن تظهر طلبات جديدة في هذه الشاشة.') +
+        'نماذج الموقع العامّ تُدرج صفوفها في هذا الجدول لحظة الإرسال، وتغيير الحالة أو الأولوية هنا لا يظهر للزوّار ' +
+        'لأن الموقع العامّ لا يعرض الطلبات إطلاقًا — فلا حاجة لإعادة بناء الموقع بعد أيّ تعديل في هذه الشاشة.') +
       chips +
       '<p class="small muted">الأعداد أعلاه محسوبة من قاعدة البيانات ضمن مُرشِّح النوع الحالي.</p>' +
       filterBar('subsSt', fSt, stItems()) +
@@ -201,9 +227,10 @@
       kv('الأولوية', prLabel(row.priority)) +
       '</div>';
 
-    var msg = firstOf(p, ['message', 'notes', 'comment', 'details']);
+    var msg = firstOf(p, K_MSG);
     var msgHtml = '<div class="sub-msg"><div class="sm-label">نصّ الرسالة</div><p' +
-      (msg ? '>' + esc(msg).replace(/\n/g, '<br>') : ' class="muted">لا يحتوي هذا الطلب على حقل رسالة.') +
+      (msg ? '>' + esc(msg).replace(/\r/g, '').replace(/\n/g, '<br>')
+           : ' class="muted">لم يُتعرَّف على حقل رسالة بين مفاتيح هذه الحمولة؛ الحقول كما وصلت معروضة بالأسفل.') +
       '</p></div>';
 
     var ps = pairs(p), form, j;

@@ -148,8 +148,16 @@
       restart();
     }
 
+    function applySpeed(){
+      // سرعة الشريط المتصل من إعدادات المدير (بالثواني) — تُقيَّد في نطاق معقول
+      var s=window.IAQ&&IAQ.setting?IAQ.setting('partners_strip_speed'):null;
+      var n=(typeof s==='number')?s:parseFloat(s);
+      if(isFinite(n)&&n>=8&&n<=180)track.style.setProperty('--mq-speed',n+'s');
+      else track.style.removeProperty('--mq-speed');
+    }
     function apply(mode){
       if(!MODES[mode])mode='auto';
+      applySpeed();
       if(mode===cur)return;
       clearMode();cur=mode;mq.setAttribute('data-mode',mode);
       if(mode==='manual')initManual();

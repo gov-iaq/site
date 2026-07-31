@@ -22,8 +22,11 @@
     { k: 'donors', t: 'رضا الداعمين' }
   ];
 
-  /* نصوص الأسئلة كما هي في نماذج الموقع العام (vq/bq/dq) — أي مفتاح غير معروف
-     يُعرض كما ورد في قاعدة البيانات بلا تجميل. */
+  /* مفاتيح ratings كما يخزّنها الموقع العام فعلًا: نموذج قياس الرضا يقرأ نصّ
+     السؤال من عنصر .qt ويستعمله مفتاحًا (انظر templates/footer.html)، فالمفتاح
+     هو جملة السؤال بالعربية لا رمزًا مختصرًا مثل vq0. لذلك الأصل أن نعرض
+     المفتاح كما ورد في قاعدة البيانات، والخريطة أدناه احتياط لصفوف قديمة أو
+     مُدرَجة يدويًا بالرموز المختصرة فقط. */
   var QLABEL = {
     vq0: 'سهولة تصفّح الموقع والوصول للمعلومة',
     vq1: 'وضوح المحتوى وكفايته',
@@ -44,7 +47,12 @@
     for (i = 0; i < TYPES.length; i++) if (TYPES[i].k === k) return TYPES[i].t;
     return k;
   }
-  function qLabel(k) { return QLABEL[k] ? QLABEL[k] : String(k); }
+  function qLabel(k) {
+    var s = String(k == null ? '' : k);
+    if (Object.prototype.hasOwnProperty.call(QLABEL, s)) return QLABEL[s];
+    if (s.replace(/\s/g, '') === '') return 'سؤال بلا نصّ في قاعدة البيانات';
+    return s;
+  }
 
   function isObj(v) {
     return !!v && typeof v === 'object' &&
@@ -149,9 +157,9 @@
         (st.answers ? pct.toFixed(0) + '%' : '—') +
         '</div><div class="ml">نسبة الرضا (المتوسط ÷ 5)</div></div>' +
       '<div class="metric"><div class="mv">' + F.num(st.total) +
-        '</div><div class="ml">عدد الردود المقروءة</div></div>' +
+        '</div><div class="ml">عدد ردود هذا التصنيف</div></div>' +
       '<div class="metric"><div class="mv">' + F.num(st.answers) +
-        '</div><div class="ml">عدد الإجابات الرقمية</div></div>' +
+        '</div><div class="ml">عدد الإجابات الرقمية فيها</div></div>' +
     '</div>';
   }
 
@@ -159,15 +167,18 @@
     if (!st.keys.length) {
       return U.empty('لا توجد إجابات رقمية صالحة في هذه الردود.');
     }
-    var h = '<div class="hbars">', i, k, avg, pct;
+    var h = '<div class="hbars">', i, k, avg, pct, lbl;
     for (i = 0; i < st.keys.length; i++) {
       k = st.keys[i];
       avg = st.sums[k] / st.cnts[k];
       pct = avg / 5 * 100;
       if (pct < 0) pct = 0;
       if (pct > 100) pct = 100;
+      /* المفتاح جملة سؤال كاملة وعمود العنوان ضيّق — نقصّه للعرض ونضع النصّ
+         الكامل في تلميح، بلا حذف أي معلومة. */
+      lbl = qLabel(k);
       h += '<div class="hbar">' +
-        '<div class="hb-label">' + U.esc(qLabel(k)) +
+        '<div class="hb-label" title="' + U.esc(lbl) + '">' + U.esc(F.cut(lbl, 44)) +
           ' <span class="muted small">(' + F.num(st.cnts[k]) + ')</span></div>' +
         '<div class="hb-track"><div class="hb-fill" style="width:' + pct.toFixed(1) +
           '%;background:' + barColor(avg) + '"></div></div>' +
@@ -177,7 +188,11 @@
     h += '</div>';
     h += '<p class="muted small" style="margin-block-start:14px">' +
       'الرقم بين القوسين = عدد الردود التي أجابت على هذا السؤال تحديدًا، ' +
-      'وطول الشريط = المتوسط ÷ 5. عدد الأسئلة المقاسة: ' + F.num(st.keys.length) + '.' +
+      'وطول الشريط = المتوسط ÷ 5. عدد الأسئلة المقاسة: ' + F.num(st.keys.length) + '. ' +
+      'وتنبيه لازم لقراءة الأرقام: نموذج الموقع يخزّن كل سؤال بمفتاح هو نصّ ' +
+      'السؤال كما كان مكتوبًا لحظة الإرسال، فإن عُدِّلت صياغة سؤال لاحقًا ظهرت ' +
+      'الصياغة الجديدة سؤالًا منفصلًا بردوده وحدها، وبقيت ردود الصياغة القديمة ' +
+      'في سطر آخر — فلا تُجمع المتوسطات بينهما تلقائيًا.' +
       '</p>';
     return h;
   }

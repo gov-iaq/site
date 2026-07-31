@@ -109,6 +109,33 @@
     );
   }
 
+  /* حذف كائن من المستودع وتسجيل ما حدث فعلًا في st:
+     st.gone = حُذف الملف فعلًا، st.note = عبارة تُلحق برسالة المستخدم.
+     مصفوفة فارغة من المستودع تعني «لم يُحذف شيء» وليست خطأً. */
+  function delObj(bucket, path, st) {
+    if (!path) {
+      st.note = ' ولم يكن للسجلّ مسار ملف في المستودع، فلم يُطلب حذف أي ملف.';
+      return Promise.resolve();
+    }
+    return IAQ.storage.remove(bucket, [path]).then(
+      function (del) {
+        if (del && del.length) st.gone = true;
+        else st.note = ' لكن لم يُحذف أي ملف من المستودع.';
+      },
+      function (e) { st.note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
+    );
+  }
+
+  /* رسالة فشل حذف الصفّ — تُصرّح بأن الملف سبق حذفه إن حُذف، فلا نترك المستخدم
+     يظنّ أن شيئًا لم يتغيّر بينما الملف اختفى والسجلّ باقٍ يشير إليه. */
+  function delFailMsg(st, path) {
+    return 'لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' +
+      (st.gone
+        ? ' لكنّ الملف حُذف من المستودع قبل ذلك، فالسجلّ الباقي يشير إلى ملف غير موجود (' +
+          path + ').'
+        : st.note);
+  }
+
   /* --------------------------- نسخ الرابط --------------------------- */
   function fallbackCopy(t) {
     var ta = document.createElement('textarea');
@@ -371,8 +398,13 @@
         );
       });
     }).then(function (rows) {
-      var id = (rows && rows.length) ? rows[0].id : null;
-      IAQ.audit('document.create', 'documents', id);
+      /* لا نُعلن حفظًا لم نتحقّق منه: مع return=representation الصفّ المحفوظ يُعاد،
+         فغياب الصفوف يعني أن السجلّ لم يُحفظ بينما الملف مرفوع فعلًا. */
+      if (!rows || !rows.length) {
+        throw new Error('رُفع الملف لكن قاعدة البيانات لم تُرجع أي صفّ، فلا يمكن تأكيد حفظ ' +
+          'السجلّ. راجع جدول الوثائق، والملف المرفوع مساره: ' + path);
+      }
+      IAQ.audit('document.create', 'documents', rows[0].id);
       U.toast('حُفظت الوثيقة كمسوّدة — تظهر في الموقع بعد إعادة البناء والنشر');
       IAQ.go('documents');
     }).catch(function (e) {
@@ -408,24 +440,17 @@
     var id = btn.getAttribute('data-id');
     var d = byId(docs, id);
     if (!d) { U.toast('السجلّ غير موجود — أعد تحميل الشاشة', 'err'); return; }
-    var note = '';
+    var path = d.storage_path || '';
+    var st = { note: '', gone: false };
     U.ask('حذف «' + F.cut(d.title, 40) + '»؟ سيُحذف الملف من المستودع وسجلّه من قاعدة البيانات، ' +
           'ولا يمكن التراجع.', 'حذف نهائي').then(function (ok) {
       if (!ok) return null;
-      return IAQ.storage.remove(B_DOC, [d.storage_path || '']).then(
-        function (del) {
-          /* مصفوفة فارغة = لم يُحذف شيء، وهي ليست خطأً — نُبلّغ بها كما هي */
-          if (!del || !del.length) note = ' لكن لم يُحذف أي ملف من المستودع.';
-        },
-        function (e) { note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
-      ).then(function () {
+      return delObj(B_DOC, path, st).then(function () {
         return A.remove('documents', id);
       }).then(function (rows) {
-        if (!rows || !rows.length) {
-          throw new Error('لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' + note);
-        }
+        if (!rows || !rows.length) throw new Error(delFailMsg(st, path));
         IAQ.audit('document.delete', 'documents', id);
-        U.toast('حُذف سجلّ الوثيقة.' + note, note ? 'warn' : undefined);
+        U.toast('حُذف سجلّ الوثيقة.' + st.note, st.note ? 'warn' : undefined);
         IAQ.go('documents');
       });
     }).catch(function (e) { U.toast(msg(e), 'err'); });
@@ -462,8 +487,11 @@
         );
       });
     }).then(function (rows) {
-      var id = (rows && rows.length) ? rows[0].id : null;
-      IAQ.audit('media.create', 'media', id);
+      if (!rows || !rows.length) {
+        throw new Error('رُفعت الصورة لكن قاعدة البيانات لم تُرجع أي صفّ، فلا يمكن تأكيد حفظ ' +
+          'سجلّها. مسار الصورة في المستودع: ' + path);
+      }
+      IAQ.audit('media.create', 'media', rows[0].id);
       U.toast('رُفعت الصورة ورابطها العلنيّ جاهز للاستخدام');
       IAQ.go('documents');
     }).catch(function (e) {
@@ -487,23 +515,17 @@
     var id = btn.getAttribute('data-id');
     var m = byId(imgs, id);
     if (!m) { U.toast('السجلّ غير موجود — أعد تحميل الشاشة', 'err'); return; }
-    var note = '';
+    var path = m.storage_path || '';
+    var st = { note: '', gone: false };
     U.ask('حذف الصورة «' + F.cut(m.title || m.storage_path || '', 40) + '»؟ ' +
           'أي صفحة تستخدم رابطها ستفقد الصورة.', 'حذف نهائي').then(function (ok) {
       if (!ok) return null;
-      return IAQ.storage.remove(m.bucket || B_IMG, [m.storage_path || '']).then(
-        function (del) {
-          if (!del || !del.length) note = ' لكن لم يُحذف أي ملف من المستودع.';
-        },
-        function (e) { note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
-      ).then(function () {
+      return delObj(m.bucket || B_IMG, path, st).then(function () {
         return A.remove('media', id);
       }).then(function (rows) {
-        if (!rows || !rows.length) {
-          throw new Error('لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' + note);
-        }
+        if (!rows || !rows.length) throw new Error(delFailMsg(st, path));
         IAQ.audit('media.delete', 'media', id);
-        U.toast('حُذفت الصورة.' + note, note ? 'warn' : undefined);
+        U.toast('حُذفت الصورة.' + st.note, st.note ? 'warn' : undefined);
         IAQ.go('documents');
       });
     }).catch(function (e) { U.toast(msg(e), 'err'); });

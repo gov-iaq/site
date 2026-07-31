@@ -1614,15 +1614,22 @@ var IAQ = (function () {
    العمود value من نوع jsonb، فالقيمة تصل مُفكَّكة أصلًا (نصّ أو عدد) وتُرسل خامًا.
 
    حقائق تحقّقتُ منها من مصدر الموقع نفسه — الواجهة تقولها كما هي بلا مبالغة:
-   • طبقة التشغيل في الصفحات تقرأ settings?is_public=is.true وتطبّق
-     partners_strip_mode فعليًّا وقت العرض — بلا إعادة بناء.
-   • هذه الإعدادات تُخزَّن في متصفّح الزائر مدّة خمس دقائق، فقد يرى زائر عائد
-     النمط السابق للحظة ثم يُصحَّح تلقائيًّا عند أوّل تحديث للإعدادات.
+   • src/templates/iaq-runtime.js يقرأ settings?select=key,value&is_public=is.true
+     وfooter.html يطبّق partners_strip_mode فعليًّا وقت العرض — بلا إعادة بناء.
+   • التوقيت الحقيقي: الطبقة تسأل الخدمة عند كل تحميل صفحة (فورًا إن تجاوز عمر
+     النسخة المحليّة خمس دقائق، وإلا بعد 1.5 ثانية من التحميل)، ولا يوجد
+     استقصاء دوريّ بعد ذلك — فالصفحة المفتوحة بلا إعادة تحميل لا تتبدّل أبدًا.
+     لذلك نقول «عند أوّل تحميل» لا «خلال خمس دقائق».
+   • النسخة المحليّة (localStorage، TTL = 300000) تُطبَّق قبل وصول الجواب، فقد
+     يلمح زائر عائد النمط السابق لجزء من الثانية ثم يُصحَّح في التحميل نفسه.
    • partners_strip_speed لا تقرؤه صفحات الموقع بعد: مدّة الدورة مثبَّتة على
-     34 ثانية في تنسيقات البناء (‎--mq-speed‎). نقولها صريحةً بدل الإيهام.
-   • الشريط موجود في قسم الشركاء بالصفحة الرئيسة فقط، لا في كل الصفحات.
+     ‎--mq-speed:34s‎ في src/templates/head.html. نقولها صريحةً بدل الإيهام.
+   • الشريط موجود في قسم «شركاء النجاح» بالصفحة الرئيسة فقط (id=partnersMarquee
+     في index.html وحدها).
    • الشعارات نفسها تُبنى من src/data/partners.json وقت التوليد — غير قابلة
      للتعديل من هنا بعد.
+   • updated_at يُحدَّث تلقائيًّا بمُطلِق settings_touch، فتاريخ «آخر تحديث»
+     المعروض مقروء من القاعدة لا محسوب هنا.
    ============================================================================ */
 (function () {
   'use strict';
@@ -1640,7 +1647,7 @@ var IAQ = (function () {
   var MODES = [
     { id: 'auto',   name: 'شريط متصل',      desc: 'تدفّق دائري لا ينقطع، يتوقّف عند مرور المؤشّر' },
     { id: 'manual', name: 'تحريك يدوي',     desc: 'يسحبه الزائر بإصبعه أو بالأسهم، بلا حركة تلقائية' },
-    { id: 'fade',   name: 'تبديل بالتلاشي', desc: 'مجموعات تتبدّل بهدوء كل أربع ثوانٍ تقريبًا' }
+    { id: 'fade',   name: 'تبديل بالتلاشي', desc: 'مجموعات تتبدّل بهدوء كل أربع ثوانٍ ونصف' }
   ];
 
   function modeById(id) {
@@ -1655,8 +1662,23 @@ var IAQ = (function () {
     return n;
   }
 
-  /* المقروء من القاعدة (db) مقابل اختيار المدير قبل الحفظ (sel) */
-  var db = { any: false, mode: null, speed: null, at: null, by: '' };
+  /* عدد فقط: jsonb قد يصل null أو نصًّا فارغًا، و Number(null) = 0 وهو ليس صفرًا
+     مقصودًا — لو قبلناه لعرضنا 18 ث وادّعينا أنها المخزَّنة. */
+  function numOf(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string' && v.replace(/\s+/g, '') !== '') {
+      var n = Number(v);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  /* المقروء من القاعدة (db) مقابل اختيار المدير قبل الحفظ (sel).
+     hasMode/hasSpeed = وُجد الصفّ فعلًا، تمييزًا عن صفّ موجود بقيمة فارغة. */
+  function blank() {
+    return { any: false, hasMode: false, hasSpeed: false, mode: null, speed: null, at: null, by: '' };
+  }
+  var db = blank();
   var sel = { mode: null, speed: DEF_SPEED };
 
   /* ------------------------------ قراءة الحالة ------------------------------ */
@@ -1664,17 +1686,16 @@ var IAQ = (function () {
     return A.select('settings',
       'select=key,value,updated_at,updated_by&key=in.(' + K_MODE + ',' + K_SPEED + ')'
     ).then(function (rows) {
-      db = { any: false, mode: null, speed: null, at: null, by: '' };
+      db = blank();
       (rows || []).forEach(function (r) {
         if (r.key === K_MODE) {
-          db.any = true;
-          db.mode = (r.value === null || r.value === undefined) ? null : String(r.value);
+          db.any = true; db.hasMode = true;
+          db.mode = (r.value === null || r.value === undefined || r.value === '') ? null : String(r.value);
           db.at = r.updated_at || null;
           db.by = r.updated_by || '';
         } else if (r.key === K_SPEED) {
-          db.any = true;
-          var n = Number(r.value);
-          db.speed = isFinite(n) ? n : null;
+          db.any = true; db.hasSpeed = true;
+          db.speed = numOf(r.value);
         }
       });
       /* المزامنة عند كل دخول للشاشة: ما نعرضه مبدئيًّا هو المخزَّن لا التخمين */
@@ -1685,12 +1706,15 @@ var IAQ = (function () {
 
   function isDirty() {
     if (!db.any) return true;
+    /* صفّ ناقص أو قيمة لا يعرفها الموقع = لا يزال بحاجة حفظ، فلا ندّعي أنّه محفوظ */
+    if (!modeById(db.mode)) return true;
     if (sel.mode !== db.mode) return true;
     if (db.speed == null) return true;
     return clamp(db.speed) !== clamp(sel.speed);
   }
   function dirtyText() {
     if (!db.any) return 'لا شيء محفوظ في قاعدة البيانات بعد';
+    if (!modeById(db.mode)) return 'المخزَّن غير صالح — يحتاج حفظًا';
     return isDirty() ? 'تغييرات لم تُحفظ' : 'كل التغييرات محفوظة';
   }
 
@@ -1717,18 +1741,27 @@ var IAQ = (function () {
         'الصفحات في هذه الحالة تعمل بالنمط الابتدائي المبنيّ من ' +
         '<span class="mono">partners.json → strip_mode</span> (وهو «شريط متصل» ما لم يُغيَّر). ' +
         'الحفظ من هنا سيُنشئ الصفّين إن كانت لديك صلاحية الكتابة.');
-    } else if (db.mode && !modeById(db.mode)) {
-      h += U.notice('<b>القيمة المخزَّنة غير معروفة:</b> <span class="mono">' + U.esc(db.mode) + '</span> — ' +
+    } else if (!db.hasMode) {
+      h += U.notice('<b>صفّ النمط غير موجود</b> — قرأنا صفّ السرعة وحده من جدول ' +
+        '<span class="mono">settings</span>. الصفحة الرئيسة تعمل الآن بالنمط الابتدائي المبنيّ من ' +
+        '<span class="mono">partners.json → strip_mode</span> («شريط متصل»). ' +
+        'اختر نمطًا واحفظ لإنشاء الصفّ.');
+    } else if (!modeById(db.mode)) {
+      h += U.notice('<b>الصفّ موجود لكن قيمته لا يعرفها الموقع:</b> <span class="mono">' +
+        U.esc(db.mode === null ? 'null' : db.mode) + '</span> — ' +
         'صفحات الموقع تتجاهلها وتعود إلى «شريط متصل». اختر نمطًا صحيحًا واحفظ لتصحيح الصفّ.');
     }
 
-    /* ما يحدث فعلًا عند الحفظ — لا وعد بأكثر من ذلك */
-    h += U.notice('<b>ما يحدث عند الحفظ:</b> النمط يُخزَّن في جدول الإعدادات، وصفحات الموقع تقرؤه ' +
-      'مباشرةً من قاعدة البيانات عند العرض، فلا يحتاج إعادة بناء أو نشر. ' +
-      'الصفحة تحتفظ بنسخة محليّة من الإعدادات مدّة خمس دقائق، فيصل التغيير إلى الزائر ' +
-      'خلال خمس دقائق كحدّ أقصى — أو فورًا بتحديث قسري (Ctrl+Shift+R).', 'ok');
+    /* ما يحدث فعلًا عند الحفظ — مطابق لسلوك iaq-runtime.js، بلا وعد بأكثر منه */
+    h += U.notice('<b>ما يحدث عند الحفظ:</b> النمط يُخزَّن في جدول <span class="mono">settings</span>، ' +
+      'وطبقة التشغيل في صفحات الموقع تقرأ الإعدادات العلنية من قاعدة البيانات وتطبّق النمط ' +
+      'عند العرض — بلا إعادة بناء ولا نشر. ' +
+      'يراه الزائر في أوّل تحميل للصفحة الرئيسة بعد الحفظ؛ أمّا صفحة مفتوحة أمامه الآن فلا تتبدّل ' +
+      'من نفسها، لأنّ الطبقة تسأل الخدمة عند التحميل فقط ولا تستقصيها بعده. ' +
+      'وزائر عائد قد يلمح النمط السابق لجزء من الثانية (نسخة محليّة عمرها خمس دقائق تُطبَّق قبل ' +
+      'وصول الجواب) ثم يُصحَّح تلقائيًّا في التحميل نفسه.', 'ok');
 
-    var live = db.any && modeById(db.mode) ? modeById(db.mode) : null;
+    var live = modeById(db.mode);
     var meta = '<div class="prow"><span class="muted">النمط المخزَّن الآن:</span>' +
       '<b>' + U.esc(live ? live.name : 'غير محدّد') + '</b>' +
       (db.at ? '<span class="muted small">آخر تحديث ' + U.esc(F.date(db.at)) +
@@ -1765,9 +1798,18 @@ var IAQ = (function () {
     return h;
   }
 
+  /* قراءة المنزلقة وقت الحاجة: متصفّحات قديمة لا تُطلق input على input[type=range]
+     بل change وحده، فلا نعتمد على الحدث لمعرفة القيمة الحالية. */
+  function readSpeedInput() {
+    var el = U.$('#partners-speed');
+    if (el) sel.speed = clamp(el.value);
+    return sel.speed;
+  }
+
   function repaint() {
     var m = U.$('#viewArea');
     if (!m) return;
+    readSpeedInput();                 // كي لا يُمحى ما سحبه المدير عند إعادة الرسم
     m.innerHTML = markup();
   }
 
@@ -1794,19 +1836,19 @@ var IAQ = (function () {
   });
 
   IAQ.on('partnersUndo', function () {
+    var had = db.any && (modeById(db.mode) || db.speed != null);
     sel.mode = modeById(db.mode) ? db.mode : null;
     sel.speed = db.speed == null ? DEF_SPEED : clamp(db.speed);
-    repaint();
-    U.toast('أُعيدت القيم المخزَّنة');
+    var m = U.$('#viewArea');
+    if (m) m.innerHTML = markup();   // بلا readSpeedInput: التراجع يتخلّص من قيمة المنزلقة
+    U.toast(had ? 'أُعيدت القيم المخزَّنة' : 'لا شيء مخزَّن — أُعيدت القيم الابتدائية');
   });
 
   IAQ.on('partnersReload', function () { IAQ.go('partners'); });
 
   IAQ.on('partnersSave', function (btn) {
     if (!sel.mode) { U.toast('اختر أحد الأنماط الثلاثة أولًا', 'warn'); return; }
-    var el = U.$('#partners-speed');
-    if (el) sel.speed = clamp(el.value);
-    var sp = clamp(sel.speed);
+    var sp = clamp(readSpeedInput());
     var who = (IAQ.me && IAQ.me.email) || null;
 
     btn.disabled = true;
@@ -1818,7 +1860,7 @@ var IAQ = (function () {
         throw new Error('لم تُرجع القاعدة أي صفّ — لم يُحفظ شيء. تأكّد من صلاحية الكتابة.');
       }
       IAQ.audit('settings.update', 'settings', K_MODE);
-      U.toast('حُفظ النمط — يصل الزائر خلال خمس دقائق كحدّ أقصى', 'ok');
+      U.toast('حُفظ النمط — يظهر للزائر عند أوّل تحميل للصفحة الرئيسة', 'ok');
       IAQ.go('partners');
     })['catch'](function (e) {
       btn.disabled = false;
@@ -1826,8 +1868,9 @@ var IAQ = (function () {
     });
   });
 
-  /* مستمعان على مستوى المستند فقط — لا نربط شيئًا بعناصر نرسمها ثم نمحوها */
-  document.addEventListener('input', function (e) {
+  /* مستمعون على مستوى المستند فقط — لا نربط شيئًا بعناصر نرسمها ثم نمحوها.
+     input و change معًا: المتصفّحات القديمة تُطلق change وحده على المنزلقة. */
+  function onSpeed(e) {
     var t = e.target;
     if (!t || t.id !== 'partners-speed') return;
     sel.speed = clamp(t.value);
@@ -1835,7 +1878,9 @@ var IAQ = (function () {
     if (v) v.textContent = sel.speed + ' ث';
     var d = U.$('#partners-dirty');
     if (d) d.textContent = dirtyText();
-  });
+  }
+  document.addEventListener('input', onSpeed);
+  document.addEventListener('change', onSpeed);
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
@@ -1893,13 +1938,21 @@ var IAQ = (function () {
     return n;
   }
 
-  /* تاريخ بصيغة YYYY-MM-DD صالحة لحقل input[type=date] بلا انزلاق منطقة زمنية */
+  /* تاريخ بصيغة YYYY-MM-DD صالحة لحقل input[type=date] بلا انزلاق منطقة زمنية.
+     يُعيد '' إن تعذّر التحليل — لأن قيمة غير قياسية في input[type=date] يتجاهلها
+     المتصفّح بصمت (F.day تُعيد النصّ كما هو عند فشل التحليل). */
   function ymd(v) {
     if (!v) return '';
     var s = String(v);
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
     var d = F.day(s);
-    return d === '—' ? '' : d;
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
+  }
+
+  /* للعرض فقط: لا نُخفي قيمة غير قياسية، نُظهرها كما جاءت من القاعدة */
+  function dateText(v) {
+    if (v == null || v === '') return '—';
+    return ymd(v) || String(v);
   }
 
   function val(sel) {
@@ -2014,7 +2067,7 @@ var IAQ = (function () {
               U.iconBtn('news-del', IC_DEL, { id: r.id, sm: true, danger: true, label: 'حذف' }) +
               '</div>';
             return [
-              '<span class="mono small">' + U.esc(ymd(r.date) || '—') + '</span>',
+              '<span class="mono small">' + U.esc(dateText(r.date)) + '</span>',
               '<b>' + U.esc(F.cut(r.title, 72) || '(بلا عنوان)') + '</b>' +
                 (r.lead ? '<br><span class="muted small">' + U.esc(F.cut(r.lead, 90)) + '</span>' : ''),
               r.tag ? '<span class="chip">' + U.esc(r.tag) + '</span>' : '<span class="muted">—</span>',
@@ -2112,12 +2165,17 @@ var IAQ = (function () {
     }
     var n = toInt(editId);
     if (n == null) {
-      editId = null;
-      mount.innerHTML = U.head('تعديل خبر') + U.notice('معرّف غير صالح — أُلغي التحميل.');
+      // نُعيد الحالة إلى القائمة كي لا يتحوّل هذا المخرج بصمت إلى نموذج «خبر جديد»
+      editId = null; mode = 'list';
+      mount.innerHTML = U.head('تعديل خبر') +
+        U.notice('<b>معرّف غير صالح — أُلغي التحميل حمايةً للبيانات.</b><br>' +
+          'عد إلى القائمة واختر الخبر من جديد.') +
+        '<div class="right"><button class="btn ghost" data-act="news-cancel">رجوع إلى القائمة</button></div>';
       return Promise.resolve();
     }
     return A.select('news', 'select=*&id=eq.' + n + '&limit=1').then(function (rows) {
       if (!rows || !rows.length) {
+        editId = null; mode = 'list';
         mount.innerHTML = U.head('تعديل خبر') + U.notice(
           '<b>لم يُعَد أي صفّ بهذا المعرّف (#' + U.esc(n) + ').</b><br>' +
           'قد يكون السجلّ محذوفًا، أو أن سياسات الحماية لا تسمح لحسابك بقراءته — ' +
@@ -2202,7 +2260,7 @@ var IAQ = (function () {
       var paras = Object.prototype.toString.call(r.body) === '[object Array]' ? r.body : [];
       var fl = factsToLines(r.facts);
       var h = '<div class="sub-meta">' +
-        '<div class="kv"><span>التاريخ</span><b>' + U.esc(ymd(r.date) || '—') + '</b></div>' +
+        '<div class="kv"><span>التاريخ</span><b>' + U.esc(dateText(r.date)) + '</b></div>' +
         '<div class="kv"><span>التصنيف</span><b>' + U.esc(r.tag || '—') + '</b></div>' +
         '<div class="kv"><span>الحالة</span><b>' + U.esc(statusText(r.status)) + '</b></div>' +
         '<div class="kv"><span>الصورة</span><b>' + U.esc(r.image || '—') + '</b></div>' +
@@ -2231,10 +2289,17 @@ var IAQ = (function () {
   });
 
   IAQ.on('news-save', function (btn) {
+    // نفرّق بين «لا يوجد معرّف» (إضافة) و«معرّف موجود لكنه غير صالح» (نتوقّف).
+    // بلا هذا التفريق يتحوّل التعديل إلى إضافة صفّ مكرّر بصمت.
+    var id = btn.getAttribute('data-id');
+    var n = null;
+    if (id != null && id !== '') {
+      n = toInt(id);
+      if (n == null) { U.toast('معرّف غير صالح — أُلغي الحفظ.', 'err'); return; }
+    }
+
     var rec = collect();
     if (!rec) return;
-    var id = btn.getAttribute('data-id');
-    var n = id == null ? null : toInt(id);
 
     if (n != null) {
       rec.updated_at = new Date().toISOString();
@@ -2254,7 +2319,8 @@ var IAQ = (function () {
     A.insert('news', rec, '*').then(function (rows) {
       var nid = rows && rows.length ? rows[0].id : null;
       if (nid == null) {
-        U.toast('لم يُعَد سجلّ جديد — لم نتأكّد من الإضافة.', 'warn');
+        // لا نعرف إن نجحت الإضافة: نُبقي النموذج كما هو ونحذّر من تكرار الحفظ
+        U.toast('لم يُعَد سجلّ جديد — راجع القائمة قبل إعادة الحفظ كي لا يتكرّر الخبر.', 'warn');
         return;
       }
       return IAQ.audit('news.create', 'news', nid).then(function () {
@@ -2414,6 +2480,33 @@ var IAQ = (function () {
       function (rows) { return { rows: rows || [], err: '' }; },
       function (e) { return { rows: [], err: msg(e) }; }
     );
+  }
+
+  /* حذف كائن من المستودع وتسجيل ما حدث فعلًا في st:
+     st.gone = حُذف الملف فعلًا، st.note = عبارة تُلحق برسالة المستخدم.
+     مصفوفة فارغة من المستودع تعني «لم يُحذف شيء» وليست خطأً. */
+  function delObj(bucket, path, st) {
+    if (!path) {
+      st.note = ' ولم يكن للسجلّ مسار ملف في المستودع، فلم يُطلب حذف أي ملف.';
+      return Promise.resolve();
+    }
+    return IAQ.storage.remove(bucket, [path]).then(
+      function (del) {
+        if (del && del.length) st.gone = true;
+        else st.note = ' لكن لم يُحذف أي ملف من المستودع.';
+      },
+      function (e) { st.note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
+    );
+  }
+
+  /* رسالة فشل حذف الصفّ — تُصرّح بأن الملف سبق حذفه إن حُذف، فلا نترك المستخدم
+     يظنّ أن شيئًا لم يتغيّر بينما الملف اختفى والسجلّ باقٍ يشير إليه. */
+  function delFailMsg(st, path) {
+    return 'لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' +
+      (st.gone
+        ? ' لكنّ الملف حُذف من المستودع قبل ذلك، فالسجلّ الباقي يشير إلى ملف غير موجود (' +
+          path + ').'
+        : st.note);
   }
 
   /* --------------------------- نسخ الرابط --------------------------- */
@@ -2678,8 +2771,13 @@ var IAQ = (function () {
         );
       });
     }).then(function (rows) {
-      var id = (rows && rows.length) ? rows[0].id : null;
-      IAQ.audit('document.create', 'documents', id);
+      /* لا نُعلن حفظًا لم نتحقّق منه: مع return=representation الصفّ المحفوظ يُعاد،
+         فغياب الصفوف يعني أن السجلّ لم يُحفظ بينما الملف مرفوع فعلًا. */
+      if (!rows || !rows.length) {
+        throw new Error('رُفع الملف لكن قاعدة البيانات لم تُرجع أي صفّ، فلا يمكن تأكيد حفظ ' +
+          'السجلّ. راجع جدول الوثائق، والملف المرفوع مساره: ' + path);
+      }
+      IAQ.audit('document.create', 'documents', rows[0].id);
       U.toast('حُفظت الوثيقة كمسوّدة — تظهر في الموقع بعد إعادة البناء والنشر');
       IAQ.go('documents');
     }).catch(function (e) {
@@ -2715,24 +2813,17 @@ var IAQ = (function () {
     var id = btn.getAttribute('data-id');
     var d = byId(docs, id);
     if (!d) { U.toast('السجلّ غير موجود — أعد تحميل الشاشة', 'err'); return; }
-    var note = '';
+    var path = d.storage_path || '';
+    var st = { note: '', gone: false };
     U.ask('حذف «' + F.cut(d.title, 40) + '»؟ سيُحذف الملف من المستودع وسجلّه من قاعدة البيانات، ' +
           'ولا يمكن التراجع.', 'حذف نهائي').then(function (ok) {
       if (!ok) return null;
-      return IAQ.storage.remove(B_DOC, [d.storage_path || '']).then(
-        function (del) {
-          /* مصفوفة فارغة = لم يُحذف شيء، وهي ليست خطأً — نُبلّغ بها كما هي */
-          if (!del || !del.length) note = ' لكن لم يُحذف أي ملف من المستودع.';
-        },
-        function (e) { note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
-      ).then(function () {
+      return delObj(B_DOC, path, st).then(function () {
         return A.remove('documents', id);
       }).then(function (rows) {
-        if (!rows || !rows.length) {
-          throw new Error('لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' + note);
-        }
+        if (!rows || !rows.length) throw new Error(delFailMsg(st, path));
         IAQ.audit('document.delete', 'documents', id);
-        U.toast('حُذف سجلّ الوثيقة.' + note, note ? 'warn' : undefined);
+        U.toast('حُذف سجلّ الوثيقة.' + st.note, st.note ? 'warn' : undefined);
         IAQ.go('documents');
       });
     }).catch(function (e) { U.toast(msg(e), 'err'); });
@@ -2769,8 +2860,11 @@ var IAQ = (function () {
         );
       });
     }).then(function (rows) {
-      var id = (rows && rows.length) ? rows[0].id : null;
-      IAQ.audit('media.create', 'media', id);
+      if (!rows || !rows.length) {
+        throw new Error('رُفعت الصورة لكن قاعدة البيانات لم تُرجع أي صفّ، فلا يمكن تأكيد حفظ ' +
+          'سجلّها. مسار الصورة في المستودع: ' + path);
+      }
+      IAQ.audit('media.create', 'media', rows[0].id);
       U.toast('رُفعت الصورة ورابطها العلنيّ جاهز للاستخدام');
       IAQ.go('documents');
     }).catch(function (e) {
@@ -2794,23 +2888,17 @@ var IAQ = (function () {
     var id = btn.getAttribute('data-id');
     var m = byId(imgs, id);
     if (!m) { U.toast('السجلّ غير موجود — أعد تحميل الشاشة', 'err'); return; }
-    var note = '';
+    var path = m.storage_path || '';
+    var st = { note: '', gone: false };
     U.ask('حذف الصورة «' + F.cut(m.title || m.storage_path || '', 40) + '»؟ ' +
           'أي صفحة تستخدم رابطها ستفقد الصورة.', 'حذف نهائي').then(function (ok) {
       if (!ok) return null;
-      return IAQ.storage.remove(m.bucket || B_IMG, [m.storage_path || '']).then(
-        function (del) {
-          if (!del || !del.length) note = ' لكن لم يُحذف أي ملف من المستودع.';
-        },
-        function (e) { note = ' وتعذّر حذف الملف من المستودع (' + msg(e) + ').'; }
-      ).then(function () {
+      return delObj(m.bucket || B_IMG, path, st).then(function () {
         return A.remove('media', id);
       }).then(function (rows) {
-        if (!rows || !rows.length) {
-          throw new Error('لم يُحذف أي صفّ من قاعدة البيانات — قد لا تملك صلاحية الحذف.' + note);
-        }
+        if (!rows || !rows.length) throw new Error(delFailMsg(st, path));
         IAQ.audit('media.delete', 'media', id);
-        U.toast('حُذفت الصورة.' + note, note ? 'warn' : undefined);
+        U.toast('حُذفت الصورة.' + st.note, st.note ? 'warn' : undefined);
         IAQ.go('documents');
       });
     }).catch(function (e) { U.toast(msg(e), 'err'); });
@@ -2833,9 +2921,10 @@ var IAQ = (function () {
   var LIMIT = 200;
 
   /* ------------------------------ خرائط العرض ------------------------------ */
-  var KIND = { 'contact': 'تواصل', 'volunteer': 'تطوّع', 'membership': 'عضوية', 'jobs': 'وظائف' };
+  /* newsletter مسموح في schema-v2.sql ويُرسله زرّ النشرة في تذييل الموقع، فلا نُخفيه */
+  var KIND = { 'contact': 'تواصل', 'volunteer': 'تطوّع', 'membership': 'عضوية', 'jobs': 'وظائف', 'newsletter': 'اشتراك نشرة' };
   var KIND_CLS = { 'contact': 't-تواصل', 'volunteer': 't-تطوّع', 'membership': 't-عضوية', 'jobs': 't-توظيف' };
-  var KIND_ORDER = ['contact', 'volunteer', 'membership', 'jobs'];
+  var KIND_ORDER = ['contact', 'volunteer', 'membership', 'jobs', 'newsletter'];
 
   var ST = { 'new': 'جديد', 'in_progress': 'قيد المعالجة', 'closed': 'مُغلق', 'archived': 'مؤرشف' };
   var ST_CLS = { 'new': 'nw', 'in_progress': 'pr', 'closed': 'rp', 'archived': 'cl' };
@@ -2843,6 +2932,13 @@ var IAQ = (function () {
 
   var PR = { 'low': 'منخفضة', 'normal': 'عادية', 'high': 'عالية' };
   var PR_ORDER = ['low', 'normal', 'high'];
+
+  /* مفاتيح الحمولة كما ترسلها نماذج الموقع فعلًا: التذييل يبني الحمولة من نصّ
+     الـlabel العربي (labelOf في footer.html)، لا من اسم الحقل الإنجليزي.
+     نُبقي البدائل الإنجليزية أيضًا إن وصل طلب من مصدر آخر. */
+  var K_WHO = ['الاسم الكامل', 'الاسم', 'البريد الإلكتروني', 'البريد', 'name', 'full_name', 'email'];
+  var K_MSG = ['الرسالة', 'نبذة عنك ومهاراتك', 'نبذة عنك', 'رسالة تعريفية', 'الموضوع',
+               'message', 'notes', 'comment', 'details'];
 
   var IC_EYE = '<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>';
   var IC_DEL = '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>';
@@ -2857,16 +2953,33 @@ var IAQ = (function () {
     return '<div class="kv"><span>' + esc(k) + '</span><b style="word-break:break-word">' + esc(v) + '</b></div>';
   }
 
-  function stLabel(s) { return ST[s] || (s ? String(s) : '—'); }
-  function stCls(s) { return ST_CLS[s] || 'cl'; }
-  function prLabel(p) { return PR[p] || (p ? String(p) : '—'); }
-  function kindLabel(k) { return KIND[k] || (k ? String(k) : '—'); }
+  /* مفتاح مملوك فعلًا — بدون هذا الفحص يُرجع مثل ST_CLS['constructor'] دالةً من
+     سلسلة النماذج (prototype) فتُحقن في سمة class بلا تهذيب */
+  function own(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
+
+  function stLabel(s) { return own(ST, s) ? ST[s] : (s ? String(s) : '—'); }
+  function stCls(s) { return own(ST_CLS, s) ? ST_CLS[s] : 'cl'; }
+  function prLabel(p) { return own(PR, p) ? PR[p] : (p ? String(p) : '—'); }
+  function kindLabel(k) { return own(KIND, k) ? KIND[k] : (k ? String(k) : '—'); }
+  function kindCls(k) { return own(KIND_CLS, k) ? ' ' + KIND_CLS[k] : ''; }
 
   /* أوّل مفتاح موجود فعلًا — لا نفترض أن أيّ حقل موجود في الحمولة */
   function firstOf(p, names) {
     if (!p || typeof p !== 'object') return '';
     for (var i = 0; i < names.length; i++) {
+      if (!own(p, names[i])) continue;
       var v = p[names[i]];
+      if (v != null && typeof v !== 'object' && String(v).length) return String(v);
+    }
+    return '';
+  }
+
+  /* آخر ملاذ للملخّص: أوّل قيمة نصّية فعلية في الحمولة — قيمة حقيقية لا تخمين */
+  function firstAny(p) {
+    if (!p || typeof p !== 'object') return '';
+    var ks = Object.keys(p);
+    for (var i = 0; i < ks.length; i++) {
+      var v = p[ks[i]];
       if (v != null && typeof v !== 'object' && String(v).length) return String(v);
     }
     return '';
@@ -2949,8 +3062,8 @@ var IAQ = (function () {
         cache[String(row.id)] = row;
 
         var p = row.payload;
-        var who = firstOf(p, ['name', 'full_name', 'email']);
-        var msg = firstOf(p, ['message', 'notes']);
+        var who = firstOf(p, K_WHO) || firstAny(p);
+        var msg = firstOf(p, K_MSG);
         var sum = '';
         if (who) sum += '<b>' + esc(F.cut(who, 42)) + '</b>';
         if (msg) sum += (sum ? '<br>' : '') + '<span class="small muted">' + esc(F.cut(msg, 64)) + '</span>';
@@ -2958,7 +3071,7 @@ var IAQ = (function () {
 
         h += '<tr data-act="subsOpen" data-id="' + esc(row.id) + '">' +
           '<td><span class="small">' + esc(F.date(row.created_at)) + '</span></td>' +
-          '<td><span class="tchip' + (KIND_CLS[row.kind] ? ' ' + KIND_CLS[row.kind] : '') + '">' +
+          '<td><span class="tchip' + kindCls(row.kind) + '">' +
           esc(kindLabel(row.kind)) + '</span></td>' +
           '<td>' + sum + '</td>' +
           '<td><span class="stbadge ' + stCls(row.status) + '">' + esc(stLabel(row.status)) + '</span></td>' +
@@ -2978,7 +3091,8 @@ var IAQ = (function () {
       U.head('الطلبات والرسائل', 'الوارد من نماذج الموقع — ' + F.num(counts[0]) + ' طلبًا جديدًا') +
       U.notice('<b>هذه الشاشة تقرأ جدول <span class="mono">submissions</span> في قاعدة البيانات فقط.</b><br>' +
         'لا تُرسل اللوحة بريدًا إلكترونيًا: الردّ على أي طلب يُكتب ويُرسل يدويًا من بريد الجمعية، ثم تُحدَّث الحالة هنا لتسجيل ما تمّ. ' +
-        'وإن لم تكن نماذج الموقع العامّ موصولة بقاعدة البيانات فلن تظهر طلبات جديدة في هذه الشاشة.') +
+        'نماذج الموقع العامّ تُدرج صفوفها في هذا الجدول لحظة الإرسال، وتغيير الحالة أو الأولوية هنا لا يظهر للزوّار ' +
+        'لأن الموقع العامّ لا يعرض الطلبات إطلاقًا — فلا حاجة لإعادة بناء الموقع بعد أيّ تعديل في هذه الشاشة.') +
       chips +
       '<p class="small muted">الأعداد أعلاه محسوبة من قاعدة البيانات ضمن مُرشِّح النوع الحالي.</p>' +
       filterBar('subsSt', fSt, stItems()) +
@@ -3021,9 +3135,10 @@ var IAQ = (function () {
       kv('الأولوية', prLabel(row.priority)) +
       '</div>';
 
-    var msg = firstOf(p, ['message', 'notes', 'comment', 'details']);
+    var msg = firstOf(p, K_MSG);
     var msgHtml = '<div class="sub-msg"><div class="sm-label">نصّ الرسالة</div><p' +
-      (msg ? '>' + esc(msg).replace(/\n/g, '<br>') : ' class="muted">لا يحتوي هذا الطلب على حقل رسالة.') +
+      (msg ? '>' + esc(msg).replace(/\r/g, '').replace(/\n/g, '<br>')
+           : ' class="muted">لم يُتعرَّف على حقل رسالة بين مفاتيح هذه الحمولة؛ الحقول كما وصلت معروضة بالأسفل.') +
       '</p></div>';
 
     var ps = pairs(p), form, j;
@@ -3143,8 +3258,11 @@ var IAQ = (function () {
     { k: 'donors', t: 'رضا الداعمين' }
   ];
 
-  /* نصوص الأسئلة كما هي في نماذج الموقع العام (vq/bq/dq) — أي مفتاح غير معروف
-     يُعرض كما ورد في قاعدة البيانات بلا تجميل. */
+  /* مفاتيح ratings كما يخزّنها الموقع العام فعلًا: نموذج قياس الرضا يقرأ نصّ
+     السؤال من عنصر .qt ويستعمله مفتاحًا (انظر templates/footer.html)، فالمفتاح
+     هو جملة السؤال بالعربية لا رمزًا مختصرًا مثل vq0. لذلك الأصل أن نعرض
+     المفتاح كما ورد في قاعدة البيانات، والخريطة أدناه احتياط لصفوف قديمة أو
+     مُدرَجة يدويًا بالرموز المختصرة فقط. */
   var QLABEL = {
     vq0: 'سهولة تصفّح الموقع والوصول للمعلومة',
     vq1: 'وضوح المحتوى وكفايته',
@@ -3165,7 +3283,12 @@ var IAQ = (function () {
     for (i = 0; i < TYPES.length; i++) if (TYPES[i].k === k) return TYPES[i].t;
     return k;
   }
-  function qLabel(k) { return QLABEL[k] ? QLABEL[k] : String(k); }
+  function qLabel(k) {
+    var s = String(k == null ? '' : k);
+    if (Object.prototype.hasOwnProperty.call(QLABEL, s)) return QLABEL[s];
+    if (s.replace(/\s/g, '') === '') return 'سؤال بلا نصّ في قاعدة البيانات';
+    return s;
+  }
 
   function isObj(v) {
     return !!v && typeof v === 'object' &&
@@ -3270,9 +3393,9 @@ var IAQ = (function () {
         (st.answers ? pct.toFixed(0) + '%' : '—') +
         '</div><div class="ml">نسبة الرضا (المتوسط ÷ 5)</div></div>' +
       '<div class="metric"><div class="mv">' + F.num(st.total) +
-        '</div><div class="ml">عدد الردود المقروءة</div></div>' +
+        '</div><div class="ml">عدد ردود هذا التصنيف</div></div>' +
       '<div class="metric"><div class="mv">' + F.num(st.answers) +
-        '</div><div class="ml">عدد الإجابات الرقمية</div></div>' +
+        '</div><div class="ml">عدد الإجابات الرقمية فيها</div></div>' +
     '</div>';
   }
 
@@ -3280,15 +3403,18 @@ var IAQ = (function () {
     if (!st.keys.length) {
       return U.empty('لا توجد إجابات رقمية صالحة في هذه الردود.');
     }
-    var h = '<div class="hbars">', i, k, avg, pct;
+    var h = '<div class="hbars">', i, k, avg, pct, lbl;
     for (i = 0; i < st.keys.length; i++) {
       k = st.keys[i];
       avg = st.sums[k] / st.cnts[k];
       pct = avg / 5 * 100;
       if (pct < 0) pct = 0;
       if (pct > 100) pct = 100;
+      /* المفتاح جملة سؤال كاملة وعمود العنوان ضيّق — نقصّه للعرض ونضع النصّ
+         الكامل في تلميح، بلا حذف أي معلومة. */
+      lbl = qLabel(k);
       h += '<div class="hbar">' +
-        '<div class="hb-label">' + U.esc(qLabel(k)) +
+        '<div class="hb-label" title="' + U.esc(lbl) + '">' + U.esc(F.cut(lbl, 44)) +
           ' <span class="muted small">(' + F.num(st.cnts[k]) + ')</span></div>' +
         '<div class="hb-track"><div class="hb-fill" style="width:' + pct.toFixed(1) +
           '%;background:' + barColor(avg) + '"></div></div>' +
@@ -3298,7 +3424,11 @@ var IAQ = (function () {
     h += '</div>';
     h += '<p class="muted small" style="margin-block-start:14px">' +
       'الرقم بين القوسين = عدد الردود التي أجابت على هذا السؤال تحديدًا، ' +
-      'وطول الشريط = المتوسط ÷ 5. عدد الأسئلة المقاسة: ' + F.num(st.keys.length) + '.' +
+      'وطول الشريط = المتوسط ÷ 5. عدد الأسئلة المقاسة: ' + F.num(st.keys.length) + '. ' +
+      'وتنبيه لازم لقراءة الأرقام: نموذج الموقع يخزّن كل سؤال بمفتاح هو نصّ ' +
+      'السؤال كما كان مكتوبًا لحظة الإرسال، فإن عُدِّلت صياغة سؤال لاحقًا ظهرت ' +
+      'الصياغة الجديدة سؤالًا منفصلًا بردوده وحدها، وبقيت ردود الصياغة القديمة ' +
+      'في سطر آخر — فلا تُجمع المتوسطات بينهما تلقائيًا.' +
       '</p>';
     return h;
   }
@@ -3732,17 +3862,19 @@ var IAQ = (function () {
     other: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>'
   };
 
-  /* صيغة المفعول به في الجملة العربية */
-  var ENT_ACC = {
-    news: 'خبرًا',
-    documents: 'وثيقة',
-    submissions: 'طلبًا واردًا',
-    survey_responses: 'استجابة استبيان',
-    settings: 'إعدادًا',
-    content_overrides: 'تعديل محتوى',
-    media: 'ملف وسائط',
-    admins: 'حسابًا إداريًا',
-    audit_log: 'سطر سجلّ'
+  /* اسم الكيان داخل الجملة. صيغة مُعرَّفة مقصودة: هذا الاسم يقع مرّة مفعولًا به
+     («حدّث الخبر») ومرّة مجرورًا («على الخبر» و«أوقف نشر الخبر»)، والصيغة المُعرَّفة
+     تصحّ في الموضعين بلا تشكيل، بخلاف «خبرًا» التي تُنتج «على خبرًا». */
+  var ENT_OBJ = {
+    news: 'الخبر',
+    documents: 'الوثيقة',
+    submissions: 'الطلب الوارد',
+    survey_responses: 'استجابة الاستبيان',
+    settings: 'الإعداد',
+    content_overrides: 'تعديل المحتوى',
+    media: 'ملف الوسائط',
+    admins: 'الحساب الإداري',
+    audit_log: 'سطر السجلّ'
   };
   /* اسم الكيان في أزرار التصفية */
   var ENT_NAME = {
@@ -3802,7 +3934,7 @@ var IAQ = (function () {
     var e = entOf(r);
     var raw = String(r.action == null ? '' : r.action);
     var actor = '<b>' + U.esc(r.actor_email || 'حساب غير معروف') + '</b>';
-    var obj = e ? (U.esc(dict(ENT_ACC, e) || ('سجلًّا في «' + e + '»'))) : '';
+    var obj = e ? (U.esc(dict(ENT_OBJ, e) || ('الصفّ في جدول «' + e + '»'))) : '';
     var idPart = '';
     if (r.entity_id != null && String(r.entity_id) !== '') {
       idPart = ' رقم <span class="mono">' + U.esc(String(r.entity_id)) + '</span>';
@@ -3817,7 +3949,7 @@ var IAQ = (function () {
       return txt;                       // لا نُكرّر الإجراء الخام مرّتين
     } else {
       txt = actor + ' ' + (dict(VERB, kind) || 'نفّذ إجراءً على') + ' ' +
-            (obj || 'سجلًّا غير محدّد الجدول') + idPart;
+            (obj || 'الصفّ (جدوله غير مُسجَّل)') + idPart;
     }
     if (raw) txt += ' <span class="mono">· ' + U.esc(raw) + '</span>';
     return txt;
@@ -3967,16 +4099,21 @@ var IAQ = (function () {
 
   /* -------------------------------- القراءة -------------------------------- */
 
-  /* منطقة العرض (#viewArea) واحدة لكل الشاشات: لو غادر المستخدم هذه الشاشة قبل وصول
-     البيانات فالرسم سيمحو شاشة غيرها. وعند تعذّر معرفة الشاشة الحالية نرسم كالمعتاد. */
+  var WAIT = 'جارٍ قراءة سجلّ العمليات…';
+
+  /* منطقة العرض (#viewArea) واحدة لكل الشاشات: لو انتقل المستخدم إلى شاشة أخرى قبل
+     وصول البيانات، فرسمُنا سيمحو تلك الشاشة. نتعرّف على ذلك من محتوى المنطقة نفسها:
+     إن لم يكن فيها انتظارُنا ولا أزرارُنا فقد رسم غيرُنا فيها، فنمتنع عن الرسم.
+     (لا نعتمد على location.hash: تعذّر ضبطه يجعل الشاشة لا تُرسم أبدًا.) */
   function gone() {
-    var k = String(location.hash || '').replace('#', '');
-    return k !== '' && k !== KEY;
+    if (!mountEl) return true;
+    var h = String(mountEl.innerHTML || '');
+    return h.indexOf('data-act="audit') < 0 && h.indexOf(WAIT) < 0;
   }
 
   function load() {
     loadErr = '';
-    if (mountEl) mountEl.innerHTML = U.spinner('جارٍ قراءة سجلّ العمليات…');
+    if (mountEl) mountEl.innerHTML = U.spinner(WAIT);
     /* id.desc ثانويًّا: عدّة سطور قد تحمل الطابع الزمني نفسه، وبدون مفتاح ثانٍ
        يصبح ترتيب أوّل 200 سطر غير مستقرّ بين قراءة وأخرى. */
     return A.select('audit_log',

@@ -7,15 +7,22 @@
    العمود value من نوع jsonb، فالقيمة تصل مُفكَّكة أصلًا (نصّ أو عدد) وتُرسل خامًا.
 
    حقائق تحقّقتُ منها من مصدر الموقع نفسه — الواجهة تقولها كما هي بلا مبالغة:
-   • طبقة التشغيل في الصفحات تقرأ settings?is_public=is.true وتطبّق
-     partners_strip_mode فعليًّا وقت العرض — بلا إعادة بناء.
-   • هذه الإعدادات تُخزَّن في متصفّح الزائر مدّة خمس دقائق، فقد يرى زائر عائد
-     النمط السابق للحظة ثم يُصحَّح تلقائيًّا عند أوّل تحديث للإعدادات.
+   • src/templates/iaq-runtime.js يقرأ settings?select=key,value&is_public=is.true
+     وfooter.html يطبّق partners_strip_mode فعليًّا وقت العرض — بلا إعادة بناء.
+   • التوقيت الحقيقي: الطبقة تسأل الخدمة عند كل تحميل صفحة (فورًا إن تجاوز عمر
+     النسخة المحليّة خمس دقائق، وإلا بعد 1.5 ثانية من التحميل)، ولا يوجد
+     استقصاء دوريّ بعد ذلك — فالصفحة المفتوحة بلا إعادة تحميل لا تتبدّل أبدًا.
+     لذلك نقول «عند أوّل تحميل» لا «خلال خمس دقائق».
+   • النسخة المحليّة (localStorage، TTL = 300000) تُطبَّق قبل وصول الجواب، فقد
+     يلمح زائر عائد النمط السابق لجزء من الثانية ثم يُصحَّح في التحميل نفسه.
    • partners_strip_speed لا تقرؤه صفحات الموقع بعد: مدّة الدورة مثبَّتة على
-     34 ثانية في تنسيقات البناء (‎--mq-speed‎). نقولها صريحةً بدل الإيهام.
-   • الشريط موجود في قسم الشركاء بالصفحة الرئيسة فقط، لا في كل الصفحات.
+     ‎--mq-speed:34s‎ في src/templates/head.html. نقولها صريحةً بدل الإيهام.
+   • الشريط موجود في قسم «شركاء النجاح» بالصفحة الرئيسة فقط (id=partnersMarquee
+     في index.html وحدها).
    • الشعارات نفسها تُبنى من src/data/partners.json وقت التوليد — غير قابلة
      للتعديل من هنا بعد.
+   • updated_at يُحدَّث تلقائيًّا بمُطلِق settings_touch، فتاريخ «آخر تحديث»
+     المعروض مقروء من القاعدة لا محسوب هنا.
    ============================================================================ */
 (function () {
   'use strict';
@@ -33,7 +40,7 @@
   var MODES = [
     { id: 'auto',   name: 'شريط متصل',      desc: 'تدفّق دائري لا ينقطع، يتوقّف عند مرور المؤشّر' },
     { id: 'manual', name: 'تحريك يدوي',     desc: 'يسحبه الزائر بإصبعه أو بالأسهم، بلا حركة تلقائية' },
-    { id: 'fade',   name: 'تبديل بالتلاشي', desc: 'مجموعات تتبدّل بهدوء كل أربع ثوانٍ تقريبًا' }
+    { id: 'fade',   name: 'تبديل بالتلاشي', desc: 'مجموعات تتبدّل بهدوء كل أربع ثوانٍ ونصف' }
   ];
 
   function modeById(id) {
@@ -48,8 +55,23 @@
     return n;
   }
 
-  /* المقروء من القاعدة (db) مقابل اختيار المدير قبل الحفظ (sel) */
-  var db = { any: false, mode: null, speed: null, at: null, by: '' };
+  /* عدد فقط: jsonb قد يصل null أو نصًّا فارغًا، و Number(null) = 0 وهو ليس صفرًا
+     مقصودًا — لو قبلناه لعرضنا 18 ث وادّعينا أنها المخزَّنة. */
+  function numOf(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string' && v.replace(/\s+/g, '') !== '') {
+      var n = Number(v);
+      return isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  /* المقروء من القاعدة (db) مقابل اختيار المدير قبل الحفظ (sel).
+     hasMode/hasSpeed = وُجد الصفّ فعلًا، تمييزًا عن صفّ موجود بقيمة فارغة. */
+  function blank() {
+    return { any: false, hasMode: false, hasSpeed: false, mode: null, speed: null, at: null, by: '' };
+  }
+  var db = blank();
   var sel = { mode: null, speed: DEF_SPEED };
 
   /* ------------------------------ قراءة الحالة ------------------------------ */
@@ -57,17 +79,16 @@
     return A.select('settings',
       'select=key,value,updated_at,updated_by&key=in.(' + K_MODE + ',' + K_SPEED + ')'
     ).then(function (rows) {
-      db = { any: false, mode: null, speed: null, at: null, by: '' };
+      db = blank();
       (rows || []).forEach(function (r) {
         if (r.key === K_MODE) {
-          db.any = true;
-          db.mode = (r.value === null || r.value === undefined) ? null : String(r.value);
+          db.any = true; db.hasMode = true;
+          db.mode = (r.value === null || r.value === undefined || r.value === '') ? null : String(r.value);
           db.at = r.updated_at || null;
           db.by = r.updated_by || '';
         } else if (r.key === K_SPEED) {
-          db.any = true;
-          var n = Number(r.value);
-          db.speed = isFinite(n) ? n : null;
+          db.any = true; db.hasSpeed = true;
+          db.speed = numOf(r.value);
         }
       });
       /* المزامنة عند كل دخول للشاشة: ما نعرضه مبدئيًّا هو المخزَّن لا التخمين */
@@ -78,12 +99,15 @@
 
   function isDirty() {
     if (!db.any) return true;
+    /* صفّ ناقص أو قيمة لا يعرفها الموقع = لا يزال بحاجة حفظ، فلا ندّعي أنّه محفوظ */
+    if (!modeById(db.mode)) return true;
     if (sel.mode !== db.mode) return true;
     if (db.speed == null) return true;
     return clamp(db.speed) !== clamp(sel.speed);
   }
   function dirtyText() {
     if (!db.any) return 'لا شيء محفوظ في قاعدة البيانات بعد';
+    if (!modeById(db.mode)) return 'المخزَّن غير صالح — يحتاج حفظًا';
     return isDirty() ? 'تغييرات لم تُحفظ' : 'كل التغييرات محفوظة';
   }
 
@@ -110,18 +134,27 @@
         'الصفحات في هذه الحالة تعمل بالنمط الابتدائي المبنيّ من ' +
         '<span class="mono">partners.json → strip_mode</span> (وهو «شريط متصل» ما لم يُغيَّر). ' +
         'الحفظ من هنا سيُنشئ الصفّين إن كانت لديك صلاحية الكتابة.');
-    } else if (db.mode && !modeById(db.mode)) {
-      h += U.notice('<b>القيمة المخزَّنة غير معروفة:</b> <span class="mono">' + U.esc(db.mode) + '</span> — ' +
+    } else if (!db.hasMode) {
+      h += U.notice('<b>صفّ النمط غير موجود</b> — قرأنا صفّ السرعة وحده من جدول ' +
+        '<span class="mono">settings</span>. الصفحة الرئيسة تعمل الآن بالنمط الابتدائي المبنيّ من ' +
+        '<span class="mono">partners.json → strip_mode</span> («شريط متصل»). ' +
+        'اختر نمطًا واحفظ لإنشاء الصفّ.');
+    } else if (!modeById(db.mode)) {
+      h += U.notice('<b>الصفّ موجود لكن قيمته لا يعرفها الموقع:</b> <span class="mono">' +
+        U.esc(db.mode === null ? 'null' : db.mode) + '</span> — ' +
         'صفحات الموقع تتجاهلها وتعود إلى «شريط متصل». اختر نمطًا صحيحًا واحفظ لتصحيح الصفّ.');
     }
 
-    /* ما يحدث فعلًا عند الحفظ — لا وعد بأكثر من ذلك */
-    h += U.notice('<b>ما يحدث عند الحفظ:</b> النمط يُخزَّن في جدول الإعدادات، وصفحات الموقع تقرؤه ' +
-      'مباشرةً من قاعدة البيانات عند العرض، فلا يحتاج إعادة بناء أو نشر. ' +
-      'الصفحة تحتفظ بنسخة محليّة من الإعدادات مدّة خمس دقائق، فيصل التغيير إلى الزائر ' +
-      'خلال خمس دقائق كحدّ أقصى — أو فورًا بتحديث قسري (Ctrl+Shift+R).', 'ok');
+    /* ما يحدث فعلًا عند الحفظ — مطابق لسلوك iaq-runtime.js، بلا وعد بأكثر منه */
+    h += U.notice('<b>ما يحدث عند الحفظ:</b> النمط يُخزَّن في جدول <span class="mono">settings</span>، ' +
+      'وطبقة التشغيل في صفحات الموقع تقرأ الإعدادات العلنية من قاعدة البيانات وتطبّق النمط ' +
+      'عند العرض — بلا إعادة بناء ولا نشر. ' +
+      'يراه الزائر في أوّل تحميل للصفحة الرئيسة بعد الحفظ؛ أمّا صفحة مفتوحة أمامه الآن فلا تتبدّل ' +
+      'من نفسها، لأنّ الطبقة تسأل الخدمة عند التحميل فقط ولا تستقصيها بعده. ' +
+      'وزائر عائد قد يلمح النمط السابق لجزء من الثانية (نسخة محليّة عمرها خمس دقائق تُطبَّق قبل ' +
+      'وصول الجواب) ثم يُصحَّح تلقائيًّا في التحميل نفسه.', 'ok');
 
-    var live = db.any && modeById(db.mode) ? modeById(db.mode) : null;
+    var live = modeById(db.mode);
     var meta = '<div class="prow"><span class="muted">النمط المخزَّن الآن:</span>' +
       '<b>' + U.esc(live ? live.name : 'غير محدّد') + '</b>' +
       (db.at ? '<span class="muted small">آخر تحديث ' + U.esc(F.date(db.at)) +
@@ -158,9 +191,18 @@
     return h;
   }
 
+  /* قراءة المنزلقة وقت الحاجة: متصفّحات قديمة لا تُطلق input على input[type=range]
+     بل change وحده، فلا نعتمد على الحدث لمعرفة القيمة الحالية. */
+  function readSpeedInput() {
+    var el = U.$('#partners-speed');
+    if (el) sel.speed = clamp(el.value);
+    return sel.speed;
+  }
+
   function repaint() {
     var m = U.$('#viewArea');
     if (!m) return;
+    readSpeedInput();                 // كي لا يُمحى ما سحبه المدير عند إعادة الرسم
     m.innerHTML = markup();
   }
 
@@ -187,19 +229,19 @@
   });
 
   IAQ.on('partnersUndo', function () {
+    var had = db.any && (modeById(db.mode) || db.speed != null);
     sel.mode = modeById(db.mode) ? db.mode : null;
     sel.speed = db.speed == null ? DEF_SPEED : clamp(db.speed);
-    repaint();
-    U.toast('أُعيدت القيم المخزَّنة');
+    var m = U.$('#viewArea');
+    if (m) m.innerHTML = markup();   // بلا readSpeedInput: التراجع يتخلّص من قيمة المنزلقة
+    U.toast(had ? 'أُعيدت القيم المخزَّنة' : 'لا شيء مخزَّن — أُعيدت القيم الابتدائية');
   });
 
   IAQ.on('partnersReload', function () { IAQ.go('partners'); });
 
   IAQ.on('partnersSave', function (btn) {
     if (!sel.mode) { U.toast('اختر أحد الأنماط الثلاثة أولًا', 'warn'); return; }
-    var el = U.$('#partners-speed');
-    if (el) sel.speed = clamp(el.value);
-    var sp = clamp(sel.speed);
+    var sp = clamp(readSpeedInput());
     var who = (IAQ.me && IAQ.me.email) || null;
 
     btn.disabled = true;
@@ -211,7 +253,7 @@
         throw new Error('لم تُرجع القاعدة أي صفّ — لم يُحفظ شيء. تأكّد من صلاحية الكتابة.');
       }
       IAQ.audit('settings.update', 'settings', K_MODE);
-      U.toast('حُفظ النمط — يصل الزائر خلال خمس دقائق كحدّ أقصى', 'ok');
+      U.toast('حُفظ النمط — يظهر للزائر عند أوّل تحميل للصفحة الرئيسة', 'ok');
       IAQ.go('partners');
     })['catch'](function (e) {
       btn.disabled = false;
@@ -219,8 +261,9 @@
     });
   });
 
-  /* مستمعان على مستوى المستند فقط — لا نربط شيئًا بعناصر نرسمها ثم نمحوها */
-  document.addEventListener('input', function (e) {
+  /* مستمعون على مستوى المستند فقط — لا نربط شيئًا بعناصر نرسمها ثم نمحوها.
+     input و change معًا: المتصفّحات القديمة تُطلق change وحده على المنزلقة. */
+  function onSpeed(e) {
     var t = e.target;
     if (!t || t.id !== 'partners-speed') return;
     sel.speed = clamp(t.value);
@@ -228,7 +271,9 @@
     if (v) v.textContent = sel.speed + ' ث';
     var d = U.$('#partners-dirty');
     if (d) d.textContent = dirtyText();
-  });
+  }
+  document.addEventListener('input', onSpeed);
+  document.addEventListener('change', onSpeed);
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
