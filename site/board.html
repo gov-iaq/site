@@ -1381,6 +1381,14 @@ var IAQ_PATH = (function () {
     reveal(cards.filter(function(c){return c.closest('.bd-lead');}));
     reveal(cards.filter(function(c){return c.closest('.bd-grid');}));
   }
+  /* إعادة الفهرسة بعد أن تُعيد طبقة التشغيل بناء البطاقات من قاعدة البيانات.
+     بدونها يظلّ المُراقِب مشيرًا إلى البطاقات القديمة المنفصلة، فلا تحصل
+     البطاقات الجديدة على is-in وتبقى شفّافة تمامًا. */
+  window.IAQ_REINDEX=window.IAQ_REINDEX||{};
+  window.IAQ_REINDEX.board=function(){
+    cards=[].slice.call(sec.querySelectorAll('.bd-card'));
+    run();
+  };
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(en){
       en.forEach(function(x){ if(x.isIntersecting){ run(); io.disconnect(); } });

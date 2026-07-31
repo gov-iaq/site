@@ -1324,6 +1324,14 @@ var IAQ_PATH = (function () {
       c.classList.add('is-in');
     });
   }
+  /* إعادة الفهرسة بعد أن تُعيد طبقة التشغيل بناء البطاقات من قاعدة البيانات.
+     بدونها يظلّ المُراقِب مشيرًا إلى البطاقات القديمة المنفصلة، فلا تحصل
+     البطاقات الجديدة على is-in وتبقى شفّافة تمامًا. */
+  window.IAQ_REINDEX=window.IAQ_REINDEX||{};
+  window.IAQ_REINDEX.team=function(){
+    cards=[].slice.call(sec.querySelectorAll('.tm-card'));
+    run();
+  };
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(en){
       en.forEach(function(x){ if(x.isIntersecting){ run(); io.disconnect(); } });
