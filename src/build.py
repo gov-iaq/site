@@ -36,6 +36,9 @@ DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 NLB = b"\n"
 
+# زخرفة مستهلّ القسم (خطّان ذهبيّان ونجمة رباعية) — تُحقن في كل قسم عبر {{ORN}}
+ORN_HTML = '<div class="divider reveal" aria-hidden="true"><span class="line r"></span><span class="glyph"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="3.4"/><path d="M16 3.5C19.5 9 19.5 23 16 28.5 12.5 23 12.5 9 16 3.5Z"/><path d="M3.5 16C9 12.5 23 12.5 28.5 16 23 19.5 9 19.5 3.5 16Z"/></svg></span><span class="line"></span></div>'
+
 def rb(path):
     with open(path, "rb") as f:
         return f.read()
@@ -730,6 +733,7 @@ def build(out_dir):
     amap = admin_map()
     cmap.update(files_map())
     # رموز عامة تصل الصفحات المولّدة والثابتة معًا
+    cmap[b"{{ORN}}"] = ORN_HTML.encode("utf-8")
     cmap[b"{{MQ_MODE}}"] = strip_mode().encode("utf-8")
     cmap[b"{{MQ_SETS}}"] = str(MQ_SETS).encode("utf-8")
 
