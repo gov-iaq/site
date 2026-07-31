@@ -96,8 +96,19 @@
       if (!withSym && (c.querySelector('.bd-sym') || c.querySelector('.tm-sym'))) withSym = c;
     });
     var phSel = kind === 'board' ? '.bd-ph' : '.tm-ph';
-    ctx.photoHTML = withImg ? (withImg.querySelector(phSel) || {}).innerHTML : null;
-    ctx.symbolHTML = withSym ? (withSym.querySelector(phSel) || {}).innerHTML : null;
+    var symSel = kind === 'board' ? '.bd-sym' : '.tm-sym';
+    if (withImg) ctx.photoHTML = (withImg.querySelector(phSel) || {}).innerHTML;
+    if (withSym) ctx.symbolHTML = (withSym.querySelector(phSel) || {}).innerHTML;
+    /* الحاوية الواحدة قد تخلو من أحد النوعين — نستعير القالب من بقيّة الصفحة،
+       وإلا ظهر عضوٌ بلا صورة في إطار فارغ بدل الأيقونة الرمزية. */
+    if (!ctx.photoHTML) {
+      var anyImg = document.querySelector(cardSel + ' ' + phSel + ' img');
+      if (anyImg && anyImg.parentNode) ctx.photoHTML = anyImg.parentNode.innerHTML;
+    }
+    if (!ctx.symbolHTML) {
+      var anySym = document.querySelector(cardSel + ' ' + phSel + ' ' + symSel);
+      if (anySym && anySym.parentNode) ctx.symbolHTML = anySym.parentNode.innerHTML;
+    }
 
     var anchor = olds[olds.length - 1].nextSibling;
     var parent = olds[0].parentNode;
