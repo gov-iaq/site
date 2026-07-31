@@ -116,6 +116,16 @@ on conflict (storage_path) do update set
   doc_date=excluded.doc_date, size_label=excluded.size_label, pages=excluded.pages;
 
 -- ----------------------------------------------------------------------
+--  إعلان أن القاعدة هي مصدر القوائم
+-- ----------------------------------------------------------------------
+-- بهذا الإعداد تُفرَّغ القائمة على الموقع فعلًا إذا أخفى المدير كل صفوفها،
+-- بدل أن يظهر المحذوف من البناء الثابت. لا تُشغّله قبل تحميل الصفوف أعلاه.
+insert into public.settings (key, value, label, is_public) values
+  ('lists_from_db', 'true'::jsonb,
+   'القوائم (الأعضاء والشركاء) مصدرها قاعدة البيانات لا ملفات البناء', true)
+on conflict (key) do update set value = excluded.value;
+
+-- ----------------------------------------------------------------------
 --  تحقّق
 -- ----------------------------------------------------------------------
 select 'people' as t, count(*) from public.people

@@ -179,6 +179,15 @@ def main():
         parts += block
         counts[key] = n
 
+    parts += section("إعلان أن القاعدة هي مصدر القوائم")
+    parts += [
+        "-- بهذا الإعداد تُفرَّغ القائمة على الموقع فعلًا إذا أخفى المدير كل صفوفها،",
+        "-- بدل أن يظهر المحذوف من البناء الثابت. لا تُشغّله قبل تحميل الصفوف أعلاه.",
+        "insert into public.settings (key, value, label, is_public) values",
+        "  ('lists_from_db', 'true'::jsonb,",
+        "   'القوائم (الأعضاء والشركاء) مصدرها قاعدة البيانات لا ملفات البناء', true)",
+        "on conflict (key) do update set value = excluded.value;",
+    ]
     parts += section("تحقّق")
     parts += [
         "select 'people' as t, count(*) from public.people",

@@ -1058,7 +1058,8 @@ var IAQ_PATH = (function () {
     if (!sec) return;
     return get('people?select=title,name,role,rank,cat,phone,email,photo,sort'
       + '&grp=eq.' + kind + '&status=eq.published&order=sort.asc,id.asc').then(function (rows) {
-        if (!rows || !rows.length) return;
+        if (!rows) return;                       // فشل قراءة → يبقى البناء الثابت
+        if (!rows.length) return emptyOut(kind); // فارغة عن قصد → تُفرَّغ القائمة
         var ctx = { catLabels: {} };
         // خذ تسميات التصنيف من البطاقات المبنيّة كي تبقى الصياغة واحدة
         [].slice.call(sec.querySelectorAll('.gm-card')).forEach(function (c) {
@@ -1087,6 +1088,27 @@ var IAQ_PATH = (function () {
   }
 
   /* ------------------------------ الشركاء ------------------------------ */
+  /* القائمة فارغة فعلًا: إخفاء كل ما بُني ثابتًا، وإلا ظلّ العضو المحذوف ظاهرًا.
+     لا يُفعَّل هذا إلا إذا أعلن المدير أن القاعدة هي مصدر القوائم (إعداد
+     lists_from_db)، وإلا لَفرّغَ الصفحات قبل تحميل المحتوى إلى القاعدة. */
+  function dbOwnsLists() {
+    return !!(IAQ.setting && IAQ.setting('lists_from_db') === true);
+  }
+  function emptyOut(kind) {
+    if (!dbOwnsLists()) return;
+    var secId = { assembly: 'memSec', board: 'boardSec', team: 'teamSec' }[kind];
+    var sec = document.getElementById(secId);
+    if (!sec) return;
+    var sel = { assembly: '.gm-card', board: '.bd-card', team: '.tm-card' }[kind];
+    var olds = [].slice.call(sec.querySelectorAll(sel));
+    if (!olds.length) return;
+    olds.forEach(function (c) { c.parentNode.removeChild(c); });
+    if (window.IAQ_REINDEX && window.IAQ_REINDEX[kind]) {
+      try { window.IAQ_REINDEX[kind](); } catch (e) { }
+    }
+    document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: kind, count: 0 } }));
+  }
+
   function logoSrc(logo) {
     var s = String(logo || '');
     if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/') return s;
@@ -1097,7 +1119,14 @@ var IAQ_PATH = (function () {
     if (!track) return;
     return get('partners?select=name,logo,url,sort&status=eq.published&order=sort.asc,id.asc')
       .then(function (rows) {
-        if (!rows || !rows.length) return;
+        if (!rows) return;
+        if (!rows.length) {
+          // لا شركاء منشورون: نُفرّغ الشريط بدل إظهار قائمة محذوفة
+          if (!dbOwnsLists()) return;
+          track.innerHTML = '';
+          document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'partners', count: 0 } }));
+          return;
+        }
         var sets = parseInt(getComputedStyle(track).getPropertyValue('--mq-sets'), 10);
         if (!isFinite(sets) || sets < 1 || sets > 8) sets = 4;
         var html = '';

@@ -2,24 +2,34 @@
    قائمة الشركاء — صفوف جدول public.partners: إضافة، تعديل، ترتيب، إخفاء، حذف،
    ورفع شعار إلى مستودع iaq-media.
 
-   حقائق تحقّقتُ منها من مصدر الموقع نفسه، والواجهة تقولها كما هي بلا مبالغة:
-   • شريط الشعارات في الصفحة الرئيسة يُبنى وقت التوليد لا وقت العرض:
-     src/build.py → render_partners() يقرأ src/data/partners.json ويكتب وسوم
-     الصور من مجلّد img/partners/ داخل الصفحة الثابتة.
-   • طبقة التشغيل src/templates/iaq-runtime.js تقرأ جدولين فقط:
-     settings (is_public) و content_overrides — ولا تقرأ جدول partners إطلاقًا.
-     فلا يوجد بناء حيّ للشريط من هذا الجدول اليوم، ولذلك لا نَعِد الزائرَ بشيء:
-     ما يُعدَّل هنا يبقى في القاعدة حتى يُحدَّث الملف ويُعاد البناء والنشر.
-   • شاشة «شريط الشركاء» (30-partners.js) تضبط نمط الحركة في جدول settings،
-     وذلك يُطبَّق حيًّا فعلًا — وهو شيء آخر لا يخصّ محتوى هذه القائمة.
+   حقائق تحقّقتُها من مصدر الموقع نفسه لا من الذاكرة، والواجهة تقولها كما هي:
+   • هذا الجدول يُقرأ حيًّا وقت العرض. الملف src/templates/iaq-lists.js — الذي
+     يحقنه build.py في كل صفحة داخل نفس وسم <script> مع iaq-runtime.js (انظر
+     runtime_script) — يطلب في الصفحة الرئيسة:
+       partners?select=name,logo,url,sort&status=eq.published&order=sort.asc,id.asc
+     ثم يُعيد بناء شعارات الشريط داخل العنصر #partnersTrack. فما يُحفظ هنا يصل
+     الزائر عند أوّل تحميل للصفحة الرئيسة، بلا إعادة بناء ولا نشر.
+   • حدود ذلك، وكلّها مذكورة في تنبيه الشاشة: «منشور» وحده يُقرأ علنًا؛ وإن رجع
+     الطلب بلا صفوف أو سقطت الشبكة بقي الشريط الثابت كما هو — الطبقة لا تُفرّغ
+     الشريط أبدًا؛ والعنصر #partnersTrack موجود في site/index.html وحدها.
+   • النسخة الثابتة تُبنى وقت التوليد من src/data/partners.json عبر build.py،
+     وهي ما يظهر قبل وصول الجواب. وهذه الشاشة لا تكتب في ذلك الملف، فالنسخة
+     الثابتة لا تتغيّر قبل تحديث الملف وإعادة البناء.
+   • شاشة «شريط الشركاء» (30-partners.js) تضبط نمط حركة الشريط في جدول settings
+     (والسرعة تُخزَّن هناك لكن صفحات الموقع لا تقرؤها بعد) — شأن آخر لا يخصّ
+     محتوى هذه القائمة.
    • مخطّط الجدول (schema-v3): logo و url من نوع text not null default ''،
-     فنُرسل نصًّا فارغًا لا null. و sort من نوع int not null default 100.
+     فنُرسل نصًّا فارغًا لا null. و sort من نوع int not null default 100،
+     و updated_by من نوع text يقبل الفراغ.
    • على العمود name فهرس فريد (partners_name_idx) → الاسم المكرّر يرجع 409.
    • مُطلِق partners_touch يحدّث updated_at عند كل تعديل، فلا نرسله من هنا.
    • القراءة الممنوعة بـRLS ترجع 200 ومصفوفة فارغة لا خطأً — نعرض «لا توجد
      بيانات» ولا نُسمّي غياب الصفوف عطلًا.
    • مستودع iaq-media علنيّ القراءة (schema-v2)، فرابط الشعار المرفوع منه يعمل
      فورًا بلا توقيع ولا صلاحية.
+   • الترتيب في الشريط وفي هذه الشاشة واحد: order by sort asc, id asc. ولذلك
+     لا يكفي تبديل قيمتَي جارين إن كانت في النافذة قيم متساوية — تفصيل ذلك في
+     تعليق قسم الترتيب أدناه.
    • الشاشة تُعاد بالكامل عند كل رسم، فلا مستمع على عنصر نرسمه: كل زرّ عبر
      data-act، وحقل الملف عبر مستمع واحد على المستند.
    ============================================================================ */
@@ -33,6 +43,7 @@
   var BUCKET = 'iaq-media';
   var DIR = 'img/partners/';          // المجلّد الذي تُحلّ فيه الأسماء المجرّدة
   var LIM = 200;
+  var STEP = 10;                      // خطوة القيم عند إعادة الترقيم
 
   var STATUS = [
     { v: 'published', t: 'منشور' },
@@ -52,7 +63,7 @@
   var editId = null;        // معرّف الشريك عند التعديل، أو null للإضافة
   var internal = false;     // هل جاء الرسم من تنقّل داخليّ لهذه الوحدة؟
   var busy = false;         // رفع جارٍ — نمنع رفعين متوازيين
-  var rows = [];            // آخر ما قُرئ فعلًا من القاعدة (يُستخدم في الترتيب)
+  var rows = [];            // آخر ما قُرئ فعلًا من القاعدة (للعرض ولأسماء الرسائل)
 
   /* ------------------------------- أيقونات ------------------------------- */
   var IC_LIST = '<rect x="3" y="4" width="7" height="7" rx="1.6"/>' +
@@ -87,6 +98,7 @@
   function msg(e) { return (e && e.message) ? e.message : 'فشل الإجراء'; }
   function boom(e) { U.toast(msg(e), 'err'); }
   function who() { return (IAQ.me && IAQ.me.email) || null; }
+  function nameOf(r) { return String((r && r.name) || ''); }
 
   function statusText(s) {
     for (var i = 0; i < STATUS.length; i++) if (STATUS[i].v === s) return STATUS[i].t;
@@ -119,9 +131,9 @@
     return MIME_EXT[String(f.type || '').toLowerCase()] || '';
   }
 
-  function idxOf(id) {
+  function idxIn(list, id) {
     var s = String(id);
-    for (var i = 0; i < rows.length; i++) if (String(rows[i].id) === s) return i;
+    for (var i = 0; i < list.length; i++) if (String(list[i].id) === s) return i;
     return -1;
   }
   /* قيمة ترتيب رقمية أو null. المخطّط يجعل sort not null default 100،
@@ -131,41 +143,67 @@
     var n = Number(r.sort);
     return isFinite(n) ? Math.round(n) : null;
   }
+  /* هل كل قيم الترتيب في النافذة موجودة ومتمايزة؟ إن كانت كذلك فالترتيب محسومٌ
+     بالقيمة وحدها، ويكفي تبديل قيمتَي جارين. */
+  function allDistinct(list) {
+    var seen = {}, i, v, k;
+    for (i = 0; i < list.length; i++) {
+      v = sortOf(list[i]);
+      if (v == null) return false;
+      k = 'k' + v;
+      if (seen[k]) return false;
+      seen[k] = 1;
+    }
+    return true;
+  }
 
   /* ------------------------- التنبيهات الإلزاميّة ------------------------- */
 
   /* مدى الوصول — مقروء من مصدر الموقع لا مُفترَض */
   function reachNotice() {
     return U.notice(
-      '<b>هذه القائمة تُغيّر قاعدة البيانات، ولا تُغيّر شريط الشركاء في الموقع بعد.</b><br>' +
-      'شريط شعارات «شركاء النجاح» في الصفحة الرئيسة يُبنى وقت التوليد من الملف ' +
+      '<b>ما تُغيّره هذه القائمة يظهر للزائر في شريط الصفحة الرئيسة عند أوّل تحميل لها — ' +
+      'بلا إعادة بناء ولا نشر.</b><br>' +
+      'شريط شعارات «شركاء النجاح» يُبنى ثابتًا وقت التوليد من ' +
       '<span class="mono">src/data/partners.json</span> عبر <span class="mono">build.py</span>، ' +
-      'وطبقة التشغيل في صفحات الموقع (<span class="mono">src/templates/iaq-runtime.js</span>) ' +
-      'تقرأ جدولَي <span class="mono">settings</span> و<span class="mono">content_overrides</span> ' +
-      'فقط — ولا تقرأ جدول <span class="mono">partners</span>. لذلك الإضافة والتعديل والإخفاء ' +
-      'وإعادة الترتيب والحذف هنا تُغيّر الصفوف وحدها، ولا يراها الزائر قبل تحديث الملف وإعادة ' +
-      'البناء والنشر. حين تُربط الطبقة بهذا الجدول سيصل التغيير عند أوّل تحميل صفحة بلا إعادة بناء.'
+      'لكن طبقة القوائم الحيّة المحقونة في صفحات الموقع ' +
+      '(<span class="mono">src/templates/iaq-lists.js</span>) تطلب في الصفحة الرئيسة ' +
+      '<span class="mono" dir="ltr">partners?select=name,logo,url,sort&amp;status=eq.published' +
+      '&amp;order=sort.asc,id.asc</span> وتُعيد بناء شعارات الشريط من هذه الصفوف. ' +
+      'فالإضافة والتعديل والنشر والإخفاء وإعادة الترتيب والحذف تصل الزائر بمجرّد تحميله ' +
+      'الصفحة الرئيسة من جديد.<br>' +
+      'وهذه حدودها الأربعة كما هي في المصدر: ' +
+      '<b>١)</b> «منشور» وحده يُقرأ علنًا — المسودّة والمخفي لا يراهما الزائر. ' +
+      '<b>٢)</b> إن لم يرجع أي صفّ منشور، أو تعذّر الطلب، بقي الشريط الثابت كما هو؛ ' +
+      'فإخفاء الشركاء جميعًا أو حذفهم لا يُفرّغ الشريط بل يُرجعه إلى محتوى الملف الثابت. ' +
+      '<b>٣)</b> الشريط موجود في الصفحة الرئيسة وحدها ' +
+      '(<span class="mono">#partnersTrack</span> في <span class="mono">index.html</span>). ' +
+      '<b>٤)</b> هذه الشاشة لا تكتب في <span class="mono">partners.json</span>، فالنسخة الثابتة — ' +
+      'وهي ما يُرى في أوّل جزء من الثانية قبل وصول الجواب — لا تتغيّر قبل تحديث الملف وإعادة البناء. ' +
+      'والصفحة المفتوحة أصلًا لا تتبدّل قبل إعادة تحميلها.'
     );
   }
 
   /* شكلا حقل الشعار — الشكلان مقبولان فعلًا، والفرق بينهما مذكور صريحًا */
   function logoNotice() {
     return U.notice(
-      '<b>حقل الشعار يقبل شكلين، وكلاهما يعمل:</b><br>' +
-      '١) <b>اسم ملف مجرّد</b> مثل <span class="mono">alrajhi-foundation.png</span> — يُحلّ على ' +
-      '<span class="mono">' + U.esc(DIR) + '</span>، ويجب أن يكون الملف موجودًا فعلًا في ' +
-      '<span class="mono">site/img/partners/</span> ضمن الموقع المنشور، وإلا فالمكان يظهر فارغًا.<br>' +
+      '<b>حقل الشعار يقبل شكلين، وكلاهما يعمل في الشريط الحيّ:</b><br>' +
+      '١) <b>اسم ملف مجرّد</b> مثل <span class="mono">alrajhi-foundation.png</span> — تكتبه الطبقة ' +
+      'الحيّة كما هو مسبوقًا بـ <span class="mono">' + U.esc(DIR) + '</span>، فيجب أن يكون الملف ' +
+      'موجودًا فعلًا في <span class="mono">site/img/partners/</span> ضمن الموقع المنشور، وإلا ظهر ' +
+      'مكان الشعار فارغًا. هذه الشاشة لا ترفع ملفًّا إلى مجلّد الموقع.<br>' +
       '٢) <b>رابط كامل</b> يبدأ بـ <span class="mono">https://</span> — مثل الرابط الذي يُنتجه الرفع ' +
-      'في نموذج الإضافة: الصورة تُخزَّن في مستودع <span class="mono">iaq-media</span> العلنيّ ' +
-      'ويُسجَّل صفّها في جدول <span class="mono">media</span>، فرابطها يعمل فورًا بلا إرفاق ملف ' +
-      'بالبناء — لكنه لا يظهر في الشريط قبل ما ذُكر في التنبيه أعلاه.'
+      'أدناه: الصورة تُخزَّن في مستودع <span class="mono">iaq-media</span> العلنيّ ويُسجَّل صفّها في ' +
+      'جدول <span class="mono">media</span>، فرابطها يعمل فورًا بلا إرفاق ملف بالبناء. ' +
+      'والشكلان معًا يظهران في النسخة الحيّة من الشريط؛ أمّا النسخة الثابتة المبنيّة من ' +
+      '<span class="mono">partners.json</span> فلا تعرف إلا ما في ذلك الملف.'
     );
   }
 
   /* السطر الوحيد الذي يشير إلى شاشة نمط الحركة — بلا تكرار لعملها */
   function stripLine() {
-    return '<p class="muted small">حركة الشريط نفسها (شريط متصل / تحريك يدوي / تبديل بالتلاشي) ' +
-      'وسرعته تُضبطان في شاشة «شريط الشركاء»، لا من هنا. ' +
+    return '<p class="muted small">نمط حركة الشريط (شريط متصل / تحريك يدوي / تبديل بالتلاشي) ' +
+      'يُضبط في شاشة «شريط الشركاء» لا من هنا — وهي تخصّ الحركة وحدها لا الشعارات. ' +
       '<button class="btn ghost sm" data-act="partnerlist-strip">افتح شريط الشركاء</button></p>';
   }
 
@@ -174,7 +212,7 @@
   function tile(r, i, n) {
     var pub = (r.status === 'published');
     var logo = String(r.logo == null ? '' : r.logo);
-    var nm = String(r.name == null ? '' : r.name);
+    var nm = nameOf(r);
 
     var img = logo
       ? '<img src="' + U.esc(logoSrc(logo)) + '" alt="' + U.esc(nm) + '" loading="lazy">'
@@ -182,8 +220,9 @@
 
     var acts = '';
     if (!pub) {
-      /* بطاقة غير منشورة: لا يقرؤها الزائر (سياسة القراءة العلنية status = published) */
-      acts += '<span class="chip" title="الحالة في القاعدة: ' + U.esc(statusText(r.status)) + '">مخفي</span>';
+      /* نُسمّي الحالة كما هي في القاعدة: «مسودّة» ليست «مخفي» */
+      acts += '<span class="chip" title="لا يقرؤها الزائر — القراءة العلنية للمنشور وحده">' +
+        U.esc(statusText(r.status)) + '</span>';
     }
     acts += U.iconBtn('partnerlist-edit', IC_EDIT, { id: r.id, sm: true, label: 'تعديل' });
     if (i > 0) {
@@ -228,11 +267,16 @@
         reachNotice() + logoNotice() + stripLine() +
         U.card('الشعارات (' + F.num(rows.length) + ')', body, foot) +
         '<p class="muted small">يُعرض حتى ' + F.num(LIM) + ' صفًّا مرتّبة بالعمود ' +
-        '<span class="mono">sort</span> تصاعديًّا ثم بالمعرّف. الأعداد المذكورة هي عدد الصفوف ' +
-        'المُحمَّلة فعليًا (' + F.num(rows.length) + ' صفًّا، منها ' + F.num(pubN) + ' بحالة «منشور») ' +
-        'لا العدد الكلّي في الجدول. الشركاء الجدد يأخذون <span class="mono">sort = 100</span> ' +
-        'من إعداد الجدول، فإن تشابهت قيم الترتيب بين صفوف فالأقدم معرّفًا يتقدّم؛ وتحريك أي بطاقة ' +
-        'يفرّق القيم تلقائيًّا.</p>';
+        '<span class="mono">sort</span> تصاعديًّا ثم بالمعرّف — وهو نفس ترتيب الشريط الحيّ في ' +
+        'الصفحة الرئيسة. الأعداد المذكورة هي عدد الصفوف المُحمَّلة فعليًا (' +
+        F.num(rows.length) + ' صفًّا، منها ' + F.num(pubN) + ' بحالة «منشور») لا العدد الكلّي ' +
+        'في الجدول. الشريك الجديد يأخذ <span class="mono">sort = 100</span> من إعداد الجدول، ' +
+        'فإن تشابهت قيم الترتيب بين صفوف فُكّ التشابه بالمعرّف الأقدم. وأسهم التقديم والتأخير ' +
+        'تبدّل قيمتَي الصفّ وجاره حين تكون كل القيم المقروءة موجودة ومتمايزة؛ وإن وُجد تشابه ' +
+        'أو قيمة فارغة فالتبديل وحده لا يكفي (التشابه يُفكّ بالمعرّف لا بالقيمة)، فتُكتب قيم ' +
+        'جديدة لأقلّ عدد ممكن من الصفوف حتى تصير القيم متمايزة — وإن زاد عددها على صفّين ' +
+        'سُئلتَ قبل الكتابة، ويُذكر بعدها عدد الصفوف التي كُتبت فعلًا. الكتابة متسلسلة، ' +
+        'وتُحسب على قراءة جديدة من القاعدة لا على المعروض، وتمسّ الصفوف المقروءة وحدها.</p>';
     });
   }
 
@@ -278,10 +322,11 @@
         '<input type="text" id="partnerlist-name" value="' + U.esc(r.name || '') +
         '" placeholder="مؤسسة … الخيرية">' +
         '<span class="muted small">مطلوب. وعلى هذا العمود فهرس فريد في القاعدة، ' +
-        'فاسم مستخدم في صفّ آخر يُرفض بتعارض ولا يُحفظ.</span></div>' +
+        'فاسم مستخدم في صفّ آخر يُرفض بتعارض ولا يُحفظ. والاسم يظهر للزائر في تلميح الشعار ' +
+        'وفي بديل الصورة.</span></div>' +
       '<div class="fld"><label for="partnerlist-status">الحالة</label>' +
         statusSelect(statusOk(r.status) ? r.status : 'published') +
-        '<span class="muted small">«منشور» وحده يقرؤه الزائر بسياسات الحماية؛ ' +
+        '<span class="muted small">«منشور» وحده يقرؤه الزائر في الشريط الحيّ؛ ' +
         '«مسودّة» و«مخفي» يبقيان للمدراء.</span></div>' +
       '</div>';
 
@@ -296,9 +341,11 @@
       '<div class="fld"><label for="partnerlist-url">رابط الشريك (اختياري)</label>' +
       '<input type="text" id="partnerlist-url" value="' + U.esc(r.url || '') +
       '" placeholder="https://example.org" dir="ltr">' +
-      '<span class="muted small">إن وُضع رابط جُعل الشعار على الموقع وصلة تُفتح في تبويب جديد ' +
+      '<span class="muted small">إن وُضع رابط جُعل الشعار في الشريط وصلة تُفتح في تبويب جديد ' +
       '(<span class="mono">target=_blank rel=noopener</span>)، وإن تُرك فارغًا عُرض الشعار ' +
-      'بلا وصلة.</span></div>';
+      'بلا وصلة. والطبقة الحيّة تضع هذه القيمة كما هي في خاصية ' +
+      '<span class="mono">href</span> على الصفحة الرئيسة، فلا نقبل إلا رابطًا يبدأ بـ ' +
+      '<span class="mono">https://</span> أو <span class="mono">http://</span>.</span></div>';
 
     var up = '<label class="upload big">' + SVG_UP +
         '<span>ارفع صورة شعار من جهازك</span>' +
@@ -366,6 +413,8 @@
 
   /* تنقّل داخليّ — نُعلم دالة الرسم أن الطلب منّا لا من الشريط الجانبي */
   function goSelf() { internal = true; IAQ.go(KEY); }
+  /* الرجوع إلى القائمة يُعيد القراءة من القاعدة، فما يُعرض بعد كل إجراء مقروء
+     من الجدول لا محسوب في المتصفّح */
   function backToList() { mode = 'list'; editId = null; goSelf(); }
 
   /* ------------------------------- التسجيل ------------------------------- */
@@ -431,16 +480,28 @@
       U.toast('حالة غير معروفة — أُلغي الحفظ', 'err');
       return;
     }
+    /* الطبقة الحيّة تضع قيمة url في خاصية href على الصفحة الرئيسة، فلا نمرّر
+       مخطّطًا آخر (مثل javascript:) إلى صفحة يراها الزائر. */
+    var link = trimmed('#partnerlist-url');
+    if (link && !/^https?:\/\//i.test(link)) {
+      inlineErr('رابط الشريك غير مقبول.',
+        'يجب أن يبدأ بـ https:// أو http://، أو يُترك فارغًا. ' +
+        'هذه القيمة تُوضع كما هي في وصلة الشعار على الصفحة الرئيسة، ' +
+        'فلا نقبل غير هذين المخطّطين. لم يُكتب شيء في قاعدة البيانات.');
+      U.toast('رابط الشريك يجب أن يبدأ بـ https:// أو http://', 'err');
+      return;
+    }
     inlineErr('', '');                       // نمحو خطأ محاولة سابقة
 
     /* logo و url من نوع text not null default '' — نُرسل نصًّا فارغًا لا null */
     var rec = {
       name: name,
       logo: trimmed('#partnerlist-logo'),
-      url: trimmed('#partnerlist-url'),
+      url: link,
       status: st,
       updated_by: who()
     };
+    var live = (st === 'published');
 
     if (n != null) {
       /* updated_at يضعه مُطلِق partners_touch — لا نرسله كي لا نكتب وقتًا من المتصفّح */
@@ -450,7 +511,9 @@
           return;
         }
         return IAQ.audit('partners.update', TBL, n).then(function () {
-          U.toast('حُفظت التعديلات في القاعدة — لا تظهر على الموقع قبل إعادة البناء');
+          U.toast(live
+            ? 'حُفظت التعديلات — وتظهر في شريط الصفحة الرئيسة عند أوّل تحميل لها'
+            : 'حُفظت التعديلات — والصفّ غير منشور فلا يراه الزائر');
           backToList();
         });
       }).catch(saveBoom);
@@ -465,7 +528,9 @@
         return;
       }
       return IAQ.audit('partners.create', TBL, nid).then(function () {
-        U.toast('أُضيف الشريك إلى القاعدة — لا يظهر على الموقع قبل إعادة البناء');
+        U.toast(live
+          ? 'أُضيف الشريك — ويظهر في شريط الصفحة الرئيسة عند أوّل تحميل لها'
+          : 'أُضيف الشريك — وحالته غير منشورة فلا يراه الزائر');
         backToList();
       });
     }).catch(saveBoom);
@@ -485,63 +550,121 @@
       return IAQ.audit(to === 'published' ? 'partners.publish' : 'partners.hide', TBL, n)
         .then(function () {
           U.toast(to === 'published'
-            ? 'صار الصفّ منشورًا في القاعدة'
-            : 'أُخفي الصفّ في القاعدة');
-          mode = 'list'; editId = null; goSelf();
+            ? 'صار الصفّ منشورًا — ويظهر في شريط الصفحة الرئيسة عند أوّل تحميل لها'
+            : 'أُخفي الصفّ — ويغيب عن الشريط عند أوّل تحميل، وإن لم يبقَ منشورٌ واحد عاد ' +
+              'الشريط إلى محتوى الملف الثابت');
+          backToList();
         });
     }).catch(boom);
   });
 
   /* -------------------------------- الترتيب --------------------------------
-     تبديل قيمتَي sort بين بطاقتين متجاورتين بتحديثين متسلسلين. وإذا تساوت
-     القيمتان فالتبديل الحرفيّ لا يغيّر شيئًا (الترتيب حينها بالمعرّف)، فنكتب
-     قيمة مفرّقة للصفّ المتحرّك وحده ونقول ذلك في التنبيه. */
+     الترتيب في الشريط الحيّ وفي هذه الشاشة واحد: order by sort asc, id asc.
+     ولذلك تبديل قيمتَي جارين لا يكون صحيحًا إلا إذا كانت كل القيم المُحمَّلة
+     موجودة ومتمايزة؛ فمع أي تساوٍ:
+       • التبديل الحرفيّ بين متساويين لا يغيّر شيئًا،
+       • وكتابة «قيمة الجار ± ١» تقفز بالبطاقة فوق كل الصفوف المتساوية معها
+         (بل فوق جار مختلف القيمة أيضًا)، وتُنشئ قيمًا مكرّرة تُفسد ما بعدها.
+     فالحلّ: إن كانت القيم متمايزة بدّلنا قيمتين فقط؛ وإلا سألنا المدير ثم
+     أعدنا ترقيم الصفوف المُحمَّلة بقيم متمايزة بخطوة STEP وفق الترتيب المطلوب.
+     كل الكتابات متسلسلة (كتابة واحدة في كل مرّة) فلا تتسابق، وإن انقطعت
+     أخبرنا بعدد ما كُتب فعلًا لا بعدد مُفترَض. ونقرأ الصفوف من القاعدة قبل
+     الحساب كي لا نحسب على نسخة قديمة عدّلها مديرٌ آخر. */
+
+  /* كتابة الخطّة صفًّا صفًّا — الوعد يُرجع عدد الصفوف التي كُتبت فعلًا */
+  function writeSeq(plan, w, k, ok) {
+    if (k >= plan.length) return Promise.resolve(ok);
+    var it = plan[k];
+    return A.update(TBL, it.id, { sort: it.sort, updated_by: w }).then(function (rs) {
+      if (!rs || !rs.length) {
+        throw new Error(stopMsg(ok, plan.length, it) +
+          ' لم يُحدَّث ذلك الصفّ — تحقّق من صلاحية الكتابة، ثم أعد القراءة من القاعدة.');
+      }
+      return writeSeq(plan, w, k + 1, ok + 1);
+    }, function (e) {
+      /* حتى الخطأ القادم من الخدمة يُنسب إلى موضعه: كم صفًّا كُتب قبله وأين توقّف */
+      var err = new Error(stopMsg(ok, plan.length, it) + ' ' + msg(e));
+      if (e && e.status) err.status = e.status;
+      throw err;
+    });
+  }
+  function stopMsg(ok, total, it) {
+    return (ok ? ('كُتب ' + F.num(ok) + ' من ' + F.num(total) + ' صفًّا')
+               : 'لم يُكتب أي صفّ') +
+      ' ثم توقّف الترتيب عند «' + F.cut(it.name || ('#' + it.id), 24) + '».';
+  }
+
+  function applyPlan(plan, anchorId, w) {
+    var total = plan.length;
+    return writeSeq(plan, w, 0, 0).then(function (done) {
+      IAQ.audit('partners.reorder', TBL, anchorId);
+      U.toast('تغيّر الترتيب في القاعدة (' + F.num(done) + ' من ' + F.num(total) +
+        ' صفًّا كُتبت) — ويظهر بترتيبه الجديد في شريط الصفحة الرئيسة عند أوّل تحميل لها');
+      backToList();
+    }, function (e) {
+      /* فشل جزئيّ: نُعيد القراءة كي يرى المدير ما استقرّ فعلًا، ثم نُظهر الخطأ */
+      backToList();
+      throw e;
+    });
+  }
+
   IAQ.on('partnerlist-move', function (btn) {
     var n = toInt(btn.getAttribute('data-id'));
     if (n == null) { U.toast('معرّف غير صالح', 'err'); return; }
     var dir = btn.getAttribute('data-arg') === 'up' ? -1 : 1;
-
-    var i = idxOf(n);
-    if (i < 0) {
-      U.toast('هذا الصفّ لم يعد في القائمة المعروضة — أعد القراءة من القاعدة.', 'warn');
-      return;
-    }
-    var j = i + dir;
-    if (j < 0 || j >= rows.length) {
-      U.toast(dir < 0 ? 'البطاقة في أوّل القائمة' : 'البطاقة في آخر القائمة', 'warn');
-      return;
-    }
-
-    var a = rows[i], b = rows[j];
-    var sa = sortOf(a), sb = sortOf(b);
-    var na, nb;
-    if (sa == null || sb == null || sa === sb) {
-      var base = (sb == null ? (sa == null ? 100 : sa) : sb);
-      na = base + dir;
-      nb = null;                             // الجار لا يحتاج كتابة
-    } else {
-      na = sb; nb = sa;                      // تبديل حقيقيّ للقيمتين
-    }
-
     var w = who();
-    A.update(TBL, a.id, { sort: na, updated_by: w }).then(function (r1) {
-      if (!r1 || !r1.length) {
-        throw new Error('لم يُحدَّث ترتيب «' + F.cut(String(a.name || ''), 30) +
-          '» — تحقّق من صلاحية الكتابة. لم يتغيّر شيء.');
+
+    A.select(TBL, 'select=id,name,sort&order=sort.asc,id.asc&limit=' + LIM).then(function (rs) {
+      var list = rs || [];
+      var i = idxIn(list, n);
+      if (i < 0) {
+        U.toast('هذا الصفّ لم يعد في الصفوف المقروءة — أعد القراءة من القاعدة.', 'warn');
+        return null;
       }
-      if (nb == null) return null;
-      return A.update(TBL, b.id, { sort: nb, updated_by: w }).then(function (r2) {
-        if (!r2 || !r2.length) {
-          throw new Error('تغيّرت قيمة ترتيب «' + F.cut(String(a.name || ''), 24) +
-            '» ولم تتغيّر قيمة «' + F.cut(String(b.name || ''), 24) +
-            '»، فالترتيب الآن قد لا يكون كما تتوقّع. أعد القراءة من القاعدة ثم أعد المحاولة.');
+      var j = i + dir;
+      if (j < 0 || j >= list.length) {
+        U.toast(dir < 0 ? 'البطاقة في أوّل القائمة المقروءة' : 'البطاقة في آخر القائمة المقروءة', 'warn');
+        return null;
+      }
+      var a = list[i], b = list[j], k, plan = [];
+
+      if (allDistinct(list)) {
+        plan.push({ id: a.id, name: nameOf(a), sort: sortOf(b) });
+        plan.push({ id: b.id, name: nameOf(b), sort: sortOf(a) });
+        return applyPlan(plan, a.id, w);
+      }
+
+      /* الترتيب المطلوب: نفس القائمة وقد تبادل الصفّان موضعيهما */
+      var ord = list.slice(0);
+      ord[i] = b; ord[j] = a;
+
+      /* نمشي على الترتيب المطلوب فنجعل القيم متزايدة تمامًا، محتفظين بكل قيمة
+         تصلح كما هي — فلا نكتب إلا أقلّ عدد ممكن من الصفوف. والقيم المتزايدة
+         تمامًا تجعل الترتيب صريحًا في العمود بلا اعتماد على فكّ التشابه بالمعرّف. */
+      var prev = null, v;
+      for (k = 0; k < ord.length; k++) {
+        v = sortOf(ord[k]);
+        if (v == null || (prev != null && v <= prev)) {
+          v = (prev == null) ? STEP : prev + 1;
+          plan.push({ id: ord[k].id, name: nameOf(ord[k]), sort: v });
         }
-        return r2;
+        prev = v;
+      }
+      if (!plan.length) {
+        U.toast('لا شيء يُكتب — ترتيب القاعدة مطابق للمطلوب أصلًا.', 'warn');
+        return null;
+      }
+      /* كتابة صفّين أو أقلّ تمضي مباشرة؛ وما زاد على ذلك يُسأل عنه أوّلًا كي لا
+         يُفاجَأ المدير بكتابة في صفوف لم يلمسها */
+      if (plan.length <= 2) return applyPlan(plan, a.id, w);
+      return U.ask('قيم الترتيب في هذه القائمة متساوية أو ناقصة، فتحريك بطاقة واحدة يقتضي ' +
+        'كتابة قيمة ترتيب جديدة في ' + F.num(plan.length) + ' صفًّا من ' + F.num(list.length) +
+        ' صفًّا مقروءًا، واحدًا تلو الآخر، حتى تصير القيم متمايزة ويصير الترتيب صريحًا. ' +
+        'هذا يغيّر العمود sort في تلك الصفوف ولا يمسّ بياناتها الأخرى. أتابع؟',
+        'اكتب الترتيب').then(function (okAsk) {
+        if (!okAsk) return null;
+        return applyPlan(plan, a.id, w);
       });
-    }).then(function () {
-      IAQ.audit('partners.reorder', TBL, a.id);
-      U.toast('تغيّر الترتيب في القاعدة — لا يظهر على الموقع قبل إعادة البناء');
-      mode = 'list'; editId = null; goSelf();
     }).catch(boom);
   });
 
@@ -550,12 +673,13 @@
   IAQ.on('partnerlist-del', function (btn) {
     var n = toInt(btn.getAttribute('data-id'));
     if (n == null) { U.toast('معرّف غير صالح', 'err'); return; }
-    var i = idxOf(n);
-    var nm = i >= 0 ? String(rows[i].name || '') : '';
+    var i = idxIn(rows, n);
+    var nm = i >= 0 ? nameOf(rows[i]) : '';
 
     U.ask('سيُحذف الشريك ' + (nm ? '«' + F.cut(nm, 40) + '» ' : '') +
-      'من قاعدة البيانات نهائيًا. أمّا صورة الشعار في المستودع — إن كانت مرفوعة هنا — ' +
-      'فلا تُحذف معه، وتبقى في مكتبة الوسائط. هل تريد المتابعة؟', 'حذف').then(function (ok) {
+      'من قاعدة البيانات نهائيًا، ويغيب عن شريط الصفحة الرئيسة عند أوّل تحميل لها. ' +
+      'أمّا صورة الشعار في المستودع — إن كانت مرفوعة هنا — فلا تُحذف معه وتبقى في ' +
+      'مكتبة الوسائط. هل تريد المتابعة؟', 'حذف').then(function (ok) {
       if (!ok) return null;
       return A.remove(TBL, n).then(function (rs) {
         if (!rs || !rs.length) {
@@ -563,8 +687,9 @@
           return;
         }
         return IAQ.audit('partners.delete', TBL, n).then(function () {
-          U.toast('تم الحذف من القاعدة — يبقى الشعار في الموقع قبل إعادة البناء');
-          mode = 'list'; editId = null; goSelf();
+          U.toast('حُذف الصفّ من القاعدة — ويغيب عن الشريط عند أوّل تحميل للصفحة الرئيسة، ' +
+            'وإن لم يبقَ شريك منشور عاد الشريط إلى محتوى الملف الثابت');
+          backToList();
         });
       });
     }).catch(boom);
@@ -576,7 +701,11 @@
   function startUpload(input) {
     var f = (input.files && input.files.length) ? input.files[0] : null;
     if (!f) return;
-    if (busy) { U.toast('هناك رفع جارٍ — انتظر انتهاءه', 'warn'); return; }
+    if (busy) {
+      U.toast('هناك رفع جارٍ — انتظر انتهاءه ثم اختر الملف من جديد', 'warn');
+      try { input.value = ''; } catch (eb) { }
+      return;
+    }
 
     var ext = extOf(f);
     if (!ext) {
