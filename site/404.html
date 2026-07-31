@@ -196,9 +196,10 @@ section[id]{scroll-margin-top:92px}
 .testi-role{font-size:.87rem;color:var(--muted)}
 .partners{background:var(--news-bg)}
 .marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
-.marquee-track{display:flex;gap:22px;width:max-content;animation:marquee 34s linear infinite}
+.marquee-track{--mq-sets:4;display:flex;width:max-content;animation:marquee 34s linear infinite}
+.marquee-track .mq-set{display:flex;gap:22px;padding-inline-end:22px}
 .marquee:hover .marquee-track{animation-play-state:paused}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes marquee{from{transform:translateX(calc(100% / var(--mq-sets)))}to{transform:translateX(0)}}
 .partner{flex:none;width:190px;height:104px;border:1px solid var(--card-bd);border-radius:var(--card-radius);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--surface);color:var(--muted);filter:grayscale(1);opacity:.72;transition:all .35s}
 .partner:hover{filter:grayscale(0);opacity:1;color:var(--teal);border-color:var(--teal);transform:translateY(-4px)}
 .partner svg{width:34px;height:34px}
@@ -245,8 +246,8 @@ section[id]{scroll-margin-top:92px}
  .hero-container{grid-template-columns:1fr !important}
 }
 @media (max-width:900px){
- .nav-menu{position:fixed;inset-block-start:0;inset-inline-end:0;height:100vh;width:min(340px,86vw);background:var(--surface);flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;padding:92px 18px 32px;box-shadow:-8px 0 40px rgba(6,63,54,.14);transform:translateX(100%);transition:transform .35s var(--ease);z-index:1001;overflow-y:auto}
- .nav-menu.open{transform:translateX(0)}
+ .nav-menu{position:fixed;inset-block-start:0;inset-inline-end:0;height:100vh;height:100dvh;width:min(340px,86vw);background:var(--surface);flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;padding:92px 18px 32px;box-shadow:8px 0 40px rgba(6,63,54,.14);transform:translateX(-100%);visibility:hidden;pointer-events:none;transition:transform .35s var(--ease),visibility .35s var(--ease);z-index:1001;overflow-y:auto;overscroll-behavior:contain}
+ .nav-menu.open{transform:translateX(0);visibility:visible;pointer-events:auto}
  .nav-item{display:block;width:100%}
  .nav-link{width:100%;justify-content:space-between;padding:14px 16px;border-radius:10px;font-size:16px;color:var(--ink)}
  .nav-link::after{display:none}
@@ -256,16 +257,17 @@ section[id]{scroll-margin-top:92px}
  .dropdown-inner{border:none;box-shadow:none;background:transparent;padding:0 8px 8px;gap:0}
  .dropdown-inner a{padding:12px 20px;color:var(--body)}
  .nav-toggle{display:flex}
+ .site-header{z-index:1002}
  .nav-cta{display:none}
 }
 @media (max-width:640px){
  :root{--section-pad:66px}
- .hero{min-height:auto;padding:120px 0 76px}
+ .hero{min-height:auto;padding:118px 0 112px}
  .about-grid,.programs-grid,.testi-grid{grid-template-columns:1fr}
  .stats-grid{grid-template-columns:repeat(2,1fr)}
  .stat{border-inline-end:none;border-block-end:1px solid var(--stats-line);padding-block-end:22px}
  .footer-top{grid-template-columns:1fr;gap:40px}
- .hero-controls{inset-inline-start:50%;transform:translateX(50%);flex-direction:column;gap:14px;align-items:center}
+ .hero-controls{inset-inline-start:50%;inset-block-end:30px;transform:translateX(50%);flex-direction:row;gap:16px;align-items:center}
  .newsletter-form{flex-direction:column}.newsletter-form button{width:100%;justify-content:center}
  .news-card{flex-basis:280px}
 }
@@ -430,7 +432,8 @@ section[id]{scroll-margin-top:92px}
 .scale{display:flex;gap:8px;flex-wrap:wrap}
 .scale label{flex:1;min-width:64px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:12px 8px;cursor:pointer;font-size:14px;color:var(--body);transition:all .2s}
 .scale label:hover{border-color:var(--teal);color:var(--teal)}
-.scale input{position:absolute;opacity:0;pointer-events:none}
+.scale input{position:absolute;width:1px;height:1px;padding:0;margin:0;border:0;opacity:0;pointer-events:none;clip-path:inset(50%)}
+.scale input:focus-visible+span{outline:2px solid var(--teal);outline-offset:4px;border-radius:4px}
 .scale input:checked+span{color:#fff}
 .scale label:has(input:checked){background:var(--teal);border-color:var(--teal);color:#fff}
 

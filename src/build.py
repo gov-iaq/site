@@ -382,8 +382,14 @@ def files_map():
         out[marker] = _file_rows(cats.get(key, [])).encode("utf-8")
     return out
 
+MQ_SETS = 4   # يجب أن يطابق --mq-sets في head.html
+
 def render_partners():
-    """شعارات الشركاء في مجموعتين متطابقتين تمامًا لتمرير متصل بلا قفزة."""
+    """شعارات الشركاء في مجموعات متطابقة تمامًا لتمرير متصل بلا قفزة ولا فراغ.
+
+    الإزاحة في الأنيميشن = مجموعة واحدة بالضبط، فتكفي المجموعات الباقية
+    (MQ_SETS-1) لتغطية أعرض شاشة: 3 × 1700px تقريبًا.
+    """
     if not os.path.exists(PARTNERS_J):
         return b""
     with io.open(PARTNERS_J, encoding="utf-8") as f:
@@ -403,7 +409,8 @@ def render_partners():
         return '<div class="plogo"%s>%s</div>' % (attrs, inner)
 
     sets = []
-    for dup in (False, True):
+    for i in range(MQ_SETS):
+        dup = i > 0
         sets.append('<div class="mq-set"%s>%s</div>'
                     % (' aria-hidden="true"' if dup else '',
                        "".join(one(p, dup) for p in items)))
