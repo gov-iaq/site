@@ -256,6 +256,23 @@
   var fils=[].slice.call(section.querySelectorAll('.gm-fil'));
   var cards=[].slice.call(grid.querySelectorAll('.gm-card'));
   var total=cards.length;
+  /* إعادة الفهرسة بعد أن تُعيد طبقة التشغيل بناء البطاقات من قاعدة البيانات */
+  window.IAQ_REINDEX=window.IAQ_REINDEX||{};
+  window.IAQ_REINDEX.assembly=function(){
+    cards=[].slice.call(grid.querySelectorAll('.gm-card'));
+    total=cards.length;
+    cards.forEach(function(c){ c.dataset.key=norm(c.getAttribute('data-name')); });
+    /* العدّادات الثلاثة: الإجمالي ثم المؤسسون ثم العاملون */
+    var st=section.querySelectorAll(".gm-stat b[data-count-to]");
+    var nF=cards.filter(function(c){return c.getAttribute("data-cat")==="founder";}).length;
+    var nW=cards.filter(function(c){return c.getAttribute("data-cat")==="working";}).length;
+    var vals=[total,nF,nW];
+    for(var i=0;i<st.length&&i<3;i++){
+      st[i].setAttribute("data-count-to",String(vals[i]));
+      st[i].textContent=String(vals[i]);
+    }
+    render();
+  };
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var rtl=(getComputedStyle(document.documentElement).direction==='rtl');
   var state={cat:'all',q:''};

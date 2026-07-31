@@ -583,7 +583,10 @@ def runtime_script(slug):
     cfg = json.dumps(supa_cfg(), ensure_ascii=False).encode("utf-8")
     head = (b"var IAQ_SUPA=" + cfg + b",IAQ_SLUG=" +
             json.dumps(slug, ensure_ascii=False).encode("utf-8") + b";\n")
-    return b"<script>\n" + head + path_algo() + b"\n" + rb(body) + b"</script>\n"
+    lists = os.path.join(TEMPLATES, "iaq-lists.js")
+    extra = rb(lists) if os.path.exists(lists) else b""
+    return (b"<script>\n" + head + path_algo() + b"\n" + rb(body)
+            + b"\n" + extra + b"</script>\n")
 
 STRIP_MODES = ("auto", "manual", "fade")
 

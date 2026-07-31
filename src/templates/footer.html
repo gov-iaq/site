@@ -168,6 +168,11 @@
     document.addEventListener('iaq:settings',function(){
       apply((window.IAQ&&IAQ.setting&&IAQ.setting('partners_strip_mode'))||'auto');
     });
+    // أُعيد بناء الشعارات من قاعدة البيانات: نُعيد التهيئة على المحتوى الجديد
+    document.addEventListener('iaq:lists',function(e){
+      if(!e.detail||e.detail.kind!=='partners')return;
+      var m=cur; cur=null; apply(m||'auto');
+    });
   })(mqEl);}
 
   // counters + reveal
