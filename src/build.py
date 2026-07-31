@@ -35,6 +35,7 @@ SUPA_J    = os.path.join(HERE, "data", "supabase.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
 
 NLB = b"\n"
+NLS = "\n"
 
 # زخرفة مستهلّ القسم (خطّان ذهبيّان ونجمة رباعية) — تُحقن في كل قسم عبر {{ORN}}
 ORN_HTML = '<div class="divider reveal" aria-hidden="true"><span class="line r"></span><span class="glyph"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="3.4"/><path d="M16 3.5C19.5 9 19.5 23 16 28.5 12.5 23 12.5 9 16 3.5Z"/><path d="M3.5 16C9 12.5 23 12.5 28.5 16 23 19.5 9 19.5 3.5 16Z"/></svg></span><span class="line"></span></div>'
@@ -671,18 +672,45 @@ def check_tokens(name, data):
 PANEL     = os.path.join(HERE, "panel")
 PANEL_MODS= os.path.join(PANEL, "modules")
 
-def panel_map():
-    """أجزاء لوحة التحكّم: التنسيق + النواة + الوحدات مرتّبة باسم الملف."""
-    style = rb(os.path.join(PANEL, "panel.css")) if os.path.exists(os.path.join(PANEL, "panel.css")) else b""
-    core  = rb(os.path.join(PANEL, "core.js"))  if os.path.exists(os.path.join(PANEL, "core.js"))  else b""
-    mods = []
-    if os.path.isdir(PANEL_MODS):
-        for name in sorted(os.listdir(PANEL_MODS)):
-            if name.endswith(".js"):
-                mods.append(b"/* ===== " + name.encode("utf-8") + b" ===== */" + NLB + rb(os.path.join(PANEL_MODS, name)))
-    return {b"{{PANEL_STYLE}}": style,
-            b"{{PANEL_CORE}}":  core,
-            b"{{PANEL_MODULES}}": NLB.join(mods)}
+def panel_real():
+    """بيانات الموقع المعروفة وقت البناء — تُحقن جاهزة في اللوحة بلا انتظار شبكة."""
+    real = {}
+    if os.path.exists(CONTACT_F):
+        with io.open(CONTACT_F, encoding="utf-8") as f:
+            c = json.load(f)
+        s = c.get("socials", {})
+        real["settings"] = {
+            "address": c.get("address_line", ""), "phone": c.get("phone_display", ""),
+            "email": c.get("email", ""), "reg": c.get("license_no", ""),
+            "social": {"x": s.get("x", ""), "instagram": s.get("instagram", ""),
+                       "linkedin": s.get("linkedin", ""), "youtube": s.get("youtube", ""),
+                       "whatsapp": s.get("whatsapp", "")},
+        }
+        real["social"] = real["settings"]["social"]
+    real["brand"] = {"ar": "حاضنة الجمعيات",
+                     "en": "ASSOCIATION INCUBATOR"}
+    with io.open(DATA, encoding="utf-8") as f:
+        pages = json.load(f)["pages"]
+    real["pages"] = [{"id": "p" + pg["slug"], "title": pg["title"].split("|")[-1].strip(),
+                      "slug": pg["slug"], "type": "محتوى",
+                      "status": "منشورة"} for pg in pages]
+    real["seoTitle"] = pages[0]["title"].split("|")[0].strip() if pages else ""
+    # أقسام الرئيسية الفعلية بعنوانها ووصفها كما هي في المصدر
+    idx = os.path.join(CONTENT, "index.main.html")
+    if os.path.exists(idx):
+        html = rb(idx).decode("utf-8")
+        secs = []
+        for m in re.finditer(rb'id="([a-z]+)"', html.encode("utf-8")):
+            pass
+        pat = re.compile(r'<section[^>]*id="([a-z]+)"[^>]*>.*?'
+                         r'<span class="eyebrow">([^<]*)</span><h2>([^<]*)</h2>(?:<p>([^<]*)</p>)?', re.S)
+        for m in pat.finditer(html):
+            secs.append({"id": "s" + m.group(1), "key": m.group(1), "name": m.group(2).strip(),
+                         "visible": True, "editable": True,
+                         "title": m.group(3).strip(), "subtitle": (m.group(4) or "").strip()})
+        if secs:
+            real["sections"] = secs
+    return real
 
 def panel_name():
     """اسم ملف اللوحة مشتقّ من رابط الدخول في contact.json."""
@@ -693,21 +721,88 @@ def panel_name():
     return login.replace(".html", "-panel.html")
 
 def build_panel(out_dir, cmap, amap):
-    """يجمع صفحة اللوحة من src/panel ويكتبها في المخرج. يرجع اسم الملف."""
-    shell = os.path.join(PANEL, "shell.html")
-    if not os.path.exists(shell):
+    """يبني صفحة اللوحة من تصميم المدير كما هو، مع استبدال طبقة التخزين وحدها.
+
+    أربع عمليات دقيقة على الملف الأصلي، ولا شيء غيرها:
+      1) بوّابة الجلسة وإعداد الاتصال في <head>.
+      2) تغليف السكربت الرئيسي في دالّة تُنادى بعد وصول البيانات.
+      3) load()  يقرأ من الجسر بدل الذاكرة المحلية.
+      4) save()  يكتب في القاعدة بدل الذاكرة المحلية.
+    """
+    src = os.path.join(PANEL, "design.html")
+    if not os.path.exists(src):
         return None
-    page = rb(shell)
-    for k, v in panel_map().items():
-        page = page.replace(k, v)
+    page = rb(src).decode("utf-8")
+    n0 = len(page)
+
+    supa = json.dumps(supa_cfg(), ensure_ascii=False)
+    login = "iaq-cp-9f4b21.html"
+    if os.path.exists(CONTACT_F):
+        with io.open(CONTACT_F, encoding="utf-8") as f:
+            login = json.load(f).get("admin_login_url") or login
+
+    gate = (
+        '<meta name="robots" content="noindex, nofollow, noarchive" />' + NLS +
+        '<script>' + NLS +
+        '(function(){var LOGIN=' + json.dumps(login) + ';var s=null;' + NLS +
+        'try{s=JSON.parse(sessionStorage.getItem("iaq_session")||"null");}catch(e){}' + NLS +
+        'if(!s||!s.access_token||!(s.expires_at*1000>Date.now()+5000)){' + NLS +
+        'try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);return;}' + NLS +
+        'window.IAQ_SESSION=s;window.IAQ_SUPABASE=' + supa + ';window.IAQ_LOGIN=LOGIN;' + NLS +
+        'window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{method:"POST",' + NLS +
+        'headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}' + NLS +
+        'try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();' + NLS +
+        'window.IAQ_REAL=' + json.dumps(panel_real(), ensure_ascii=False) + ';' + NLS +
+        '</script>' + NLS)
+
+    steps = []
+    # 1) البوّابة بعد العنوان (فريد، بخلاف </head>)
+    a = "</title>"
+    assert page.count(a) == 1, "title anchor"
+    page = page.replace(a, a + NLS + gate, 1); steps.append("gate")
+
+    # 2) تغليف السكربت الرئيسي
+    a = '(function(){' + NLS + '"use strict";'
+    assert page.count(a) == 1, "iife open"
+    page = page.replace(a, 'window.IAQ_PANEL_MAIN=function(){' + NLS + '"use strict";', 1)
+    a = "renderSidebar();switchView('dashboard');" + NLS + "})();"
+    assert page.count(a) == 1, "iife close"
+    page = page.replace(a, "renderSidebar();switchView('dashboard');" + NLS + "};", 1)
+    steps.append("wrap")
+
+    # 3) و4) طبقة التخزين
+    a = ("function load(){try{var s=localStorage.getItem('aiSiteConfigV2');"
+         "return s?JSON.parse(s):null;}catch(e){return null;}}")
+    assert page.count(a) == 1, "load fn"
+    page = page.replace(a,
+        "function load(){var d=defaults();var i=window.IAQ_CFG_IN;if(!i)return d;"
+        "for(var k in i){if(i.hasOwnProperty(k))d[k]=i[k];}return d;}", 1)
+    steps.append("load")
+
+    a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"
+    assert page.count(a) == 1, "save fn"
+    page = page.replace(a, "function save(){if(window.IAQ_CFG_SAVE)window.IAQ_CFG_SAVE(config);}", 1)
+    steps.append("save")
+
+    # الجسر بعد السكربت الرئيسي
+    adapter = os.path.join(PANEL, "adapter.js")
+    bridge = rb(adapter).decode("utf-8") if os.path.exists(adapter) else ""
+    # </body> يتكرّر: الأول داخل نصّ جافاسكربت لمعاينة الأكواد. نرسو على الذيل.
+    a = "</script>" + NLS + "</body>"
+    assert page.count(a) == 1, "body close"
+    page = page.replace(a, "</script>" + NLS + "<script>" + NLS + bridge + "</script>" + NLS + "</body>", 1)
+    steps.append("bridge")
+
+    data = page.encode("utf-8")
     for k, v in cmap.items():
-        page = page.replace(k, v)
+        data = data.replace(k, v)
     for k, v in amap.items():
-        page = page.replace(k, v)
+        data = data.replace(k, v)
     name = panel_name()
-    check_tokens(name, page)
+    check_tokens(name, data)
     with open(os.path.join(out_dir, name), "wb") as f:
-        f.write(page)
+        f.write(data)
+    print("لوحة التحكّم: %s (%d من %d بايت) — %s" % (name, len(data), n0, "، ".join(steps)))
     return name
 
 def build(out_dir):
