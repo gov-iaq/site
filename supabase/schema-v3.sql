@@ -29,8 +29,13 @@ create table if not exists public.people (
 );
 
 create index if not exists people_grp_idx on public.people (grp, sort, id);
--- مفتاح طبيعي يمنع التكرار عند إعادة تشغيل ملف التحميل
-create unique index if not exists people_natural_idx on public.people (grp, name);
+
+-- مفتاح ملف التحميل: يسمح بتكرار الاسم (شخصان مختلفان قد يتشابه اسمهما
+-- تمامًا، وهذا واقع في قائمة الجمعية العمومية) ويُبقي التحميل غير مُكرِّر.
+-- يبقى فارغًا لكل صفّ يُضاف من اللوحة، والفراغات لا تتعارض في فهرس فريد.
+alter table public.people add column if not exists seed_key text;
+drop index if exists public.people_natural_idx;
+create unique index if not exists people_seed_idx on public.people (seed_key);
 
 alter table public.people enable row level security;
 
@@ -93,5 +98,6 @@ create trigger partners_touch before update on public.partners
 -- ============================================================================
 --  تحقّق بعد التشغيل:
 --    select grp, count(*) from public.people group by grp;
+--    select name, count(*) from public.people where grp='assembly' group by name having count(*)>1;
 --    select count(*) from public.partners;
 -- ============================================================================

@@ -75,13 +75,13 @@ section[id]{scroll-margin-top:92px}
 .brand-en{font-size:11px;color:var(--gold-600);letter-spacing:1px;font-weight:500}
 .nav-menu{display:flex;align-items:center;gap:2px}
 .nav-item{position:relative;display:flex;align-items:center}
-.nav-link{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:8px;font-family:var(--font-body);font-size:15px;font-weight:500;line-height:1.6;color:var(--nav-ink);background:none;border:none;cursor:pointer;transition:color .2s,background .2s}
+.nav-link{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 11px;white-space:nowrap;border-radius:8px;font-family:var(--font-body);font-size:15px;font-weight:500;line-height:1.6;color:var(--nav-ink);background:none;border:none;cursor:pointer;transition:color .2s,background .2s}
 .nav-link .chev{width:13px;height:13px;color:var(--gold-600);transition:transform .28s var(--ease)}
 /* أيقونة دالّة لكل عنصر قائمة — ذهبية هادئة تتحوّل إلى لون الهوية عند التفاعل */
-.nav-link .nav-ic{width:17px;height:17px;flex:none;color:var(--gold-600);opacity:.92;transition:color .25s var(--ease),opacity .25s var(--ease),transform .25s var(--ease)}
+.nav-link .nav-ic{width:16px;height:16px;flex:none;color:var(--gold-600);opacity:.92;transition:color .25s var(--ease),opacity .25s var(--ease),transform .25s var(--ease)}
 .nav-link:hover .nav-ic,.nav-link:focus-visible .nav-ic{color:var(--nav-hover);opacity:1;transform:scale(1.08)}
 .nav-link.active .nav-ic{color:var(--teal);opacity:1}
-.nav-link::after{content:"";position:absolute;inset-block-end:4px;inset-inline:13px;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .28s;border-radius:2px}
+.nav-link::after{content:"";position:absolute;inset-block-end:4px;inset-inline:11px;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .28s;border-radius:2px}
 .nav-link:hover{color:var(--nav-hover)}
 .nav-link:hover::after{transform:scaleX(1)}
 .nav-item.has-dropdown:hover .chev,.nav-item.has-dropdown:focus-within .chev,.nav-item.open .chev{transform:rotate(180deg)}
@@ -305,6 +305,20 @@ section[id]{scroll-margin-top:92px}
 .reveal{opacity:0;transform:translateY(34px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .reveal.in-view{opacity:1;transform:none}
 .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}.reveal.d5{transition-delay:.40s}
+/* بين 900 و1200 تضيق الترويسة، فنُقلّص الحشوة والأيقونة تدريجيًّا كي يبقى
+   كل عنوان في سطر واحد بلا التفاف ولا خروج عن الحدّ. */
+@media (max-width:1180px){
+ .nav-link{padding:9px 8px;font-size:14.5px}
+ .nav-link::after{inset-inline:8px}
+ .nav-link .nav-ic{width:15px;height:15px}
+ .nav-link{gap:5px}
+}
+@media (max-width:1030px){
+ .nav-menu{gap:0}
+ .nav-link{padding:9px 6px;font-size:14px}
+ .nav-link::after{inset-inline:6px}
+ .nav-link .nav-ic{display:none}      /* الأيقونات تبقى في المنسدلة */
+}
 @media (max-width:1024px){
  .about-grid,.programs-grid,.testi-grid{grid-template-columns:repeat(2,1fr)}
  .stats-grid{grid-template-columns:repeat(3,1fr);gap:34px 16px}

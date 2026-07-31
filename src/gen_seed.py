@@ -75,16 +75,31 @@ def gen_people():
                          m.get("rank", "member") if m.get("rank") in ("chair", "vice", "lead") else "member",
                          "", m.get("phone", ""), m.get("email", ""), m.get("photo", ""), (i + 1) * 10))
 
-    out.append("insert into public.people (grp,title,name,role,rank,cat,phone,email,photo,sort) values")
+    # مفتاح تحميل مستقلّ: الاسم قد يتكرّر لشخصين مختلفين تمامًا (وهو واقع في
+    # قائمة الجمعية العمومية)، فلا يصلح (grp,name) مفتاحًا. نُرقّم التكرار.
+    seen = {}
+    out.append("insert into public.people (seed_key,grp,title,name,role,rank,cat,phone,email,photo,sort) values")
     vals = []
     for r in rows:
-        vals.append("  (%s,%s,%s,%s,%s,%s,%s,%s,%s,%d)" % (
+        base = r[0] + "|" + r[2]
+        i = seen.get(base, 0)
+        seen[base] = i + 1
+        vals.append("  (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d)" % (
+            q(base + "|" + str(i)),
             q(r[0]), q(r[1]), q(r[2]), q(r[3]), q(r[4]), q(r[5]), q(r[6]), q(r[7]), q(r[8]), r[9]))
     out.append(",\n".join(vals))
-    out.append("on conflict (grp, name) do update set")
+    out.append("on conflict (seed_key) do update set")
     out.append("  title=excluded.title, role=excluded.role, rank=excluded.rank,")
     out.append("  cat=excluded.cat, phone=excluded.phone, email=excluded.email,")
     out.append("  photo=excluded.photo, sort=excluded.sort;")
+    dups = sorted(k for k, v in seen.items() if v > 1)
+    if dups:
+        out.append("")
+        out.append("--  تنبيه: أسماء متكرّرة في ملف البيانات — أُدرجت كلها كأشخاص مستقلّين.")
+        out.append("--  إن كان أحدها تكرارًا سهوًا فاحذفه من اللوحة بعد التحميل:")
+        for d in dups:
+            g, nm = d.split("|", 1)
+            out.append("--    %s: %s  (%d مرّة)" % (g, nm, seen[d]))
     return out, len(rows)
 
 
