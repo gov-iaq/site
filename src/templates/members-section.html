@@ -271,6 +271,9 @@
       st[i].setAttribute("data-count-to",String(vals[i]));
       st[i].textContent=String(vals[i]);
     }
+    /* first=true يفرض رسمًا فوريًّا بلا مؤقّت الانتقال: لو كان التبويب في
+       الخلفية لَتأخّر المؤقّت وبقيت البطاقات مخفيّة حتى أول تفاعل. */
+    first=true;
     render();
   };
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
