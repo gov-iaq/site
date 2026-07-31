@@ -181,6 +181,40 @@
                        media: (c.media || []).length, sections: (c.sections || []).length };
     return c;
   }
+  /* تُعرض في اللوحة القيم السارية فعلًا على الموقع: التعديل إن وُجد وإلا الأصل.
+     بهذا يرى المدير الحقيقة لا نسخة قديمة محفوظة في كائن اللوحة. */
+  function overlaySite(c) {
+    if (!T) return;
+    (c.sections || []).forEach(function (s) {
+      var m = T.sections[s.key];
+      if (!m) return;
+      if (m.eyebrow) s.name = shown(m.eyebrow);
+      if (m.title) s.title = shown(m.title);
+      if (m.subtitle) s.subtitle = shown(m.subtitle);
+      if (m.root) s.visible = !OVR[ovrKey('index', m.root.path, 'hide')];
+    });
+    /* الأقسام الموجودة في الصفحة ولا تعرفها اللوحة تُضاف كي يتحكّم بها */
+    var known = {};
+    (c.sections || []).forEach(function (s) { known[s.key] = 1; });
+    for (var k in T.sections) {
+      if (!T.sections.hasOwnProperty(k) || known[k]) continue;
+      var m2 = T.sections[k];
+      if (!m2.title) continue;
+      c.sections = c.sections || [];
+      c.sections.push({ id: 'sec_' + k, key: k, name: shown(m2.eyebrow),
+                        visible: !OVR[ovrKey('index', m2.root.path, 'hide')],
+                        editable: true, title: shown(m2.title), subtitle: shown(m2.subtitle) });
+    }
+    var hs = (c.content && c.content.heroSlides) || c.heroSlides;
+    if (hs) {
+      for (var i = 0; i < hs.length && i < T.hero.length; i++) {
+        if (T.hero[i].eyebrow) hs[i].eyebrow = shown(T.hero[i].eyebrow);
+        if (T.hero[i].title) hs[i].title = shown(T.hero[i].title);
+        if (T.hero[i].text) hs[i].text = shown(T.hero[i].text);
+      }
+    }
+  }
+
   function merge(base, over) {
     var o = {};
     if (base) for (var k in base) if (base.hasOwnProperty(k)) o[k] = base[k];
@@ -188,6 +222,165 @@
     return o;
   }
   function blobHas(b, k) { return !!(b && b[k] && b[k].length); }
+
+  /* ============================ وصل الشاشات بالموقع ============================
+     شاشتا «أقسام الرئيسية» و«النصوص والمحتوى» تُحرّران نصوصًا موجودة فعلًا في
+     الصفحة الرئيسة. نوصلهما بجدول content_overrides فيصير التعديل نافذًا على
+     الموقع عند أوّل تحميل، بلا إعادة بناء.
+
+     المسارات والبصمات تُحسب داخل إطار يحمل الصفحة الحقيقية بوسم iaq-edit=1،
+     أي بالخوارزمية نفسها التي ستُطبّق التعديل لاحقًا. لا نُعيد كتابتها هنا،
+     فلا يمكن أن تتباعد نسختان.
+     ============================================================================ */
+  var T = null;        // خريطة الأهداف: مسار + بصمة + النصّ الأصلي
+  var OVR = {};        // التعديلات القائمة، مفتاحها page|path|op
+  var frameWin = null;
+
+  function ovrKey(page, path, op) { return page + '|' + path + '|' + op; }
+
+  function loadTargets() {
+    return new Promise(function (done) {
+      var fr = document.createElement('iframe');
+      fr.setAttribute('aria-hidden', 'true');
+      fr.style.cssText = 'position:absolute;width:1280px;height:800px;inset-block-start:-99999px;border:0';
+      fr.src = 'index.html?iaq-edit=1';
+      fr.onload = function () {
+        try { done(scan(fr.contentWindow, fr.contentDocument)); }
+        catch (e) { done(null); }
+      };
+      fr.onerror = function () { done(null); };
+      document.body.appendChild(fr);
+      setTimeout(function () { done(T || null); }, 9000);   // لا نُعلّق اللوحة أبدًا
+    });
+  }
+
+  function scan(w, d) {
+    var P = w.IAQ_PATH;
+    if (!P) return null;
+    frameWin = w;
+
+    function target(el) {
+      if (!el) return null;
+      var path = P.pathOf(el);
+      if (!path) return null;
+      var mixed = !!el.firstElementChild;
+      return { path: path, op: mixed ? 'html' : 'text',
+               orig: mixed ? el.innerHTML : el.textContent,
+               plain: P.norm(el.textContent) };
+    }
+
+    var map = { sections: {}, hero: [], aboutIntro: null };
+
+    /* أقسام الرئيسية: العنوان الصغير والكبير والوصف، وجذر القسم للإظهار والإخفاء */
+    [].slice.call(d.querySelectorAll('section[id]')).forEach(function (sec) {
+      var hd = sec.querySelector('.section-head');
+      if (!hd) return;
+      map.sections[sec.id] = {
+        eyebrow: target(hd.querySelector('.eyebrow')),
+        title: target(hd.querySelector('h2')),
+        subtitle: target(hd.querySelector('p')),
+        root: { path: P.pathOf(sec), op: 'hide', orig: '', plain: '' }
+      };
+    });
+
+    /* شرائح الغلاف */
+    [].slice.call(d.querySelectorAll('.hero-slide')).forEach(function (sl) {
+      map.hero.push({ eyebrow: target(sl.querySelector('.hero-eyebrow')),
+                      title: target(sl.querySelector('h1')),
+                      text: target(sl.querySelector('.hero-text')) });
+    });
+
+    return map;
+  }
+
+  /* بصمة الأصل بالخوارزمية نفسها التي يستخدمها الموقع عند التطبيق */
+  function fpFor(t) {
+    if (!frameWin || !frameWin.IAQ_PATH) return null;
+    var el = frameWin.IAQ_PATH.nodeAt(frameWin.document, t.path);
+    if (!el) return null;
+    return (t.op === 'html') ? frameWin.IAQ_PATH.fpOf(el, el.innerHTML) : frameWin.IAQ_PATH.fpOf(el);
+  }
+  function normOf(s) {
+    return (frameWin && frameWin.IAQ_PATH) ? frameWin.IAQ_PATH.norm(s) : String(s == null ? '' : s).trim();
+  }
+
+  /* القيمة المعروضة في اللوحة: التعديل السارِي إن وُجد، وإلا الأصل المبنيّ */
+  function shown(t, page) {
+    if (!t) return '';
+    var o = OVR[ovrKey(page || 'index', t.path, t.op)];
+    if (o && o.value != null) return o.value;
+    return t.op === 'html' ? t.orig : t.plain;
+  }
+
+  /* يبني قائمة الكتابات من الفرق بين ما في اللوحة وما في الصفحة */
+  function diffOne(out, t, val, label, page) {
+    if (!t || val == null) return;
+    page = page || 'index';
+    var cur = String(val);
+    var key = ovrKey(page, t.path, t.op);
+    var base = t.op === 'html' ? t.orig : t.plain;
+    if (normOf(cur) === normOf(base)) {
+      if (OVR[key]) out.del.push({ page: page, path: t.path, op: t.op });   // عاد للأصل
+      return;
+    }
+    if (OVR[key] && String(OVR[key].value) === cur) return;                 // لا جديد
+    var fp = fpFor(t);
+    out.up.push({ page: page, path: t.path, op: t.op, attr: '', part: -1,
+                  value: cur, orig_fp: fp, orig_text: String(base).slice(0, 300),
+                  label: label, status: 'published',
+                  updated_by: (S && S.email) || '' });
+  }
+
+  function diffVisible(out, root, visible, label) {
+    if (!root) return;
+    var key = ovrKey('index', root.path, 'hide');
+    if (visible === false) {
+      if (OVR[key]) return;
+      out.up.push({ page: 'index', path: root.path, op: 'hide', attr: '', part: -1,
+                    value: null, orig_fp: fpFor(root), orig_text: '', label: label,
+                    status: 'published', updated_by: (S && S.email) || '' });
+    } else if (OVR[key]) {
+      out.del.push({ page: 'index', path: root.path, op: 'hide' });
+    }
+  }
+
+  function collectSite(config) {
+    var out = { up: [], del: [] };
+    if (!T) return out;
+    (config.sections || []).forEach(function (s) {
+      var m = T.sections[s.key];
+      if (!m) return;
+      diffOne(out, m.eyebrow, s.name, 'العنوان الصغير — ' + s.key);
+      diffOne(out, m.title, s.title, 'عنوان القسم — ' + s.key);
+      diffOne(out, m.subtitle, s.subtitle, 'وصف القسم — ' + s.key);
+      diffVisible(out, m.root, s.visible, 'إظهار القسم — ' + s.key);
+    });
+    var hs = (config.content && config.content.heroSlides) || config.heroSlides || [];
+    for (var i = 0; i < hs.length && i < T.hero.length; i++) {
+      diffOne(out, T.hero[i].eyebrow, hs[i].eyebrow, 'شريحة ' + (i + 1) + ' — التمهيد');
+      diffOne(out, T.hero[i].title, hs[i].title, 'شريحة ' + (i + 1) + ' — العنوان');
+      diffOne(out, T.hero[i].text, hs[i].text, 'شريحة ' + (i + 1) + ' — النصّ');
+    }
+    return out;
+  }
+
+  function applySite(config) {
+    var w = collectSite(config);
+    if (!w.up.length && !w.del.length) return Promise.resolve(0);
+    var jobs = [];
+    if (w.up.length) {
+      jobs.push(upsert('content_overrides', w.up, 'page,path,op,attr,part').then(function (rows) {
+        (rows || []).forEach(function (r) { OVR[ovrKey(r.page, r.path, r.op)] = r; });
+      }));
+    }
+    w.del.forEach(function (d) {
+      jobs.push(fetch(CFG.url + '/rest/v1/content_overrides?page=eq.' + encodeURIComponent(d.page) +
+        '&path=eq.' + encodeURIComponent(d.path) + '&op=eq.' + encodeURIComponent(d.op),
+        { method: 'DELETE', headers: headers({ Prefer: 'return=representation' }) })
+        .then(must).then(function () { delete OVR[ovrKey(d.page, d.path, d.op)]; }));
+    });
+    return Promise.all(jobs).then(function () { return w.up.length + w.del.length; });
+  }
 
   /* -------------------------------- الحفظ -------------------------------- */
   var timer = null, lastJson = '', saving = false, pending = false;
@@ -208,10 +401,13 @@
                           updated_by: (S && S.email) || '' }], 'key')
       .then(function () {
         lastJson = body;
-        return syncNews(config);
+        return Promise.all([syncNews(config), applySite(config)]);
       })
-      .then(function (n) {
-        status('حُفظ في قاعدة البيانات' + (n ? ' · حُدِّث ' + n + ' خبرًا في جدول الأخبار' : ''), 'ok');
+      .then(function (r) {
+        var n = r[0], live = r[1];
+        status('حُفظ في قاعدة البيانات' +
+               (live ? ' · سرى ' + live + ' تعديلًا على الموقع (يظهر للزائر عند أوّل تحميل)' : '') +
+               (n ? ' · حُدِّث ' + n + ' خبرًا' : ''), 'ok');
       })
       .catch(function (e) {
         status('فشل الحفظ: ' + (e && e.message ? e.message : e), 'err');
@@ -257,7 +453,9 @@
       sel('settings', 'select=key,value&limit=100'),
       sel('news', 'select=*&order=date.desc&limit=200'),
       sel('submissions', 'select=*&order=created_at.desc&limit=200'),
-      sel('media', 'select=*&order=id.desc&limit=200')
+      sel('media', 'select=*&order=id.desc&limit=200'),
+      sel('content_overrides', 'select=*&limit=500'),
+      loadTargets()
     ]);
   }).then(function (res) {
     var blob = null;
@@ -265,16 +463,23 @@
     db.news = res[1] || [];
     db.subs = res[2] || [];
     db.media = res[3] || [];
+    (res[4] || []).forEach(function (r) { OVR[ovrKey(r.page, r.path, r.op)] = r; });
+    T = res[5];
 
     window.IAQ_CFG_IN = compose(blob, db);
+    overlaySite(window.IAQ_CFG_IN);
     try { lastJson = JSON.stringify(window.IAQ_CFG_IN); } catch (e) { lastJson = ''; }
 
     if (typeof window.IAQ_PANEL_MAIN !== 'function') { fatal('لم يُحمَّل سكربت اللوحة.'); return; }
     window.IAQ_PANEL_MAIN();
 
-    status('متصل بقاعدة البيانات — ' + db.news.length + ' خبرًا · ' + db.subs.length +
-           ' طلبًا · ' + db.media.length + ' وسيطًا · ' + db.admins.length + ' مديرًا' +
-           (blob ? ' · حالة اللوحة محمّلة' : ' · أوّل تشغيل، لا حالة محفوظة بعد'), 'ok');
+    var nSec = T ? Object.keys(T.sections).length : 0;
+    var nOvr = Object.keys(OVR).length;
+    status('متصل — ' + db.news.length + ' خبرًا · ' + db.subs.length + ' طلبًا · ' +
+           db.media.length + ' وسيطًا · ' + db.admins.length + ' مديرًا' +
+           (nSec ? ' | موصول بالموقع: ' + nSec + ' قسمًا و' + T.hero.length + ' شريحة' +
+                   (nOvr ? '، ' + nOvr + ' تعديلًا ساريًا' : '')
+                 : ' | تعذّر قراءة الصفحة الرئيسة، فتعديل النصوص لن يسري'), 'ok');
   }).catch(function (e) {
     fatal((e && e.message ? e.message : String(e)));
   });
