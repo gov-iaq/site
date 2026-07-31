@@ -780,6 +780,17 @@ def build_panel(out_dir, cmap, amap):
         "if(window.IAQ_AFTER_LOAD)window.IAQ_AFTER_LOAD(d);return d;}", 1)
     steps.append("load")
 
+    # 5) شاشة أعضاء الجمعية العمومية: إدخالان فقط في تصميم المدير
+    a = '{group:"المحتوى"},'
+    assert page.count(a) == 1, "nav group content"
+    page = page.replace(a, a + '{k:"assembly",label:"الجمعية '
+                              'العمومية",icon:"users"},', 1)
+    a = "var views={dashboard:vDashboard,"
+    assert page.count(a) == 1, "views map"
+    page = page.replace(a, "var views={assembly:function(){return window.IAQ_ASSEMBLY.view();},"
+                           "dashboard:vDashboard,", 1)
+    steps.append("assembly")
+
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"
     assert page.count(a) == 1, "save fn"
     page = page.replace(a, "function save(){if(window.IAQ_CFG_SAVE)window.IAQ_CFG_SAVE(config);}", 1)
@@ -788,6 +799,9 @@ def build_panel(out_dir, cmap, amap):
     # الجسر بعد السكربت الرئيسي
     adapter = os.path.join(PANEL, "adapter.js")
     bridge = rb(adapter).decode("utf-8") if os.path.exists(adapter) else ""
+    asm = os.path.join(PANEL, "assembly.js")
+    if os.path.exists(asm):
+        bridge = rb(asm).decode("utf-8") + NLS + bridge
     # </body> يتكرّر: الأول داخل نصّ جافاسكربت لمعاينة الأكواد. نرسو على الذيل.
     a = "</script>" + NLS + "</body>"
     assert page.count(a) == 1, "body close"
