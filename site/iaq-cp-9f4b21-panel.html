@@ -487,7 +487,7 @@ function sampleSubs(){
 
 /* ---------- state ---------- */
 var config=migrate(load())||defaults();
-function load(){var d=defaults();var i=window.IAQ_CFG_IN;if(!i)return d;for(var k in i){if(i.hasOwnProperty(k))d[k]=i[k];}return d;}
+function load(){var d=defaults();var i=window.IAQ_CFG_IN;if(i){for(var k in i){if(i.hasOwnProperty(k))d[k]=i[k];}}if(window.IAQ_AFTER_LOAD)window.IAQ_AFTER_LOAD(d);return d;}
 function migrate(c){ if(!c)return null; var d=defaults(); ['analytics','contentStats','formStats','contactStats','users','roles','customCode','submissions'].forEach(function(k){ if(c[k]==null)c[k]=d[k]; }); if(!c.customCode.pages)c.customCode.pages={}; return c; }
 function save(){if(window.IAQ_CFG_SAVE)window.IAQ_CFG_SAVE(config);}
 function getP(o,p){return p.split('.').reduce(function(a,k){return a==null?a:a[k];},o);}
@@ -1187,7 +1187,9 @@ renderSidebar();switchView('dashboard');
     if (!t) return '';
     var o = OVR[ovrKey(page || 'index', t.path, t.op)];
     if (o && o.value != null) return o.value;
-    return t.op === 'html' ? t.orig : t.plain;
+    /* دائمًا النصّ المجرّد: عرض HTML خام في حقل نصّ يُربك، والمقارنة به تُنتج
+       فروقًا وهمية. وما لم يُغيّره المدير لا يُكتب أصلًا فتبقى الوسوم الداخلية. */
+    return t.plain;
   }
 
   /* يبني قائمة الكتابات من الفرق بين ما في اللوحة وما في الصفحة */
@@ -1196,7 +1198,7 @@ renderSidebar();switchView('dashboard');
     page = page || 'index';
     var cur = String(val);
     var key = ovrKey(page, t.path, t.op);
-    var base = t.op === 'html' ? t.orig : t.plain;
+    var base = t.plain;
     if (normOf(cur) === normOf(base)) {
       if (OVR[key]) out.del.push({ page: page, path: t.path, op: t.op });   // عاد للأصل
       return;
@@ -1345,7 +1347,10 @@ renderSidebar();switchView('dashboard');
     T = res[5];
 
     window.IAQ_CFG_IN = compose(blob, db);
-    overlaySite(window.IAQ_CFG_IN);
+    /* الدمج يجري داخل load() بعد أن يضمّ التصميم قيمه الافتراضية — قبلها لا
+       يكون config.content موجودًا، فتُقارَن نصوص التصميم النموذجية بنصوص
+       الصفحة الحقيقية ويُكتب فوقها. */
+    window.IAQ_AFTER_LOAD = overlaySite;
     try { lastJson = JSON.stringify(window.IAQ_CFG_IN); } catch (e) { lastJson = ''; }
 
     if (typeof window.IAQ_PANEL_MAIN !== 'function') { fatal('لم يُحمَّل سكربت اللوحة.'); return; }

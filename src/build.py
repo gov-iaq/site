@@ -775,8 +775,9 @@ def build_panel(out_dir, cmap, amap):
          "return s?JSON.parse(s):null;}catch(e){return null;}}")
     assert page.count(a) == 1, "load fn"
     page = page.replace(a,
-        "function load(){var d=defaults();var i=window.IAQ_CFG_IN;if(!i)return d;"
-        "for(var k in i){if(i.hasOwnProperty(k))d[k]=i[k];}return d;}", 1)
+        "function load(){var d=defaults();var i=window.IAQ_CFG_IN;"
+        "if(i){for(var k in i){if(i.hasOwnProperty(k))d[k]=i[k];}}"
+        "if(window.IAQ_AFTER_LOAD)window.IAQ_AFTER_LOAD(d);return d;}", 1)
     steps.append("load")
 
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"

@@ -309,7 +309,9 @@
     if (!t) return '';
     var o = OVR[ovrKey(page || 'index', t.path, t.op)];
     if (o && o.value != null) return o.value;
-    return t.op === 'html' ? t.orig : t.plain;
+    /* دائمًا النصّ المجرّد: عرض HTML خام في حقل نصّ يُربك، والمقارنة به تُنتج
+       فروقًا وهمية. وما لم يُغيّره المدير لا يُكتب أصلًا فتبقى الوسوم الداخلية. */
+    return t.plain;
   }
 
   /* يبني قائمة الكتابات من الفرق بين ما في اللوحة وما في الصفحة */
@@ -318,7 +320,7 @@
     page = page || 'index';
     var cur = String(val);
     var key = ovrKey(page, t.path, t.op);
-    var base = t.op === 'html' ? t.orig : t.plain;
+    var base = t.plain;
     if (normOf(cur) === normOf(base)) {
       if (OVR[key]) out.del.push({ page: page, path: t.path, op: t.op });   // عاد للأصل
       return;
@@ -467,7 +469,10 @@
     T = res[5];
 
     window.IAQ_CFG_IN = compose(blob, db);
-    overlaySite(window.IAQ_CFG_IN);
+    /* الدمج يجري داخل load() بعد أن يضمّ التصميم قيمه الافتراضية — قبلها لا
+       يكون config.content موجودًا، فتُقارَن نصوص التصميم النموذجية بنصوص
+       الصفحة الحقيقية ويُكتب فوقها. */
+    window.IAQ_AFTER_LOAD = overlaySite;
     try { lastJson = JSON.stringify(window.IAQ_CFG_IN); } catch (e) { lastJson = ''; }
 
     if (typeof window.IAQ_PANEL_MAIN !== 'function') { fatal('لم يُحمَّل سكربت اللوحة.'); return; }
