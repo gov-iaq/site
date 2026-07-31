@@ -33,13 +33,13 @@
         { k: 'title', l: 'اللقب', t: 'text', w: 58 },
         { k: 'name', l: 'الاسم', t: 'text', req: 1, w: 196 },
         { k: 'role', l: 'المنصب', t: 'text', w: 140 },
-        { k: 'rank', l: 'الرتبة', t: 'select', o: { chair: 'رئيس', vice: 'نائب الرئيس', lead: 'مدير تنفيذي', member: 'عضو' }, w: 118 },
+        { k: 'rank', l: 'الرتبة', t: 'select', o: { member: 'عضو', chair: 'رئيس', vice: 'نائب الرئيس', lead: 'مدير تنفيذي' }, def: 'member', w: 118 },
         { k: 'cat', l: 'التصنيف', t: 'select', o: { '': '—', founder: 'مؤسس', working: 'عامل' }, w: 96 },
         { k: 'phone', l: 'الجوال', t: 'text', w: 112 },
         { k: 'email', l: 'البريد', t: 'text', w: 158 },
         { k: 'photo', l: 'الصورة', t: 'text', w: 116, hint: 'اسم الملف داخل img/board أو img/team' },
-        { k: 'sort', l: 'الترتيب', t: 'int', w: 74 },
-        { k: 'status', l: 'الحالة', t: 'select', o: ST_PUB, w: 92 }
+        { k: 'sort', l: 'الترتيب', t: 'int', def: 100, w: 74 },
+        { k: 'status', l: 'الحالة', t: 'select', o: ST_PUB, def: 'published', w: 92 }
       ]
     },
     {
@@ -55,7 +55,7 @@
         { k: 'image', l: 'الصورة', t: 'text', w: 130 },
         { k: 'cta_label', l: 'نصّ الزرّ', t: 'text', w: 110 },
         { k: 'cta_url', l: 'رابط الزرّ', t: 'text', w: 150 },
-        { k: 'status', l: 'الحالة', t: 'select', o: ST_NEWS, w: 92 }
+        { k: 'status', l: 'الحالة', t: 'select', o: ST_NEWS, def: 'draft', w: 92 }
       ]
     },
     {
@@ -65,8 +65,8 @@
         { k: 'name', l: 'الاسم', t: 'text', req: 1, w: 240 },
         { k: 'logo', l: 'الشعار', t: 'text', w: 230, hint: 'اسم ملف في img/partners أو رابط كامل' },
         { k: 'url', l: 'الرابط', t: 'text', w: 190 },
-        { k: 'sort', l: 'الترتيب', t: 'int', w: 74 },
-        { k: 'status', l: 'الحالة', t: 'select', o: ST_PUB, w: 92 }
+        { k: 'sort', l: 'الترتيب', t: 'int', def: 100, w: 74 },
+        { k: 'status', l: 'الحالة', t: 'select', o: ST_PUB, def: 'published', w: 92 }
       ]
     },
     {
@@ -81,7 +81,7 @@
         { k: 'doc_date', l: 'التاريخ', t: 'text', w: 150 },
         { k: 'size_label', l: 'الحجم', t: 'text', w: 90 },
         { k: 'pages', l: 'الصفحات', t: 'int', w: 74 },
-        { k: 'status', l: 'الحالة', t: 'select', o: ST_NEWS, w: 92 }
+        { k: 'status', l: 'الحالة', t: 'select', o: ST_NEWS, def: 'draft', w: 92 }
       ]
     },
     {
@@ -278,7 +278,9 @@
       return '<td>' + (editable ? cellEdit(c, row, rid) : cellRO(c, row)) + '</td>';
     }).join('');
     var acts = '';
-    if (t.mode === 'crud' || t.mode === 'del') {
+    var anyEditable = false;
+    for (var z = 0; z < t.cols.length; z++) if (t.cols[z].t !== 'ro') anyEditable = true;
+    if (anyEditable && (t.mode === 'crud' || t.mode === 'del')) {
       acts += '<button class="btn sm ok" data-act="dt-save" data-id="' + U.attr(rid) + '">حفظ</button> ';
     }
     if (t.mode !== 'ro') {
@@ -406,10 +408,9 @@
     var t = tbl(cur), r = { __tmp: Date.now() };
     for (var i = 0; i < t.cols.length; i++) {
       var c = t.cols[i];
-      r[c.k] = (c.t === 'select') ? Object.keys(c.o)[0] : (c.t === 'int' ? null : '');
+      if (c.def !== undefined) r[c.k] = c.def;
+      else r[c.k] = (c.t === 'select') ? Object.keys(c.o)[0] : (c.t === 'int' ? null : '');
     }
-    if (t.id === 'people') { r.status = 'published'; r.sort = 100; }
-    if (t.id === 'partners') { r.status = 'published'; r.sort = 100; }
     news.unshift(r);
     draw(U.$('#viewArea'));
   });
