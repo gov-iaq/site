@@ -196,18 +196,71 @@ section[id]{scroll-margin-top:92px}
 .testi-name{font-weight:700;color:var(--card-title2);font-size:1rem}
 .testi-role{font-size:.87rem;color:var(--muted)}
 .partners{background:var(--news-bg)}
-.marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
+/* ============================================================
+   شريط الشركاء — ثلاثة أنماط يختار بينها مدير النظام:
+   data-mode="auto"   : تمرير متصل لا ينقطع (الافتراضي)
+   data-mode="manual" : تحريك يدوي بالسحب والأسهم ولوحة المفاتيح
+   data-mode="fade"   : تبديل مجموعات بالتلاشي
+   ============================================================ */
+.marquee{position:relative}
+.mq-view{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
 /* --mq-sets: عدد المجموعات المتطابقة التي يولّدها البنّاء. الإزاحة = مجموعة واحدة بالضبط
    فتُستبدل كل مجموعة بالتالية بلا قفزة، ويبقى الشريط ممتلئًا على أي عرض شاشة. */
-.marquee-track{--mq-sets:4;--mq-speed:34s;display:flex;width:max-content;animation:marquee var(--mq-speed) linear infinite;will-change:transform}
+.marquee-track{--mq-sets:4;--mq-speed:34s;display:flex;width:max-content}
+.marquee[data-mode="auto"] .marquee-track{animation:marquee var(--mq-speed) linear infinite;will-change:transform}
 .marquee-track .mq-set{display:flex;gap:22px;padding-inline-end:22px}
+/* أزرار التنقّل ومؤشّرات الصفحات — تظهر في النمطين اليدوي والتلاشي فقط */
+.mq-nav{position:absolute;inset-block-start:50%;translate:0 -50%;z-index:3;width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line);background:var(--surface);color:var(--teal);cursor:pointer;
+  display:none;align-items:center;justify-content:center;box-shadow:0 10px 26px -14px rgba(6,63,54,.42);
+  transition:background .25s var(--ease),color .25s var(--ease),transform .25s var(--ease),opacity .25s}
+.mq-nav svg{width:20px;height:20px}
+.mq-nav:hover{background:var(--teal);color:#fff;transform:scale(1.07)}
+.mq-nav:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.mq-nav[disabled]{opacity:.34;cursor:default;transform:none}
+.mq-prev{inset-inline-start:6px}
+.mq-next{inset-inline-end:6px}
+.marquee[data-mode="manual"] .mq-nav,.marquee[data-mode="fade"] .mq-nav{display:flex}
+.mq-dots{display:none;justify-content:center;gap:9px;margin-block-start:18px}
+.marquee[data-mode="fade"] .mq-dots{display:flex}
+.mq-dots button{width:11px;height:11px;border-radius:50%;border:none;padding:0;background:var(--tb,#d6e5e3);cursor:pointer;transition:all .3s var(--ease)}
+.mq-dots button[aria-current="true"]{background:var(--teal);width:30px;border-radius:999px}
+.mq-dots button:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+/* النمط اليدوي: منطقة العرض تصبح قابلة للتمرير والسحب */
+.marquee[data-mode="manual"] .mq-view{overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;-ms-overflow-style:none;cursor:grab;padding-block-end:2px}
+.marquee[data-mode="manual"] .mq-view::-webkit-scrollbar{display:none}
+.marquee[data-mode="manual"] .mq-view.is-drag{cursor:grabbing;scroll-snap-type:none}
+.marquee[data-mode="manual"] .mq-view.is-drag .plogo{pointer-events:none}
+.marquee[data-mode="manual"] .marquee-track{animation:none;transform:none}
+.marquee[data-mode="manual"] .plogo{scroll-snap-align:center}
+/* النمطان اليدوي والتلاشي يعرضان مجموعة واحدة فقط — التكرار للتمرير المتصل وحده */
+.marquee[data-mode="manual"] .mq-set:not(:first-child),
+.marquee[data-mode="fade"] .mq-set:not(:first-child){display:none}
+/* نمط التلاشي: صفحات مكدّسة تتبادل الظهور */
+.marquee[data-mode="fade"] .marquee-track{display:block;width:100%;animation:none;transform:none;position:relative;height:104px}
+.marquee[data-mode="fade"] .mq-set{display:contents}
+.marquee[data-mode="fade"] .mq-page{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:22px;
+  opacity:0;visibility:hidden;transition:opacity .7s var(--ease),visibility .7s var(--ease)}
+.marquee[data-mode="fade"] .mq-page.is-on{opacity:1;visibility:visible}
+@media (max-width:640px){
+  .marquee[data-mode="fade"] .marquee-track{height:92px}
+  .marquee[data-mode="fade"] .mq-page{gap:12px}
+  .mq-nav{width:38px;height:38px}.mq-nav svg{width:17px;height:17px}
+}
 .marquee-track .plogo{flex:none;width:190px;height:104px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease)}
 .marquee-track .plogo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:saturate(.92);transition:filter .3s var(--ease),transform .35s var(--ease)}
 .marquee-track .plogo:hover{border-color:rgba(0,120,120,.34);box-shadow:0 14px 30px -16px rgba(6,63,54,.3);transform:translateY(-3px)}
 .marquee-track .plogo:hover img{filter:saturate(1.06);transform:scale(1.04)}
 @media (max-width:640px){.marquee-track .plogo{width:158px;height:92px;padding:13px 15px}}
 @media (prefers-reduced-motion:reduce){.marquee-track .plogo,.marquee-track .plogo img{transition:none}.marquee-track .plogo:hover{transform:none}.marquee-track .plogo:hover img{transform:none}}
-.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee[data-mode="auto"]:hover .marquee-track{animation-play-state:paused}
+/* مع تفضيل تقليل الحركة: كل الشعارات ثابتة ومرئية بلا أي تحريك */
+@media (prefers-reduced-motion:reduce){
+  .marquee[data-mode="fade"] .marquee-track{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;height:auto;width:100%}
+  .marquee[data-mode="fade"] .mq-page{position:static;inset:auto;opacity:1;visibility:visible;transition:none;flex-wrap:wrap}
+  .marquee[data-mode="fade"] .mq-dots,.marquee[data-mode="fade"] .mq-nav{display:none}
+  .mq-nav{transition:none}.mq-nav:hover{transform:none}
+}
 /* في RTL يُثبَّت الشريط من حافته اليمنى، فنبدأ مُزاحًا بمقدار مجموعة وننتهي عند الصفر:
    الحركة إلى اليسار (يخرج الشعار يسارًا ويدخل من اليمين) دون أن ينكشف فراغ. */
 @keyframes marquee{from{transform:translateX(calc(100% / var(--mq-sets)))}to{transform:translateX(0)}}
@@ -504,6 +557,365 @@ section[id]{scroll-margin-top:92px}
 <meta name="twitter:description" content="سياسة الخصوصية وحماية البيانات الشخصية في جمعية حاضنة الجمعيات." />
 <meta name="twitter:image" content="https://iaq.org.sa/og-image.png" />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"NGO","name":"جمعية حاضنة الجمعيات","url":"https://iaq.org.sa","logo":"https://iaq.org.sa/favicon.png","description":"جمعية حاضنة الجمعيات جمعية غير ربحية مرخّصة تُعنى باحتضان الجمعيات وتطوير قدراتها المؤسسية من التأسيس حتى الاستدامة وقياس الأثر.","address":{"@type":"PostalAddress","streetAddress":"حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان","addressLocality":"بريدة","addressCountry":"SA"},"telephone":"+966505144421","email":"info@iaq.org.sa","sameAs":["https://x.com/iaq_ksa","https://www.youtube.com/@iaq_ksa","https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/"]}</script>
+<script>
+var IAQ_SUPA={"url": "https://xolcbzmvqudgenenewug.supabase.co", "key": "sb_publishable_MMuS5wmhzmKtyV3cbbiSKQ_fWFuExOx"},IAQ_SLUG="privacy";
+/* ============================================================================
+   خوارزمية العنونة المشتركة — تُحقن حرفيًّا في كل صفحة وفي لوحة التحكّم معًا،
+   فلا يمكن أن تتباعد النسختان. أي تغيير هنا يسري على الطرفين عند إعادة البناء.
+
+   المسار = سلسلة وسوم من مرساة معلومة إلى العنصر، ومع كل وسم ترتيبه بين
+   أشقّائه من النوع نفسه:   #main/SECTION[3]/DIV[1]/H2[1]
+
+   قرارات مقصودة (كل واحد منها أُثبت على الصفحات الـ18 الفعلية):
+   • الترتيب بالنوع (nth-of-type) لا بالموضع: إدراج عنصر من نوع جديد لا يُزحزح
+     أي مسار قائم، بخلاف nth-child الذي يُبطل كل مسارات الشقيق الواحد.
+   • localName لا tagName: وسوم SVG صغيرة الحروف في DOM بخلاف وسوم HTML.
+   • مقارنة namespaceURI أيضًا: <a> في HTML و<a> في SVG نوعان مختلفان.
+   • [i] تُكتب دائمًا ولو كانت 1، فلا يعتمد التحليل على قاعدة اختصار.
+   • المرساة: أقرب سلف له id فريد. هذا يقصّ عمق المسار (المتوسط 7.3 خطوة)
+     فلا يُبطل تغييرٌ في أعلى الصفحة مساراتِ ما تحتها.
+   ============================================================================ */
+var IAQ_PATH = (function () {
+  'use strict';
+
+  function tagOf(el) { return (el.localName || (el.nodeName || '').toLowerCase()); }
+
+  function step(el) {
+    var ln = el.localName, ns = el.namespaceURI, i = 1, s = el;
+    while ((s = s.previousElementSibling)) {
+      if (s.localName === ln && s.namespaceURI === ns) i++;
+    }
+    return tagOf(el) + '[' + i + ']';
+  }
+
+  /* id صالح كمرساة؟ يجب أن يكون فريدًا فعلًا في المستند */
+  function anchorId(el) {
+    var id = el.id;
+    if (!id) return null;
+    var doc = el.ownerDocument;
+    if (!doc.getElementById) return null;
+    if (doc.getElementById(id) !== el) return null;          // مكرّر أو ملتبس
+    if (/[\s"'\\]/.test(id)) return null;                     // id غريب — لا نعتمد عليه
+    return id;
+  }
+
+  /* مسار عنصر — يرجع null لما هو خارج <body> أو غير عنصر */
+  function pathOf(el) {
+    if (!el || el.nodeType !== 1) return null;
+    var doc = el.ownerDocument, body = doc && doc.body;
+    if (!body || !body.contains(el)) return null;
+    if (el === body) return 'BODY';
+    var self = anchorId(el);
+    if (self) return '#' + self;
+    var parts = [], n = el;
+    while (n && n !== body) {
+      if (n !== el) {
+        var a = anchorId(n);
+        if (a) return '#' + a + '/' + parts.reverse().join('/');
+      }
+      parts.push(step(n));
+      n = n.parentElement;
+      if (!n) return null;
+    }
+    return 'BODY/' + parts.reverse().join('/');
+  }
+
+  /* العنصر من مساره — null إن لم يوجد (بنية تغيّرت) */
+  function nodeAt(doc, path) {
+    if (!doc || !path) return null;
+    var body = doc.body; if (!body) return null;
+    var parts = path.split('/'), cur, i = 0;
+    if (parts[0] === 'BODY') { cur = body; i = 1; }
+    else if (parts[0].charAt(0) === '#') {
+      cur = doc.getElementById(parts[0].slice(1));
+      if (!cur) return null;
+      i = 1;
+    } else return null;
+    for (; i < parts.length; i++) {
+      var m = /^([A-Za-z0-9_:-]+)\[(\d+)\]$/.exec(parts[i]);
+      if (!m) return null;
+      var tag = m[1], want = +m[2], seen = 0, found = null;
+      for (var c = cur.firstElementChild; c; c = c.nextElementSibling) {
+        if (tagOf(c) === tag && ++seen === want) { found = c; break; }
+      }
+      if (!found) return null;
+      cur = found;
+    }
+    return cur;
+  }
+
+  /* هل العنصر في الترويسة/التذييل المشتركين؟ تعديله يجب أن يسري على كل الصفحات. */
+  function scopeOf(el) {
+    if (!el || el.nodeType !== 1) return 'page';
+    var n = el;
+    while (n && n.nodeType === 1) {
+      var t = tagOf(n);
+      if (t === 'header' && n.id === 'siteHeader') return 'global';
+      if (t === 'footer') return 'global';
+      if (n.classList && (n.classList.contains('site-header') || n.classList.contains('site-footer'))) return 'global';
+      if (n.classList && n.classList.contains('skip-link')) return 'global';
+      n = n.parentElement;
+    }
+    return 'page';
+  }
+
+  /* تطبيع النص قبل البصمة: توحيد يونيكود (NFC) + المسافات، وحذف المحارف الصفرية.
+     يمنع إبطال البصمات عند اختلاف صور الحروف العربية أو المسافات فقط. */
+  function norm(str) {
+    var s = String(str == null ? '' : str);
+    if (s.normalize) { try { s = s.normalize('NFC'); } catch (e) { } }
+    return s.replace(/[\u200b-\u200f\u202a-\u202e\ufeff]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /* بصمة FNV-1a (32-bit) بالسادس عشري */
+  function hash(str) {
+    var s = String(str == null ? '' : str), h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
+
+  /* بصمة المحتوى مع سياقه: الوسم + النص + وسم الأب.
+     687 عقدة نصّية في الموقع تتشابه نصوصها، فالسياق يقلّل احتمال التطابق الكاذب
+     الذي قد يضع نصًّا في موضع خاطئ بعد تغيّر بنيويّ. */
+  function fpOf(el, raw) {
+    var text = norm(raw == null ? (el ? el.textContent : '') : raw);
+    var tag = el ? tagOf(el) : '';
+    var par = (el && el.parentElement) ? tagOf(el.parentElement) : '';
+    return hash(tag + '\u0001' + text + '\u0001' + par);
+  }
+
+  /* بصمة نصّ مجرّد (للمقارنة السريعة) */
+  function fp(str) { return hash(norm(str)); }
+
+  function isLeafText(el) {
+    if (!el || el.nodeType !== 1) return false;
+    if (el.firstElementChild) return false;
+    return norm(el.textContent).length > 0;
+  }
+
+  /* فهارس عُقد النص المباشرة غير الفارغة — لتحرير نصّ مجاور لعناصر سطرية */
+  function textParts(el) {
+    var out = [];
+    if (!el) return out;
+    for (var i = 0; i < el.childNodes.length; i++) {
+      var n = el.childNodes[i];
+      if (n.nodeType === 3 && norm(n.nodeValue).length) out.push({ i: i, text: n.nodeValue });
+    }
+    return out;
+  }
+
+  return {
+    pathOf: pathOf, nodeAt: nodeAt, scopeOf: scopeOf,
+    fp: fp, fpOf: fpOf, norm: norm, hash: hash,
+    isLeafText: isLeafText, textParts: textParts, tagOf: tagOf
+  };
+})();
+
+/* ============================================================================
+   طبقة التشغيل العلنية — تقرأ إعدادات المدير وتعديلاته من Supabase وتطبّقها.
+
+   • تُنفَّذ في <head> فتكون IAQ.setting() جاهزة قبل أي سكربت آخر في الصفحة.
+   • القراءة الأولى من الذاكرة المحلية (فورية بلا انتظار الشبكة)، ثم تحديث
+     هادئ من الخدمة مع مهلة صلاحية.
+   • أمان المحتوى: لا يُطبَّق تعديل إلا إذا طابقت بصمة الأصل، فلا يظهر نصّ في
+     موضع خاطئ إذا تغيّرت بنية الصفحة. وكل ما يُقرأ محميّ بسياسات RLS.
+   • إعادة التطبيق: سكربتات الصفحة تكتب على textContent في مواضع كثيرة، فنُعيد
+     التثبيت بعد التحميل وبعد مهلتين قصيرتين حتى لا يُمحى تعديل المدير بهدوء.
+   • وضع التحرير (?iaq-edit=1): لا يُطبَّق شيء تلقائيًّا، وتُكشف واجهة للوحة
+     كي تقرأ النصوص الأصلية وتعاين تعديلاتها.
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  var CFG  = IAQ_SUPA;                                 // {url, key} — يُحقنان عند البناء
+  var slug = IAQ_SLUG;                                 // معرّف الصفحة — يُحقن عند البناء
+  var TTL  = 300000;                                   // 5 دقائق
+  var LSK  = 'iaq_rt_v1';
+  var EDIT = /(?:^|[?&])iaq-edit=1(?:&|$)/.test(location.search);
+
+  var store = { settings: {}, overrides: [], at: 0 };
+  try {
+    var raw = localStorage.getItem(LSK);
+    if (raw) { var p = JSON.parse(raw); if (p && p.settings) store = p; }
+  } catch (e) { /* تخزين محليّ معطَّل — نكمل بالافتراضيات */ }
+
+  var IAQ = window.IAQ = window.IAQ || {};
+  IAQ.setting  = function (k, d) { var v = store.settings ? store.settings[k] : undefined; return (v === undefined || v === null) ? d : v; };
+  IAQ.settings = function () { return store.settings || {}; };
+  IAQ.path     = IAQ_PATH;
+  IAQ.editing  = EDIT;
+
+  /* ------------------------- تطبيق تعديل واحد ------------------------- */
+  function stamp(o) { return o.op + ':' + (o.attr || o.part || ''); }
+
+  function basisFp(o, el) {
+    if (o.op === 'attr') return IAQ_PATH.fpOf(el, el.getAttribute(o.attr || '') || '');
+    if (o.op === 'icon' || o.op === 'html') return IAQ_PATH.fpOf(el, el.innerHTML);
+    if (o.op === 'tnode') {
+      var n = el.childNodes[o.part];
+      if (!n || n.nodeType !== 3) return null;
+      return IAQ_PATH.fpOf(el, n.nodeValue);
+    }
+    return IAQ_PATH.fpOf(el);
+  }
+
+  function put(o, el) {
+    switch (o.op) {
+      case 'text':
+        if (el.firstElementChild) return 'unsafe';       // فيه عناصر أبناء — يُحرَّر بالورقة لا بالكل
+        if (el.textContent !== o.value) el.textContent = o.value == null ? '' : o.value;
+        return 'ok';
+      case 'tnode':
+        var n = el.childNodes[o.part];
+        if (!n || n.nodeType !== 3) return 'drift';
+        if (n.nodeValue !== o.value) n.nodeValue = o.value == null ? '' : o.value;
+        return 'ok';
+      case 'attr':
+        if (!o.attr) return 'bad';
+        if (o.value == null || o.value === '') { if (el.hasAttribute(o.attr)) el.removeAttribute(o.attr); }
+        else if (el.getAttribute(o.attr) !== o.value) el.setAttribute(o.attr, o.value);
+        return 'ok';
+      case 'icon':
+        if (IAQ_PATH.tagOf(el) !== 'svg') return 'bad';
+        if (el.innerHTML !== o.value) el.innerHTML = o.value || '';
+        return 'ok';
+      case 'html':
+        if (el.innerHTML !== o.value) el.innerHTML = o.value || '';
+        return 'ok';
+      case 'hide':
+        el.setAttribute('hidden', '');
+        el.style.setProperty('display', 'none', 'important');
+        el.setAttribute('aria-hidden', 'true');
+        return 'ok';
+      case 'delete':
+        if (el.parentNode) el.parentNode.removeChild(el);
+        return 'ok';
+      default: return 'bad';
+    }
+  }
+
+  function applyOne(o, doc) {
+    var el = IAQ_PATH.nodeAt(doc || document, o.path);
+    if (!el) return 'missing';
+    var done = el.getAttribute('data-iaq-done') === stamp(o);
+    // البصمة تُفحص عند أول تطبيق فقط: بعده صار المحتوى هو الجديد بطبيعته،
+    // وإعادة الفحص ستُسقط التعديل وتُعيد النص القديم لو كتبت عليه سكربتات الصفحة.
+    if (!done && o.orig_fp) {
+      var got = basisFp(o, el);
+      if (got === null) return 'drift';
+      if (got !== o.orig_fp) return 'drift';
+    }
+    var r = put(o, el);
+    if (r === 'ok' && o.op !== 'delete') el.setAttribute('data-iaq-done', stamp(o));
+    return r;
+  }
+
+  /* الحذف آخرًا: إزالة عنصر تُزحزح ترتيب أشقّائه من نوعه، فتُبطل مسارات لم تُطبَّق بعد */
+  function ordered(list) {
+    return list.slice().sort(function (a, b) {
+      return (a.op === 'delete' ? 1 : 0) - (b.op === 'delete' ? 1 : 0);
+    });
+  }
+
+  function applyAll(list, doc) {
+    var stats = { ok: 0, drift: 0, missing: 0, other: 0 };
+    ordered(list || []).forEach(function (o) {
+      var r = applyOne(o, doc);
+      if (r === 'ok') stats.ok++;
+      else if (r === 'drift') stats.drift++;
+      else if (r === 'missing') stats.missing++;
+      else stats.other++;
+    });
+    return stats;
+  }
+
+  function applyStored() {
+    if (EDIT) return;
+    IAQ.lastApply = applyAll(store.overrides);
+    document.dispatchEvent(new CustomEvent('iaq:content', { detail: IAQ.lastApply }));
+  }
+
+  function whenReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
+    else fn();
+  }
+
+  whenReady(function () {
+    applyStored();
+    // إعادة تثبيت: سكربتات الصفحة قد تكتب على النصوص بعدنا
+    window.addEventListener('load', applyStored, { once: true });
+    setTimeout(applyStored, 1200);
+    setTimeout(applyStored, 3200);
+  });
+
+  /* --------------------------- جلب وتحديث --------------------------- */
+  function fresh() { return store.at && (Date.now() - store.at) < TTL; }
+
+  function get(pathQ) {
+    return fetch(CFG.url + '/rest/v1/' + pathQ, { headers: { apikey: CFG.key, Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+
+  function refresh() {
+    if (!CFG || !CFG.url || !CFG.key) return Promise.resolve();
+    var q = encodeURIComponent(slug || '__none__');
+    return Promise.all([
+      get('settings?select=key,value&is_public=is.true'),
+      get('content_overrides?select=page,path,op,attr,part,value,orig_fp&status=eq.published'
+        + '&or=(page.eq.' + q + ',page.eq.*)')
+    ]).then(function (res) {
+      if (res[0] === null && res[1] === null) return;      // الشبكة ساقطة — نُبقي المخزَّن
+      var s = {};
+      (res[0] || []).forEach(function (row) { s[row.key] = row.value; });
+      var ovr = res[1] || [];
+      var setChanged = JSON.stringify(s) !== JSON.stringify(store.settings || {});
+      var ovrChanged = JSON.stringify(ovr) !== JSON.stringify(store.overrides || []);
+      store = { settings: s, overrides: ovr, at: Date.now() };
+      try { localStorage.setItem(LSK, JSON.stringify(store)); } catch (e) { }
+      if (setChanged) document.dispatchEvent(new CustomEvent('iaq:settings', { detail: s }));
+      if (ovrChanged) whenReady(applyStored);
+    });
+  }
+
+  IAQ.refresh = function () { store.at = 0; return refresh(); };
+  if (!fresh()) refresh(); else setTimeout(refresh, 1500);
+
+  /* ------------------------- إرسال نماذج الزوّار -------------------------
+     سياسات RLS تسمح للزائر بالإدراج فقط في submissions و survey_responses،
+     ولا تسمح له بقراءة أي منهما. الفشل يُعاد كخطأ كي لا تُعرض رسالة نجاح كاذبة. */
+  IAQ.post = function (table, row) {
+    if (!CFG || !CFG.url || !CFG.key) return Promise.reject(new Error('الخدمة غير مهيّأة'));
+    return fetch(CFG.url + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: { apikey: CFG.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(row)
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (b) {
+        var m = '';
+        try { var j = JSON.parse(b); m = j.message || j.hint || ''; } catch (e) { }
+        throw new Error(m || ('تعذّر الإرسال (' + r.status + ')'));
+      });
+      return true;
+    });
+  };
+
+  /* ------------------- واجهة وضع التحرير للوحة التحكّم ------------------- */
+  if (EDIT) {
+    IAQ.edit = {
+      slug: slug,
+      apply: function (list) { return applyAll(list); },
+      applyOne: function (o) { return applyOne(o); },
+      reset: function () { location.reload(); },
+      ready: true
+    };
+    document.documentElement.setAttribute('data-iaq-edit', '1');
+  }
+})();
+</script>
 </head>
 <body class="hybrid" data-page="privacy">
 <a href="#main" class="skip-link">تخطَّ إلى المحتوى</a>
@@ -653,74 +1065,10 @@ section[id]{scroll-margin-top:92px}
   var $=function(s,c){return (c||document).querySelector(s);};
   var $$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));};
 
-  // ===== apply saved admin config (local CMS bridge) =====
-  (function(){
-    var cfg=null; try{cfg=JSON.parse(localStorage.getItem('aiSiteConfigV2'));}catch(e){cfg=null;}
-    if(!cfg) return;
-    var page=(document.body.getAttribute('data-page')||'index');
-    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-    function darken(hex,amt){hex=(hex||'').replace('#','');if(hex.length!==6)return hex?('#'+hex):hex;var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);function c(x){x=Math.round(x*(1-amt));x=Math.max(0,Math.min(255,x)).toString(16);return x.length<2?'0'+x:x;}return '#'+c(r)+c(g)+c(b);}
-    function runScripts(el){$$('script',el).forEach(function(o){var s=document.createElement('script');if(o.src)s.src=o.src;else s.textContent=o.textContent;o.parentNode.replaceChild(s,o);});}
-    function injectHTML(parent,html){var tmp=document.createElement('div');tmp.innerHTML=html;var nodes=[];while(tmp.firstChild){nodes.push(tmp.firstChild);tmp.removeChild(tmp.firstChild);}nodes.forEach(function(node){if(node.tagName==='SCRIPT'){var s=document.createElement('script');if(node.src)s.src=node.src;else s.textContent=node.textContent;parent.appendChild(s);}else{parent.appendChild(node);}});}
-    // theme
-    var t=cfg.theme||{},root=document.documentElement;
-    function S(k,v){if(v)root.style.setProperty(k,v);}
-    if(t.primary){var P=t.primary,Pd=darken(P,.12);S('--teal',P);S('--teal-600',Pd);S('--nav-hover',P);S('--btn1-bg',P);S('--btn1-h',Pd);S('--tag-bg',P);S('--link',P);S('--card-title',P);S('--icon-ink',P);S('--picon-ink',P);}
-    if(t.accent){var Y=t.accent;S('--gold',Y);S('--gold-600',darken(Y,.16));S('--hero-accent',Y);S('--num-color',Y);}
-    if(t.deep){S('--teal-deep',t.deep);S('--stats-bg',t.deep);S('--foot-bg',darken(t.deep,.12));}
-    S('--bg',t.bg);S('--surface',t.bg);S('--surface-2',t.surface2);S('--news-bg',t.surface2);S('--hero-bg',t.heroBg);
-    S('--ink',t.ink);S('--nav-ink',t.ink);S('--brand-ar',t.ink);S('--body',t.body);
-    if(t.radius!=null){var r=t.radius+'px';S('--radius',r);S('--card-radius',r);S('--btn-radius',r);}
-    function loadFont(n){if(!n)return;var id='gf-'+n.replace(/\s+/g,'-');if(document.getElementById(id))return;var l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+n.replace(/\s+/g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}
-    if(t.headFont){S('--font-display',"'"+t.headFont+"',serif");loadFont(t.headFont);}
-    if(t.bodyFont){S('--font-body',"'"+t.bodyFont+"',sans-serif");loadFont(t.bodyFont);}
-    if(t.pattern===false){var ps=document.createElement('style');ps.textContent='.hero-deco,.pb-deco{background-image:none!important}';document.head.appendChild(ps);}
-    // brand
-    if(cfg.brand){$$('.brand-ar').forEach(function(e){if(cfg.brand.ar)e.textContent=cfg.brand.ar;});$$('.brand-en').forEach(function(e){if(cfg.brand.en)e.textContent=cfg.brand.en;});if(cfg.brand.logo&&cfg.brand.logo.indexOf('data:')===0)$$('img.brand-mark').forEach(function(im){im.src=cfg.brand.logo;});}
-    // menu rebuild
-    var nav=$('#navMenu');
-    if(nav&&cfg.menu&&cfg.menu.length){
-      var chev='';var ex=$('.nav-trigger .chev')||$('.nav-trigger svg');if(ex)chev=ex.outerHTML;else chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-      var here=(location.pathname.split('/').pop()||'index.html');if(!here)here='index.html';
-      var html='';
-      cfg.menu.forEach(function(it){
-        if(it.visible===false)return;
-        var kids=(it.children||[]).filter(function(c){return c.visible!==false;});
-        if(kids.length){
-          var act=kids.some(function(c){return c.href===here;});
-          html+='<div class="nav-item has-dropdown"><button type="button" class="nav-link nav-trigger'+(act?' active':'')+'" aria-expanded="false" aria-haspopup="true">'+esc(it.label)+chev+'</button><div class="dropdown"><div class="dropdown-inner">';
-          kids.forEach(function(c){html+='<a href="'+esc(c.href||'#')+'"'+(c.href===here?' class="active"':'')+'>'+esc(c.label)+'</a>';});
-          html+='</div></div></div>';
-        }else{html+='<a href="'+esc(it.href||'#')+'" class="nav-link'+(it.href===here?' active':'')+'">'+esc(it.label)+'</a>';}
-      });
-      nav.innerHTML=html;
-    }
-    // home sections
-    var secMap={hero:'.hero',about:'#about',news:'#news',programs:'#programs',stats:'#stats',testi:'#testimonials',partners:'#partners'};
-    (cfg.sections||[]).forEach(function(s){
-      var sel=secMap[s.key];if(!sel)return;var el=$(sel);if(!el)return;
-      if(s.visible===false){el.style.display='none';return;}
-      if(s.editable){var head=$('.section-head',el);if(head){var h2=$('h2',head);if(h2&&s.title)h2.textContent=s.title;var p=$('p',head);if(s.subtitle){if(p)p.textContent=s.subtitle;else{p=document.createElement('p');p.textContent=s.subtitle;head.appendChild(p);}}}}
-    });
-    // hero slides text
-    if(cfg.content&&cfg.content.heroSlides){var hsl=$$('.hero-slide');cfg.content.heroSlides.forEach(function(sl,i){var node=hsl[i];if(!node)return;var eb=$('.hero-eyebrow',node);if(eb&&sl.eyebrow)eb.textContent=sl.eyebrow;var h1=$('h1',node);if(h1&&sl.title)h1.textContent=sl.title;var tx=$('.hero-text',node);if(tx&&sl.text)tx.textContent=sl.text;});}
-    // footer contact + social
-    if(cfg.settings){var sp=$$('.footer-contact li span');if(sp.length>=4){if(cfg.settings.address)sp[0].textContent=cfg.settings.address;if(cfg.settings.phone)sp[1].textContent=cfg.settings.phone;if(cfg.settings.email)sp[2].textContent=cfg.settings.email;if(cfg.settings.reg)sp[3].textContent='رقم التسجيل: '+cfg.settings.reg;}
-      if(cfg.settings.social){var soc=$$('.social a');['x','instagram','linkedin','youtube','whatsapp'].forEach(function(k,idx){if(soc[idx]&&cfg.settings.social[k]&&cfg.settings.social[k]!=='#')soc[idx].setAttribute('href',cfg.settings.social[k]);});}}
-    // custom code
-    var cc=cfg.customCode||{};
-    if(cc.global&&cc.global.head)injectHTML(document.head,cc.global.head);
-    var blocks=(cc.pages&&cc.pages[page])||[];
-    blocks.forEach(function(b){
-      if(b.enabled===false||!b.code)return;
-      var wrap=document.createElement('div');wrap.className='custom-block';var main=$('#main');
-      if(b.pos==='top'){if(main)main.insertBefore(wrap,main.firstChild);else document.body.insertBefore(wrap,document.body.firstChild);}
-      else if(b.pos==='afterHero'){var hero=$('.hero')||$('.page-banner');if(hero&&hero.parentNode)hero.parentNode.insertBefore(wrap,hero.nextSibling);else if(main)main.insertBefore(wrap,main.firstChild);else document.body.appendChild(wrap);}
-      else{var foot=$('.site-footer');if(foot&&foot.parentNode)foot.parentNode.insertBefore(wrap,foot);else document.body.appendChild(wrap);}
-      wrap.innerHTML=b.code;runScripts(wrap);
-    });
-    if(cc.global&&cc.global.bodyEnd)injectHTML(document.body,cc.global.bodyEnd);
-  })();
+  // جسر المحتوى الحقيقي يعمل من طبقة التشغيل في <head> (iaq-runtime.js):
+  // يقرأ إعدادات المدير وتعديلاته من Supabase فيراها كل الزوّار.
+  // أُزيل الجسر المحليّ القديم (localStorage aiSiteConfigV2): كان يسري على
+  // متصفّح المدير وحده، وكان ينفّذ HTML وسكربتات من الذاكرة المحلية.
 
   var header=$('#siteHeader');
   if(header){ var os=function(){header.classList.toggle('scrolled',window.scrollY>20);}; window.addEventListener('scroll',os,{passive:true}); os(); }
@@ -753,7 +1101,125 @@ section[id]{scroll-margin-top:92px}
     var nt=null;function na(){if(reduce)return;nt=setInterval(function(){var m=strip.scrollWidth-strip.clientWidth;if(Math.abs(strip.scrollLeft)>=m-4)strip.scrollTo({left:0,behavior:'smooth'});else strip.scrollBy({left:-stp(),behavior:'smooth'});},4500);}
     strip.addEventListener('mouseenter',function(){if(nt)clearInterval(nt);});strip.addEventListener('mouseleave',na);na();}
 
-  // partners marquee: الشعارات تُولَّد من partners.json عند البناء
+  // ===== شريط الشركاء: ثلاثة أنماط، النمط يأتي من إعدادات مدير النظام =====
+  // النمط الافتراضي مبنيّ في data-mode، ويُستبدل بما اختاره المدير (IAQ.setting)
+  var mqEl=document.getElementById('partnersMarquee');
+  if(mqEl){(function(mq){
+    var view=document.getElementById('partnersView'),
+        track=document.getElementById('partnersTrack'),
+        prev=$('.mq-prev',mq), next=$('.mq-next',mq), dots=document.getElementById('partnersDots'),
+        MODES={auto:1,manual:1,fade:1}, cur=null, timer=null, pages=[], idx=0;
+
+    function clearMode(){
+      if(timer){clearInterval(timer);timer=null;}
+      // فكّ صفحات التلاشي وإعادة الشعارات إلى مجموعتها
+      if(pages.length){
+        var set=$('.mq-set',track);
+        pages.forEach(function(p){while(p.firstChild)set.appendChild(p.firstChild);p.remove();});
+        pages=[];
+      }
+      [prev,next].forEach(function(b){if(b){b.hidden=true;b.disabled=false;}});
+      if(dots){dots.hidden=true;dots.innerHTML='';}
+      if(view){view.classList.remove('is-drag');view.scrollLeft=0;}
+    }
+
+    /* ---- يدوي: سحب بالماوس/اللمس + أسهم + لوحة مفاتيح ---- */
+    function initManual(){
+      if(!view) return;
+      [prev,next].forEach(function(b){if(b)b.hidden=false;});
+      var card=$('.plogo',track), step=card?card.offsetWidth+22:212;
+      function upd(){
+        // في RTL يكون scrollLeft سالبًا أو موجبًا حسب المتصفّح — نعتمد القيمة المطلقة
+        var max=track.scrollWidth-view.clientWidth, at=Math.abs(view.scrollLeft);
+        if(prev)prev.disabled=at>=max-2;
+        if(next)next.disabled=at<=2;
+      }
+      function go(dir){view.scrollBy({left:dir*step,behavior:'smooth'});}
+      if(next)next.addEventListener('click',function(){go(1);});
+      if(prev)prev.addEventListener('click',function(){go(-1);});
+      view.addEventListener('scroll',upd,{passive:true});
+      view.setAttribute('tabindex','0');
+      view.setAttribute('role','group');
+      view.setAttribute('aria-label','شعارات الشركاء — استخدم الأسهم للتنقّل');
+      view.addEventListener('keydown',function(e){
+        if(e.key==='ArrowLeft'){go(1);e.preventDefault();}
+        else if(e.key==='ArrowRight'){go(-1);e.preventDefault();}
+      });
+      // سحب بالمؤشّر
+      var down=false,sx=0,sl=0,moved=0;
+      view.addEventListener('pointerdown',function(e){
+        if(e.pointerType==='mouse'&&e.button!==0)return;
+        down=true;moved=0;sx=e.clientX;sl=view.scrollLeft;view.classList.add('is-drag');
+        try{view.setPointerCapture(e.pointerId);}catch(err){}
+      });
+      view.addEventListener('pointermove',function(e){
+        if(!down)return;
+        var d=e.clientX-sx;moved=Math.abs(d);
+        if(moved>3)view.scrollLeft=sl-d;
+      });
+      function end(){if(!down)return;down=false;view.classList.remove('is-drag');upd();}
+      view.addEventListener('pointerup',end);
+      view.addEventListener('pointercancel',end);
+      view.addEventListener('click',function(e){if(moved>6){e.preventDefault();e.stopPropagation();}},true);
+      upd();
+    }
+
+    /* ---- تلاشي: تقسيم الشعارات إلى صفحات بحسب المساحة المتاحة ---- */
+    function initFade(){
+      var set=$('.mq-set',track); if(!set) return;
+      var logos=$$('.plogo',set); if(!logos.length) return;
+      var per=Math.max(1,Math.min(logos.length,Math.floor(mq.clientWidth/210)))||1;
+      var n=Math.ceil(logos.length/per);
+      for(var i=0;i<n;i++){
+        var pg=document.createElement('div');
+        pg.className='mq-page';
+        if(i)pg.setAttribute('aria-hidden','true');
+        for(var j=i*per;j<Math.min((i+1)*per,logos.length);j++)pg.appendChild(logos[j]);
+        track.appendChild(pg);pages.push(pg);
+      }
+      idx=0;pages[0].classList.add('is-on');
+      if(dots&&n>1){
+        dots.hidden=false;
+        pages.forEach(function(_,i){
+          var b=document.createElement('button');
+          b.type='button';b.setAttribute('aria-label','المجموعة '+(i+1));
+          b.setAttribute('aria-current',i===0?'true':'false');
+          b.addEventListener('click',function(){show(i);restart();});
+          dots.appendChild(b);
+        });
+      }
+      [prev,next].forEach(function(b){if(b)b.hidden=(n<2);});
+      if(next)next.addEventListener('click',function(){show(idx+1);restart();});
+      if(prev)prev.addEventListener('click',function(){show(idx-1);restart();});
+      function show(i){
+        var n2=pages.length; i=((i%n2)+n2)%n2;
+        pages.forEach(function(p,k){
+          var on=k===i;p.classList.toggle('is-on',on);
+          if(on)p.removeAttribute('aria-hidden');else p.setAttribute('aria-hidden','true');
+        });
+        if(dots)$$('button',dots).forEach(function(b,k){b.setAttribute('aria-current',k===i?'true':'false');});
+        idx=i;
+      }
+      function restart(){if(timer)clearInterval(timer);if(!reduce&&pages.length>1)timer=setInterval(function(){show(idx+1);},4500);}
+      mq.addEventListener('mouseenter',function(){if(timer)clearInterval(timer);});
+      mq.addEventListener('mouseleave',restart);
+      document.addEventListener('visibilitychange',function(){document.hidden?(timer&&clearInterval(timer)):restart();});
+      restart();
+    }
+
+    function apply(mode){
+      if(!MODES[mode])mode='auto';
+      if(mode===cur)return;
+      clearMode();cur=mode;mq.setAttribute('data-mode',mode);
+      if(mode==='manual')initManual();
+      else if(mode==='fade')initFade();
+    }
+    // النمط المخزَّن محليًّا يُطبَّق فورًا بلا انتظار الشبكة، ثم يُحدَّث عند وصول الإعدادات
+    apply((window.IAQ&&IAQ.setting&&IAQ.setting('partners_strip_mode'))||mq.getAttribute('data-mode')||'auto');
+    document.addEventListener('iaq:settings',function(){
+      apply((window.IAQ&&IAQ.setting&&IAQ.setting('partners_strip_mode'))||'auto');
+    });
+  })(mqEl);}
 
   // counters + reveal
   function count(el){var t=parseFloat(el.getAttribute('data-target')),s=el.getAttribute('data-suffix')||'';if(reduce){el.innerHTML=t.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');return;}var d=1600,st=null;function tk(ts){if(!st)st=ts;var p=Math.min((ts-st)/d,1),e=1-Math.pow(1-p,3),v=Math.round(t*e);el.innerHTML=v.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');if(p<1)requestAnimationFrame(tk);}requestAnimationFrame(tk);}
@@ -771,13 +1237,91 @@ section[id]{scroll-margin-top:92px}
   // forms
   $$('.js-form').forEach(function(form){
     function valid(){var ok=true;$$('[required]',form).forEach(function(f){var fld=f.closest('.field')||f.closest('.survey-q');var bad=false;var v=(f.value||'').trim();if(f.type==='checkbox')bad=!f.checked;else if(f.type==='radio')bad=!form.querySelector('input[name="'+f.name+'"]:checked');else if(f.type==='email')bad=!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);else bad=!v;if(fld)fld.classList.toggle('err',bad);if(bad)ok=false;});return ok;}
-    form.addEventListener('submit',function(e){e.preventDefault();if(!valid())return;var ff=$('.form-fields',form),ok=$('.form-success',form);if(ff)ff.style.display='none';if(ok){ok.style.display='block';ok.scrollIntoView({behavior:'smooth',block:'center'});}});
+    /* ===== إرسال حقيقي إلى قاعدة البيانات =====
+       لا تُعرض رسالة النجاح إلا بعد تأكيد الخدمة استلام الطلب. */
+    function labelOf(f){
+      var fld=f.closest('.field'); var l=fld?$('label',fld):null;
+      var txt=l?l.textContent.replace('*','').trim():'';
+      return txt||f.getAttribute('name')||f.id||'حقل';
+    }
+    function payloadOf(){
+      var out={};
+      $$('input,select,textarea',form).forEach(function(f){
+        if(f.type==='radio'||f.type==='hidden'||f.disabled)return;
+        if(f.name==='iaq_hp')return;
+        var k=labelOf(f), v;
+        if(f.type==='checkbox')v=f.checked?'نعم':'لا'; else v=(f.value||'').trim();
+        if(v==='')return;
+        if(out[k])k=k+' ('+(f.getAttribute('name')||f.id)+')';
+        out[k]=v;
+      });
+      return out;
+    }
+    function ratingsOf(){
+      var r={},prog=null,note=null;
+      $$('.survey-q',form).forEach(function(q){
+        var qt=$('.qt',q); var name=qt?qt.textContent.trim():'';
+        var sc=$('.scale',q);
+        if(sc){
+          var chosen=$$('input[type=radio]',sc).filter(function(x){return x.checked;})[0];
+          if(chosen){var sp=chosen.nextElementSibling;var n=parseInt(sp?sp.textContent:'',10);if(isFinite(n))r[name]=n;}
+          return;
+        }
+        var ta=$('textarea',q), tx=$('input[type=text]',q);
+        if(ta&&(ta.value||'').trim())note=(note?note+'\n':'')+ta.value.trim();
+        else if(tx&&(tx.value||'').trim())prog=tx.value.trim();
+      });
+      $$('textarea',form).forEach(function(ta){ if((ta.value||'').trim()&&!note)note=ta.value.trim(); });
+      return {ratings:r,program:prog,comment:note};
+    }
+    function fail(msg){
+      var box=$('.form-error',form);
+      if(!box){ box=document.createElement('div'); box.className='form-error notice'; box.setAttribute('role','alert');
+        box.style.cssText='margin-block-start:16px;padding:13px 16px;border-radius:10px;background:#fdf1ec;border:1px solid #f0cdbc;color:#8c3d1c;font-size:.95rem';
+        var ff2=$('.form-fields',form); if(ff2)ff2.appendChild(box); else form.appendChild(box); }
+      box.textContent=msg; box.style.display='block';
+    }
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      if(!valid())return;
+      var hp=form.querySelector('[name="iaq_hp"]');
+      var btn=$('button[type=submit]',form)||$('.btn',form);
+      var kind=form.getAttribute('data-kind'), survey=form.getAttribute('data-survey');
+      var done=function(){var ff=$('.form-fields',form),ok=$('.form-success',form);
+        if(ff)ff.style.display='none';
+        if(ok){ok.style.display='block';ok.scrollIntoView({behavior:'smooth',block:'center'});}};
+      // فخّ الآليات: إن مُلئ الحقل المخفيّ فهو روبوت — نُظهر النجاح ولا نُرسل
+      if(hp&&(hp.value||'').trim()){done();return;}
+      if(!window.IAQ||!IAQ.post||(!kind&&!survey)){
+        fail('تعذّر إرسال الطلب الآن. يرجى التواصل عبر البريد info@iaq.org.sa أو الجوال 0505144421.');
+        return;
+      }
+      var lbl=btn?btn.innerHTML:'';
+      if(btn){btn.disabled=true;btn.style.opacity='.65';btn.innerHTML='جارٍ الإرسال…';}
+      var p;
+      if(survey){var s=ratingsOf();
+        p=IAQ.post('survey_responses',{survey_type:survey,ratings:s.ratings,program:s.program,comment:s.comment});}
+      else p=IAQ.post('submissions',{kind:kind,payload:payloadOf()});
+      p.then(done).catch(function(err){
+        if(btn){btn.disabled=false;btn.style.opacity='';btn.innerHTML=lbl;}
+        fail('تعذّر إرسال الطلب: '+(err&&err.message?err.message:'خطأ غير معروف')+
+             '. يرجى المحاولة لاحقًا أو التواصل عبر info@iaq.org.sa');
+      });
+    });
     $$('input,select,textarea',form).forEach(function(f){f.addEventListener('input',function(){var fld=f.closest('.field')||f.closest('.survey-q');if(fld)fld.classList.remove('err');});});
   });
 
   // newsletter (footer)
   var nB=$('#newsletterBtn'),nE=$('#newsletterEmail'),nM=$('#newsletterMsg');
-  if(nB&&nE&&nM){nB.addEventListener('click',function(){var v=(nE.value||'').trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){nM.style.color='#c0603a';nM.textContent='يرجى إدخال بريد إلكتروني صحيح.';return;}nM.style.color='';nM.classList.add('ok');nM.textContent='تم تسجيل اشتراكك بنجاح، شكرًا لك.';nE.value='';});nE.addEventListener('keydown',function(e){if(e.key==='Enter')nB.click();});}
+  if(nB&&nE&&nM){nB.addEventListener('click',function(){var v=(nE.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){nM.style.color='#c0603a';nM.classList.remove('ok');nM.textContent='يرجى إدخال بريد إلكتروني صحيح.';return;}
+    if(!window.IAQ||!IAQ.post){nM.style.color='#c0603a';nM.textContent='تعذّر التسجيل الآن، جرّب لاحقًا.';return;}
+    nM.style.color='';nM.classList.remove('ok');nM.textContent='جارٍ التسجيل…';nB.disabled=true;
+    IAQ.post('submissions',{kind:'newsletter',payload:{'البريد':v,'المصدر':'نشرة التذييل'}})
+      .then(function(){nM.classList.add('ok');nM.textContent='تم تسجيل اشتراكك بنجاح، شكرًا لك.';nE.value='';})
+      .catch(function(e){nM.style.color='#c0603a';nM.textContent='تعذّر التسجيل: '+(e&&e.message?e.message:'خطأ');})
+      .then(function(){nB.disabled=false;});
+  });nE.addEventListener('keydown',function(e){if(e.key==='Enter')nB.click();});}
 })();
 </script>
 

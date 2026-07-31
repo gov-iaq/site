@@ -196,18 +196,71 @@ section[id]{scroll-margin-top:92px}
 .testi-name{font-weight:700;color:var(--card-title2);font-size:1rem}
 .testi-role{font-size:.87rem;color:var(--muted)}
 .partners{background:var(--news-bg)}
-.marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
+/* ============================================================
+   شريط الشركاء — ثلاثة أنماط يختار بينها مدير النظام:
+   data-mode="auto"   : تمرير متصل لا ينقطع (الافتراضي)
+   data-mode="manual" : تحريك يدوي بالسحب والأسهم ولوحة المفاتيح
+   data-mode="fade"   : تبديل مجموعات بالتلاشي
+   ============================================================ */
+.marquee{position:relative}
+.mq-view{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
 /* --mq-sets: عدد المجموعات المتطابقة التي يولّدها البنّاء. الإزاحة = مجموعة واحدة بالضبط
    فتُستبدل كل مجموعة بالتالية بلا قفزة، ويبقى الشريط ممتلئًا على أي عرض شاشة. */
-.marquee-track{--mq-sets:4;--mq-speed:34s;display:flex;width:max-content;animation:marquee var(--mq-speed) linear infinite;will-change:transform}
+.marquee-track{--mq-sets:{{MQ_SETS}};--mq-speed:34s;display:flex;width:max-content}
+.marquee[data-mode="auto"] .marquee-track{animation:marquee var(--mq-speed) linear infinite;will-change:transform}
 .marquee-track .mq-set{display:flex;gap:22px;padding-inline-end:22px}
+/* أزرار التنقّل ومؤشّرات الصفحات — تظهر في النمطين اليدوي والتلاشي فقط */
+.mq-nav{position:absolute;inset-block-start:50%;translate:0 -50%;z-index:3;width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line);background:var(--surface);color:var(--teal);cursor:pointer;
+  display:none;align-items:center;justify-content:center;box-shadow:0 10px 26px -14px rgba(6,63,54,.42);
+  transition:background .25s var(--ease),color .25s var(--ease),transform .25s var(--ease),opacity .25s}
+.mq-nav svg{width:20px;height:20px}
+.mq-nav:hover{background:var(--teal);color:#fff;transform:scale(1.07)}
+.mq-nav:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.mq-nav[disabled]{opacity:.34;cursor:default;transform:none}
+.mq-prev{inset-inline-start:6px}
+.mq-next{inset-inline-end:6px}
+.marquee[data-mode="manual"] .mq-nav,.marquee[data-mode="fade"] .mq-nav{display:flex}
+.mq-dots{display:none;justify-content:center;gap:9px;margin-block-start:18px}
+.marquee[data-mode="fade"] .mq-dots{display:flex}
+.mq-dots button{width:11px;height:11px;border-radius:50%;border:none;padding:0;background:var(--tb,#d6e5e3);cursor:pointer;transition:all .3s var(--ease)}
+.mq-dots button[aria-current="true"]{background:var(--teal);width:30px;border-radius:999px}
+.mq-dots button:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+/* النمط اليدوي: منطقة العرض تصبح قابلة للتمرير والسحب */
+.marquee[data-mode="manual"] .mq-view{overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;-ms-overflow-style:none;cursor:grab;padding-block-end:2px}
+.marquee[data-mode="manual"] .mq-view::-webkit-scrollbar{display:none}
+.marquee[data-mode="manual"] .mq-view.is-drag{cursor:grabbing;scroll-snap-type:none}
+.marquee[data-mode="manual"] .mq-view.is-drag .plogo{pointer-events:none}
+.marquee[data-mode="manual"] .marquee-track{animation:none;transform:none}
+.marquee[data-mode="manual"] .plogo{scroll-snap-align:center}
+/* النمطان اليدوي والتلاشي يعرضان مجموعة واحدة فقط — التكرار للتمرير المتصل وحده */
+.marquee[data-mode="manual"] .mq-set:not(:first-child),
+.marquee[data-mode="fade"] .mq-set:not(:first-child){display:none}
+/* نمط التلاشي: صفحات مكدّسة تتبادل الظهور */
+.marquee[data-mode="fade"] .marquee-track{display:block;width:100%;animation:none;transform:none;position:relative;height:104px}
+.marquee[data-mode="fade"] .mq-set{display:contents}
+.marquee[data-mode="fade"] .mq-page{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:22px;
+  opacity:0;visibility:hidden;transition:opacity .7s var(--ease),visibility .7s var(--ease)}
+.marquee[data-mode="fade"] .mq-page.is-on{opacity:1;visibility:visible}
+@media (max-width:640px){
+  .marquee[data-mode="fade"] .marquee-track{height:92px}
+  .marquee[data-mode="fade"] .mq-page{gap:12px}
+  .mq-nav{width:38px;height:38px}.mq-nav svg{width:17px;height:17px}
+}
 .marquee-track .plogo{flex:none;width:190px;height:104px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),transform .3s var(--ease)}
 .marquee-track .plogo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:saturate(.92);transition:filter .3s var(--ease),transform .35s var(--ease)}
 .marquee-track .plogo:hover{border-color:rgba(0,120,120,.34);box-shadow:0 14px 30px -16px rgba(6,63,54,.3);transform:translateY(-3px)}
 .marquee-track .plogo:hover img{filter:saturate(1.06);transform:scale(1.04)}
 @media (max-width:640px){.marquee-track .plogo{width:158px;height:92px;padding:13px 15px}}
 @media (prefers-reduced-motion:reduce){.marquee-track .plogo,.marquee-track .plogo img{transition:none}.marquee-track .plogo:hover{transform:none}.marquee-track .plogo:hover img{transform:none}}
-.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee[data-mode="auto"]:hover .marquee-track{animation-play-state:paused}
+/* مع تفضيل تقليل الحركة: كل الشعارات ثابتة ومرئية بلا أي تحريك */
+@media (prefers-reduced-motion:reduce){
+  .marquee[data-mode="fade"] .marquee-track{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;height:auto;width:100%}
+  .marquee[data-mode="fade"] .mq-page{position:static;inset:auto;opacity:1;visibility:visible;transition:none;flex-wrap:wrap}
+  .marquee[data-mode="fade"] .mq-dots,.marquee[data-mode="fade"] .mq-nav{display:none}
+  .mq-nav{transition:none}.mq-nav:hover{transform:none}
+}
 /* في RTL يُثبَّت الشريط من حافته اليمنى، فنبدأ مُزاحًا بمقدار مجموعة وننتهي عند الصفر:
    الحركة إلى اليسار (يخرج الشعار يسارًا ويدخل من اليمين) دون أن ينكشف فراغ. */
 @keyframes marquee{from{transform:translateX(calc(100% / var(--mq-sets)))}to{transform:translateX(0)}}
@@ -504,4 +557,4 @@ section[id]{scroll-margin-top:92px}
 <meta name="twitter:description" content="{{DESC}}" />
 <meta name="twitter:image" content="https://iaq.org.sa/og-image.png" />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"NGO","name":"جمعية حاضنة الجمعيات","url":"https://iaq.org.sa","logo":"https://iaq.org.sa/favicon.png","description":"جمعية حاضنة الجمعيات جمعية غير ربحية مرخّصة تُعنى باحتضان الجمعيات وتطوير قدراتها المؤسسية من التأسيس حتى الاستدامة وقياس الأثر.","address":{"@type":"PostalAddress","streetAddress":"{{ADDR_LINE}}","addressLocality":"{{CITY}}","addressCountry":"SA"},"telephone":"{{PHONE_TEL}}","email":"{{EMAIL}}","sameAs":["{{SOC_X}}","{{SOC_YOUTUBE}}","{{SOC_LINKEDIN}}"]}</script>
-</head>
+{{RUNTIME}}</head>

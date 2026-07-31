@@ -1,0 +1,76 @@
+{
+ "pages": [
+  {
+   "slug": "about",
+   "title": "عن الجمعية"
+  },
+  {
+   "slug": "assembly",
+   "title": "الجمعية العمومية"
+  },
+  {
+   "slug": "board",
+   "title": "مجلس الإدارة"
+  },
+  {
+   "slug": "committees",
+   "title": "اللجان الفرعية"
+  },
+  {
+   "slug": "contact",
+   "title": "تواصل معنا"
+  },
+  {
+   "slug": "endowments",
+   "title": "الأوقاف والاستثمارات"
+  },
+  {
+   "slug": "governance",
+   "title": "الحوكمة"
+  },
+  {
+   "slug": "index",
+   "title": "الرئيسية"
+  },
+  {
+   "slug": "jobs",
+   "title": "الوظائف"
+  },
+  {
+   "slug": "licenses",
+   "title": "التراخيص"
+  },
+  {
+   "slug": "membership",
+   "title": "طلب العضوية"
+  },
+  {
+   "slug": "news",
+   "title": "المركز الإعلامي"
+  },
+  {
+   "slug": "programs",
+   "title": "برامجنا"
+  },
+  {
+   "slug": "satisfaction",
+   "title": "قياس الرضا"
+  },
+  {
+   "slug": "team",
+   "title": "فريق العمل"
+  },
+  {
+   "slug": "volunteer",
+   "title": "تطوّع معنا"
+  },
+  {
+   "slug": "privacy",
+   "title": "سياسة الخصوصية"
+  },
+  {
+   "slug": "terms",
+   "title": "شروط الاستخدام"
+  }
+ ]
+}

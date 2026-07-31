@@ -196,7 +196,7 @@ section[id]{scroll-margin-top:92px}
 .testi-role{font-size:.87rem;color:var(--muted)}
 .partners{background:var(--news-bg)}
 .marquee{position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
-.marquee-track{--mq-sets:4;display:flex;width:max-content;animation:marquee 34s linear infinite}
+.marquee-track{--mq-sets:{{MQ_SETS}};display:flex;width:max-content;animation:marquee 34s linear infinite}
 .marquee-track .mq-set{display:flex;gap:22px;padding-inline-end:22px}
 .marquee:hover .marquee-track{animation-play-state:paused}
 @keyframes marquee{from{transform:translateX(calc(100% / var(--mq-sets)))}to{transform:translateX(0)}}
@@ -481,7 +481,7 @@ section[id]{scroll-margin-top:92px}
 <meta name="twitter:description" content="الصفحة غير موجودة — جمعية حاضنة الجمعيات." />
 <meta name="twitter:image" content="https://iaq.org.sa/og-image.png" />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"NGO","name":"جمعية حاضنة الجمعيات","url":"https://iaq.org.sa","logo":"https://iaq.org.sa/favicon.png","description":"جمعية حاضنة الجمعيات جمعية غير ربحية مرخّصة تُعنى باحتضان الجمعيات وتطوير قدراتها المؤسسية من التأسيس حتى الاستدامة وقياس الأثر.","address":{"@type":"PostalAddress","streetAddress":"حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان","addressLocality":"بريدة","addressCountry":"SA"},"telephone":"+966505144421","email":"info@iaq.org.sa","sameAs":["https://x.com/iaq_ksa","https://www.youtube.com/@iaq_ksa","https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/"]}</script>
-</head>
+{{RUNTIME_404}}</head>
 <body class="hybrid" data-page="404">
 <a href="#main" class="skip-link">تخطَّ إلى المحتوى</a>
 <header class="site-header" id="siteHeader"><div class="container"><div class="nav-inner">

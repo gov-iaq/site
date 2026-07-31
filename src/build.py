@@ -14,7 +14,7 @@
 
 كل شيء يُعالَج على مستوى البايت للحفاظ على التطابق التام.
 """
-import os, io, json, argparse, shutil
+import os, io, re, json, argparse, shutil
 
 HERE      = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES = os.path.join(HERE, "templates")
@@ -33,6 +33,8 @@ NEWS_J    = os.path.join(HERE, "data", "news.json")
 LEGAL_J   = os.path.join(HERE, "data", "legal.json")
 SUPA_J    = os.path.join(HERE, "data", "supabase.json")
 DEFAULT_OUT = os.path.abspath(os.path.join(HERE, "..", "site"))
+
+NLB = b"\n"
 
 def rb(path):
     with open(path, "rb") as f:
@@ -555,14 +557,45 @@ def render_legal(key):
             .replace("{{UPDATED}}", esc(data.get("updated", "")))
             .replace("{{NOTE}}", esc(data.get("_تنبيه", "")))).encode("utf-8")
 
-def admin_map():
-    """إعداد Supabase العلني + رابط اللوحة، يُحقن في صفحات اللوحة فقط."""
+def supa_cfg():
+    """إعداد Supabase العلني (الرابط + المفتاح القابل للنشر) — يُقرأ مرّة واحدة."""
     cfg = {"url": "", "key": ""}
     if os.path.exists(SUPA_J):
         with io.open(SUPA_J, encoding="utf-8") as f:
             d = json.load(f)
         cfg = {"url": (d.get("url") or "").rstrip("/"),
                "key": d.get("publishable_key") or d.get("anon_key_legacy") or ""}
+    return cfg
+
+def path_algo():
+    """خوارزمية العنونة المشتركة كنصّ — تُحقن في الصفحات وفي اللوحة معًا."""
+    p = os.path.join(TEMPLATES, "iaq-path.js")
+    return rb(p) if os.path.exists(p) else b""
+
+def runtime_script(slug):
+    """سكربت التشغيل العلنيّ لصفحة واحدة: الإعداد + خوارزمية العنونة + الطبقة."""
+    body = os.path.join(TEMPLATES, "iaq-runtime.js")
+    if not os.path.exists(body):
+        return b""
+    cfg = json.dumps(supa_cfg(), ensure_ascii=False).encode("utf-8")
+    head = (b"var IAQ_SUPA=" + cfg + b",IAQ_SLUG=" +
+            json.dumps(slug, ensure_ascii=False).encode("utf-8") + b";\n")
+    return b"<script>\n" + head + path_algo() + b"\n" + rb(body) + b"</script>\n"
+
+STRIP_MODES = ("auto", "manual", "fade")
+
+def strip_mode():
+    """نمط حركة شريط الشركاء الافتراضي — يبدّله مدير النظام لاحقًا من اللوحة."""
+    if os.path.exists(PARTNERS_J):
+        with io.open(PARTNERS_J, encoding="utf-8") as f:
+            m = (json.load(f).get("strip_mode") or "").strip()
+        if m in STRIP_MODES:
+            return m
+    return "auto"
+
+def admin_map():
+    """إعداد Supabase العلني + رابط اللوحة، يُحقن في صفحات اللوحة فقط."""
+    cfg = supa_cfg()
     login = "iaq-cp-9f4b21.html"
     if os.path.exists(CONTACT_F):
         with io.open(CONTACT_F, encoding="utf-8") as f:
@@ -572,7 +605,26 @@ def admin_map():
         b"{{SUPABASE_CFG}}": json.dumps(cfg, ensure_ascii=False).encode("utf-8"),
         b"{{PANEL_URL}}":    panel.encode("utf-8"),
         b"{{LOGIN_URL}}":    login.encode("utf-8"),
+        b"{{PATH_ALGO}}":    path_algo(),
+        b"{{RUNTIME_404}}":  runtime_script("404"),
     }
+
+BAD_CHARS = '<>"'
+
+def safe_field(name, val):
+    """بيانات التواصل تُدرج نصًّا خامًا في HTML وفي JSON-LD معًا، فلا يوجد تهريب
+    يصلح للسياقين. نمنع المحارف التي تكسر أيًّا منهما بدل تخريب البيانات."""
+    s = "" if val is None else str(val)
+    bad = [c for c in BAD_CHARS if c in s]
+    if bad:
+        raise SystemExit(
+            "خطأ في contact.json — الحقل «%s» يحتوي محارف غير مسموحة: %s"
+            % (name, " ".join(bad))
+            + chr(10) + "  القيمة: %s" % s
+            + chr(10) + "  المحارف الممنوعة: %s" % BAD_CHARS)
+    if any(ord(c) < 32 and c != chr(9) for c in s):
+        raise SystemExit("خطأ في contact.json — الحقل «%s» يحتوي محارف تحكّم." % name)
+    return s.encode("utf-8")
 
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
@@ -585,22 +637,72 @@ def contact_map():
         # الروابط الفارغة تعود إلى صفحة التواصل بدل رابط معطّل
         return s.get(key) or "contact.html"
     return {
-        b"{{LICENSE}}":       c.get("license_no", "").encode("utf-8"),
-        b"{{CITY}}":          c.get("city", "").encode("utf-8"),
-        b"{{COUNTRY}}":       c.get("country", "").encode("utf-8"),
-        b"{{ADDR_SHORT}}":    c.get("address_short", "").encode("utf-8"),
-        b"{{ADDR_LINE}}":     c.get("address_line", "").encode("utf-8"),
-        b"{{PHONE_DISPLAY}}": c.get("phone_display", "").encode("utf-8"),
-        b"{{PHONE_TEL}}":     c.get("phone_tel", "").encode("utf-8"),
-        b"{{EMAIL}}":         c.get("email", "").encode("utf-8"),
-        b"{{DONATE_URL}}":    (c.get("donate_url") or "contact.html").encode("utf-8"),
-        b"{{HOURS}}":         c.get("hours", "").encode("utf-8"),
-        b"{{SOC_X}}":         soc("x").encode("utf-8"),
-        b"{{SOC_YOUTUBE}}":   soc("youtube").encode("utf-8"),
-        b"{{SOC_LINKEDIN}}":  soc("linkedin").encode("utf-8"),
-        b"{{SOC_WHATSAPP}}":  soc("whatsapp").encode("utf-8"),
-        b"{{SOC_INSTAGRAM}}": soc("instagram").encode("utf-8"),
+        b"{{LICENSE}}":       safe_field("license_no", c.get("license_no", "")),
+        b"{{CITY}}":          safe_field("city", c.get("city", "")),
+        b"{{COUNTRY}}":       safe_field("country", c.get("country", "")),
+        b"{{ADDR_SHORT}}":    safe_field("address_short", c.get("address_short", "")),
+        b"{{ADDR_LINE}}":     safe_field("address_line", c.get("address_line", "")),
+        b"{{PHONE_DISPLAY}}": safe_field("phone_display", c.get("phone_display", "")),
+        b"{{PHONE_TEL}}":     safe_field("phone_tel", c.get("phone_tel", "")),
+        b"{{EMAIL}}":         safe_field("email", c.get("email", "")),
+        b"{{DONATE_URL}}":    safe_field("donate_url", c.get("donate_url") or "contact.html"),
+        b"{{HOURS}}":         safe_field("hours", c.get("hours", "")),
+        b"{{SOC_X}}":         safe_field("socials.x", soc("x")),
+        b"{{SOC_YOUTUBE}}":   safe_field("socials.youtube", soc("youtube")),
+        b"{{SOC_LINKEDIN}}":  safe_field("socials.linkedin", soc("linkedin")),
+        b"{{SOC_WHATSAPP}}":  safe_field("socials.whatsapp", soc("whatsapp")),
+        b"{{SOC_INSTAGRAM}}": safe_field("socials.instagram", soc("instagram")),
     }
+
+TOKEN_RE = re.compile(rb"\{\{[A-Z][A-Z0-9_]{1,30}\}\}")
+
+def check_tokens(name, data):
+    """يمنع شحن رمز نائب لم يُستبدل — البنّاء يفشل بصوت عالٍ بدل نشر {{TOKEN}} حرفيًّا."""
+    left = sorted(set(m.decode("ascii") for m in TOKEN_RE.findall(data)))
+    if left:
+        raise SystemExit("خطأ: رموز نائبة لم تُستبدل في %s ← %s" % (name, "، ".join(left)))
+
+PANEL     = os.path.join(HERE, "panel")
+PANEL_MODS= os.path.join(PANEL, "modules")
+
+def panel_map():
+    """أجزاء لوحة التحكّم: التنسيق + النواة + الوحدات مرتّبة باسم الملف."""
+    style = rb(os.path.join(PANEL, "panel.css")) if os.path.exists(os.path.join(PANEL, "panel.css")) else b""
+    core  = rb(os.path.join(PANEL, "core.js"))  if os.path.exists(os.path.join(PANEL, "core.js"))  else b""
+    mods = []
+    if os.path.isdir(PANEL_MODS):
+        for name in sorted(os.listdir(PANEL_MODS)):
+            if name.endswith(".js"):
+                mods.append(b"/* ===== " + name.encode("utf-8") + b" ===== */" + NLB + rb(os.path.join(PANEL_MODS, name)))
+    return {b"{{PANEL_STYLE}}": style,
+            b"{{PANEL_CORE}}":  core,
+            b"{{PANEL_MODULES}}": NLB.join(mods)}
+
+def panel_name():
+    """اسم ملف اللوحة مشتقّ من رابط الدخول في contact.json."""
+    login = "iaq-cp-9f4b21.html"
+    if os.path.exists(CONTACT_F):
+        with io.open(CONTACT_F, encoding="utf-8") as f:
+            login = json.load(f).get("admin_login_url") or login
+    return login.replace(".html", "-panel.html")
+
+def build_panel(out_dir, cmap, amap):
+    """يجمع صفحة اللوحة من src/panel ويكتبها في المخرج. يرجع اسم الملف."""
+    shell = os.path.join(PANEL, "shell.html")
+    if not os.path.exists(shell):
+        return None
+    page = rb(shell)
+    for k, v in panel_map().items():
+        page = page.replace(k, v)
+    for k, v in cmap.items():
+        page = page.replace(k, v)
+    for k, v in amap.items():
+        page = page.replace(k, v)
+    name = panel_name()
+    check_tokens(name, page)
+    with open(os.path.join(out_dir, name), "wb") as f:
+        f.write(page)
+    return name
 
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
@@ -627,6 +729,9 @@ def build(out_dir):
     cmap = contact_map()
     amap = admin_map()
     cmap.update(files_map())
+    # رموز عامة تصل الصفحات المولّدة والثابتة معًا
+    cmap[b"{{MQ_MODE}}"] = strip_mode().encode("utf-8")
+    cmap[b"{{MQ_SETS}}"] = str(MQ_SETS).encode("utf-8")
 
     # 1) الصفحات المُولّدة من القالب
     for pg in data["pages"]:
@@ -634,7 +739,8 @@ def build(out_dir):
         head = (head_tpl
                 .replace(b"{{TITLE}}", pg["title"].encode("utf-8"))
                 .replace(b"{{DESC}}",  pg["desc"].encode("utf-8"))
-                .replace(b"{{URL}}",   pg["url"].encode("utf-8")))
+                .replace(b"{{URL}}",   pg["url"].encode("utf-8"))
+                .replace(b"{{RUNTIME}}", runtime_script(slug)))
         body_tag = ('<body class="hybrid" data-page="%s">' % slug).encode("utf-8")
         header = header_tpl
         active = set(pg.get("active", []))
@@ -659,6 +765,7 @@ def build(out_dir):
         page = head + body_tag + header + banner + main + footer
         for k, v in cmap.items():
             page = page.replace(k, v)
+        check_tokens(slug + ".html", page)
         with open(os.path.join(out_dir, slug + ".html"), "wb") as f:
             f.write(page)
 
@@ -676,13 +783,20 @@ def build(out_dir):
                     data_b = data_b.replace(k, v)
                 for k, v in amap.items():
                     data_b = data_b.replace(k, v)
+                check_tokens(name, data_b)
                 with open(dst_f, "wb") as fh:
                     fh.write(data_b)
             else:
                 shutil.copy2(src_f, dst_f)
 
     # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة أو موجودة في static
+    # 2-ب) لوحة التحكّم تُجمَّع من src/panel بعد نسخ الأصول
+    pname = build_panel(out_dir, cmap, amap)
+
+    # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة
     expected = set(pg["slug"] + ".html" for pg in data["pages"])
+    if pname:
+        expected.add(pname)
     for root, dirs, files in os.walk(STATIC):
         if os.path.relpath(root, STATIC) == ".":
             expected |= {f for f in files if f.endswith(".html")}
@@ -692,6 +806,12 @@ def build(out_dir):
             os.remove(os.path.join(out_dir, f)); removed.append(f)
     if removed:
         print("حُذفت صفحات قديمة: %s" % "، ".join(removed))
+
+    # فهرس الصفحات للوحة التحكّم — مصدر واحد لأسماء الصفحات
+    idx = [{"slug": p["slug"], "title": p["title"].split("|")[-1].strip()}
+           for p in data["pages"]]
+    with io.open(os.path.join(out_dir, "panel-pages.json"), "w", encoding="utf-8") as f:
+        json.dump({"pages": idx}, f, ensure_ascii=False, indent=1)
 
     count = len(data["pages"])
     print("بُنيت %d صفحة من القالب + الأصول الثابتة إلى: %s" % (count, out_dir))
