@@ -179,6 +179,26 @@
   function count(el){var t=parseFloat(el.getAttribute('data-target')),s=el.getAttribute('data-suffix')||'';if(reduce){el.innerHTML=t.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');return;}var d=1600,st=null;function tk(ts){if(!st)st=ts;var p=Math.min((ts-st)/d,1),e=1-Math.pow(1-p,3),v=Math.round(t*e);el.innerHTML=v.toLocaleString('en-US')+(s?'<span class="suffix">'+s+'</span>':'');if(p<1)requestAnimationFrame(tk);}requestAnimationFrame(tk);}
   var io=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in-view');var n=$('.stat-num',e.target);if(n&&!n.dataset.done){n.dataset.done='1';count(n);}io.unobserve(e.target);}});},{threshold:0.16,rootMargin:'0px 0px -40px 0px'});
   $$('.reveal').forEach(function(el){io.observe(el);});
+  /* عناصر تُبنى من قاعدة البيانات بعد التحميل يجب أن تُراقَب هي أيضًا، وإلا
+     بقيت شفّافة إلى الأبد لأن قائمة .reveal تُقرأ مرّةً واحدة هنا. وما كان
+     داخل الشاشة الآن يُظهَر فورًا لا انتظارًا لدورة المُراقب. */
+  window.IAQ_REINDEX = window.IAQ_REINDEX || {};
+  window.IAQ_REINDEX.reveal = function(root){
+    $$('.reveal', root || document).forEach(function(el){
+      if(el.classList.contains('in-view')) return;
+      var r = el.getBoundingClientRect();
+      /* بلا أبعاد = غير معروض (داخل تبويب مغلق مثلًا). لا نرصده: قد لا يتقاطع
+         أبدًا فيبقى شفّافًا حين يُفتح التبويب. نُظهره الآن وهو مخفيّ أصلًا. */
+      if(!r.height && !r.width){ el.classList.add('in-view'); return; }
+      if(r.top < (window.innerHeight || 0) && r.bottom > 0){
+        el.classList.add('in-view');
+        var n = $('.stat-num', el);
+        if(n && !n.dataset.done){ n.dataset.done='1'; count(n); }
+        return;
+      }
+      io.observe(el);
+    });
+  };
 
   // tabs
   $$('.tabs').forEach(function(tabs){var g=tabs.getAttribute('data-tabs');var btns=$$('.tab',tabs);

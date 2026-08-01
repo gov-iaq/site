@@ -496,11 +496,120 @@
       });
   }
 
+  /* ------------------------------ الوثائق ------------------------------ */
+  /* التصنيف ← معرّف الحاوية في الصفحة. الحاويات موجودة في الحوكمة (أربع)
+     وفي قياس الرضا (واحدة)، وما لا حاوية له في هذه الصفحة يُتجاهَل. */
+  var DOC_BOX = { policies: 'gf-pol', minutes: 'gf-min', financials: 'gf-fin',
+                  annual: 'gf-ann', surveys: 'gf-sat' };
+  /* التراخيص معرضٌ آخر (صور شهادات وجداول بيانات) لا قائمةَ ملفات، فلا تُبنى هنا. */
+
+  function docHref(p) {
+    var s = String(p || '');
+    if (!s) return '';
+    if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/') return s;
+    return s;                      /* مسار داخل الموقع كما هو: files/... */
+  }
+  function fillDoc(node, row) {
+    var href = docHref(row.storage_path), title = String(row.title || '');
+    node.setAttribute('data-title', title);       /* البحث الفوري يقرأ هذا */
+    node.classList.remove('in-view');             /* يُظهره خطّاف reveal */
+    var tt = node.querySelector('.ftitle');
+    if (tt) tt.textContent = title;
+
+    var meta = node.querySelector('.fmeta');
+    if (meta) {
+      var spans = [].slice.call(meta.querySelectorAll('span'));
+      /* الصفّ المبنيّ: أوّل span التاريخ (وفيه أيقونة ساعة) والثاني الحجم.
+         نُبقي الأيقونة ونستبدل النصّ وحده، ونحذف التاريخ إن لم يوجد. */
+      var dateSpan = null, sizeSpan = null;
+      spans.forEach(function (s) {
+        if (s.querySelector('svg')) { if (!dateSpan) dateSpan = s; }
+        else if (!sizeSpan) sizeSpan = s;
+      });
+      var dv = String(row.doc_date == null ? '' : row.doc_date).trim();
+      if (dateSpan) {
+        /* يُخفى ولا يُحذف: أيقونته لازمة إن عاد التاريخ في تعديل لاحق */
+        if (dv) { txtNodeSet(dateSpan, dv); dateSpan.hidden = false; }
+        else dateSpan.hidden = true;
+      }
+      var size = 'PDF';
+      if (String(row.size_label || '').trim()) size += ' · ' + String(row.size_label).trim();
+      if (row.pages) size += ' · ' + row.pages + ' صفحة';
+      if (!sizeSpan) {
+        sizeSpan = document.createElement('span');
+        meta.appendChild(sizeSpan);
+      }
+      sizeSpan.textContent = size;
+    }
+
+    var view = node.querySelector('.file-view'), dl = node.querySelector('.file-dl');
+    if (view) view.setAttribute('href', href);
+    if (dl) {
+      dl.setAttribute('href', href);
+      var nm = String(row.dl_name || '').trim();
+      if (nm) dl.setAttribute('download', nm); else dl.setAttribute('download', '');
+    }
+    return node;
+  }
+
+  function documents() {
+    var boxes = {}, any = false;
+    for (var cat in DOC_BOX) {
+      if (!DOC_BOX.hasOwnProperty(cat)) continue;
+      var el = document.getElementById(DOC_BOX[cat]);
+      if (el) { boxes[cat] = el; any = true; }
+    }
+    if (!any) return;
+    /* select=* لأن أعمدة الترتيب قد تُضاف بترقية مخطّط لاحقة */
+    return get('documents?select=*&status=eq.published&limit=500').then(function (rows) {
+      if (!rows) return;                       // فشل قراءة → يبقى البناء الثابت
+      var byCat = {};
+      rows.forEach(function (r) {
+        var c = r.category;
+        if (!boxes[c]) return;
+        (byCat[c] = byCat[c] || []).push(r);
+      });
+      var total = 0;
+      for (var cat2 in boxes) {
+        if (!boxes.hasOwnProperty(cat2)) continue;
+        var box = boxes[cat2];
+        var list = box.querySelector('.files');
+        if (!list) continue;
+        var olds = [].slice.call(list.querySelectorAll('.file-row'));
+        if (!olds.length) continue;            // لا قالب نستنسخ منه
+        var items = (byCat[cat2] || []).slice().sort(function (a, b) {
+          var x = (a.sort == null ? 100 : a.sort), y = (b.sort == null ? 100 : b.sort);
+          if (x !== y) return x - y;
+          return (a.id || 0) - (b.id || 0);
+        });
+        if (!items.length) {
+          if (!dbOwnsLists()) continue;        // فارغة عن قصد فقط تُفرَّغ
+          olds.forEach(function (c) { c.parentNode.removeChild(c); });
+          continue;
+        }
+        var anchor = olds[olds.length - 1].nextSibling, parent = olds[0].parentNode;
+        var frag = document.createDocumentFragment();
+        items.forEach(function (row) { frag.appendChild(fillDoc(olds[0].cloneNode(true), row)); });
+        olds.forEach(function (c) { c.parentNode.removeChild(c); });
+        parent.insertBefore(frag, anchor);
+        total += items.length;
+      }
+      /* الصفوف الجديدة تحمل صنف reveal ولم تكن موجودة حين رُصدت العناصر،
+         فبلا هذا الخطّاف تبقى شفّافة إلى الأبد. */
+      if (window.IAQ_REINDEX && window.IAQ_REINDEX.reveal) {
+        try { window.IAQ_REINDEX.reveal(); } catch (e) { }
+      }
+      document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'documents', count: total } }));
+    });
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var JOBS = { assembly: [function () { return people('assembly'); }],
                board:    [function () { return people('board'); }],
                team:     [function () { return people('team'); }],
                news:     [news],
+               governance:   [documents],
+               satisfaction: [documents],
                index:    [partners, function () { return newsStrip(4); }] };
 
   function run() {

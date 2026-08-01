@@ -25,6 +25,10 @@ window.IAQ_SCREENS = (function () {
   var CAT = { founder: 'عضو مؤسس', working: 'عضو عامل' };
   var RANK = { chair: 'رئيس المجلس', vice: 'نائب الرئيس', member: 'عضو', lead: 'مدير تنفيذي' };
   var ST = { published: 'ظاهر', hidden: 'مخفي', draft: 'مسودّة' };
+  /* تصنيفات الوثائق — القيم مقيَّدة في القاعدة بـ check، فلا تُزَد من هنا */
+  var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
+                 financials: 'القوائم المالية', annual: 'التقارير السنوية',
+                 surveys: 'قياس الرضا', licenses: 'التراخيص' };
   var MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
                 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   /* «2026-06-22» ← «22 يونيو 2026» بنفس صياغة البنّاء، بلا Date كي لا تتدخّل
@@ -40,7 +44,7 @@ window.IAQ_SCREENS = (function () {
     assembly: {
       nav: 'الجمعية العمومية', h1: 'أعضاء الجمعية العمومية',
       sub: 'بيانات الأعضاء الحاليين — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.',
-      table: 'people', filter: 'grp=eq.assembly', fixed: { grp: 'assembly' },
+      table: 'people', filter: 'grp=eq.assembly', fixed: { grp: 'assembly' }, audit: 1,
       reach: 'التعديل والحذف والإضافة تسري على صفحة «الجمعية العمومية» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.',
       fields: [
         { k: 'title', l: 'اللقب (اختياري)', t: 'text', hint: 'مثل: أ. أو د. أو م.' },
@@ -60,7 +64,7 @@ window.IAQ_SCREENS = (function () {
     board: {
       nav: 'مجلس الإدارة', h1: 'أعضاء مجلس الإدارة',
       sub: 'رئيس المجلس ونائبه والأعضاء — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.',
-      table: 'people', filter: 'grp=eq.board', fixed: { grp: 'board' }, photoDir: 'board',
+      table: 'people', filter: 'grp=eq.board', fixed: { grp: 'board' }, photoDir: 'board', audit: 1,
       reach: 'التعديل والحذف والإضافة تسري على صفحة «مجلس الإدارة» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.',
       fields: [
         { k: 'title', l: 'اللقب (اختياري)', t: 'text' },
@@ -84,7 +88,7 @@ window.IAQ_SCREENS = (function () {
     team: {
       nav: 'فريق العمل', h1: 'فريق العمل التنفيذي',
       sub: 'بيانات الفريق التنفيذي وطرق التواصل — تعديل وحذف وإضافة.',
-      table: 'people', filter: 'grp=eq.team', fixed: { grp: 'team' }, photoDir: 'team',
+      table: 'people', filter: 'grp=eq.team', fixed: { grp: 'team' }, photoDir: 'team', audit: 1,
       reach: 'التعديل والحذف والإضافة تسري على صفحة «فريق العمل» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.',
       fields: [
         { k: 'title', l: 'اللقب (اختياري)', t: 'text' },
@@ -135,10 +139,45 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
+    docs: {
+      nav: 'الوثائق والملفات', h1: 'الوثائق والملفات',
+      sub: 'لوائح ومحاضر وقوائم مالية وتقارير — تحرير البيانات ورفع ملف PDF جديد.',
+      table: 'documents', filter: '', fixed: {}, nosort: 1, selectAll: 1, audit: 'auto',
+      clientOrder: [['category', 1, DOCCAT], ['sort', 1], ['id', 1]],
+      nameKey: 'title', searchKeys: ['title', 'doc_date', 'storage_path'],
+      reach: 'التعديل والحذف والإضافة تسري على تبويبات الملفات في صفحة «الحوكمة والإفصاح» وصفحة «قياس الرضا» عند أوّل تحميل، بلا إعادة بناء. ومعرض التراخيص مبنيّ ثابتًا (يحتاج صور الشهادات وجدول بياناتها) فلا تصله هذه الشاشة.',
+      fields: [
+        { k: 'category', l: 'التصنيف', t: 'select', o: DOCCAT, def: 'policies',
+          hint: 'يحدّد التبويب الذي يظهر فيه الملف' },
+        { k: 'title', l: 'عنوان الوثيقة', t: 'text', req: 1 },
+        { k: 'file', l: 'ملف PDF جديد (اختياري)', t: 'file',
+          hint: 'اختر ملفًا فيُرفع إلى تخزين الموقع ويحلّ محلّ الرابط أدناه. واتركه فارغًا فيبقى الرابط كما هو.' },
+        { k: 'storage_path', l: 'رابط الملف', t: 'text', req: 1, viaFile: 1,
+          hint: 'مسار داخل الموقع مثل files/policies/bylaws.pdf أو رابط كامل يبدأ بـ https' },
+        { k: 'dl_name', l: 'اسم ملف التحميل', t: 'text',
+          hint: 'الاسم العربي الذي يُحفظ به عند التحميل — مثل «اللائحة الأساسية.pdf»' },
+        { k: 'doc_date', l: 'تاريخ الوثيقة', t: 'text', half: 1,
+          hint: 'نصّ حرّ: 2024 أو 16/05/1445هـ (30/11/2023م)' },
+        { k: 'size_label', l: 'حجم الملف', t: 'text', half: 1, hint: 'مثل 712 KB' },
+        { k: 'pages', l: 'عدد الصفحات', t: 'int', half: 1 },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, needs: 'sort', hint: 'الأصغر أوّلًا' },
+        { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهر على الموقع', draft: 'مسودّة (لا تظهر)' }, def: 'published' }
+      ],
+      list: [{ k: 'category', l: 'التصنيف', f: 'chip', o: DOCCAT },
+             { k: 'title', l: 'العنوان', f: 'clip' },
+             { k: 'doc_date', l: 'التاريخ', f: 'text' },
+             { k: 'size_label', l: 'الحجم', f: 'text' },
+             { k: 'pages', l: 'صفحات', f: 'text' },
+             { k: 'storage_path', l: 'الملف', f: 'file' },
+             { k: 'status', l: 'الحالة', f: 'status' }],
+      stats: [{ l: 'إجمالي الوثائق' }, { l: 'ظاهر', c: 'status', v: 'published' },
+              { l: DOCCAT.policies, c: 'category', v: 'policies' },
+              { l: DOCCAT.minutes, c: 'category', v: 'minutes' }]
+    },
     partnerlist: {
       nav: 'الشركاء', h1: 'شعارات الشركاء',
       sub: 'شركاء النجاح كما يظهرون في شريط الصفحة الرئيسة — تعديل وحذف وإضافة وترتيب.',
-      table: 'partners', filter: '', fixed: {}, logoDir: 'partners',
+      table: 'partners', filter: '', fixed: {}, logoDir: 'partners', audit: 1,
       reach: 'التعديل والحذف والإضافة تسري على شريط الشركاء في الصفحة الرئيسة عند أوّل تحميل لها، بلا إعادة بناء.',
       fields: [
         { k: 'name', l: 'اسم الشريك', t: 'text', req: 1 },
@@ -202,7 +241,37 @@ window.IAQ_SCREENS = (function () {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[k] || '') + '</svg>';
   }
-  function fieldsOf(sc) { return sc.fields; }
+  /* مقارنٌ مركّب: [['category',1,DOCCAT],['sort',1],['id',1]] — المفتاح التالي
+     يفصل التعادل. والعنصر الثالث (إن وُجد) كائنٌ ترتيبُ مفاتيحه هو الترتيب
+     المطلوب، فتُرتَّب التصنيفات كترتيب تبويبات الموقع لا أبجديًّا بمفاتيحها. */
+  function cmp(spec) {
+    return function (a, b) {
+      for (var i = 0; i < spec.length; i++) {
+        var k = spec[i][0], d = spec[i][1], rank = spec[i][2], x = a[k], y = b[k], c;
+        if (rank) {
+          var ks = Object.keys(rank), xi = ks.indexOf(x), yi = ks.indexOf(y);
+          if (xi < 0) xi = ks.length;
+          if (yi < 0) yi = ks.length;
+          c = xi - yi;
+        } else if (x == null && y == null) {
+          continue;
+        } else if (typeof x === 'number' && typeof y === 'number') {
+          c = (x < y ? -1 : (x > y ? 1 : 0));
+        } else {
+          c = String(x == null ? '' : x).localeCompare(String(y == null ? '' : y), 'ar');
+        }
+        if (c) return c * d;
+      }
+      return 0;
+    };
+  }
+  /* هل يوجد العمود فعلًا في الصفوف المقروءة؟ يُستعمل مع select=* لإظهار حقلٍ
+     لا وجود له قبل ترقية المخطّط، بدل أن يُرسل فيُرفض الطلب. */
+  function hasCol(k) { return !!(rows.length && rows[0].hasOwnProperty(k)); }
+  function auditOn(sc) { return sc.audit === 'auto' ? hasCol('updated_by') : !!sc.audit; }
+  function fieldsOf(sc) {
+    return sc.fields.filter(function (f) { return f.needs ? hasCol(f.needs) : true; });
+  }
   function fieldByKey(sc, k) {
     var f = null;
     fieldsOf(sc).forEach(function (x) { if (x.k === k) f = x; });
@@ -218,10 +287,18 @@ window.IAQ_SCREENS = (function () {
     /* جداولٌ بلا عمود ترتيب (الأخبار) — طلبه أو الترتيب به يُفشل الطلب كلّه */
     if (!sc.nosort && cols.indexOf('sort') < 0) cols.push('sort');
     if (sc.table === 'people' && cols.indexOf('title') < 0) cols.push('title');
-    var qs = 'select=' + cols.join(',') + (sc.filter ? '&' + sc.filter : '') +
-             '&order=' + (sc.order || 'sort.asc,id.asc') + '&limit=500';
+    /* جدولٌ قد تتغيّر أعمدته بترقية المخطّط: نطلب * ونرتّب في المتصفّح، فلا
+       يُفشل طلبُ عمودٍ لم يُنشَأ بعد القراءة كلّها، ويعمل قبل الترقية وبعدها. */
+    var qs = (sc.selectAll ? 'select=*' : 'select=' + cols.join(',')) +
+             (sc.filter ? '&' + sc.filter : '') +
+             (sc.clientOrder ? '' : '&order=' + (sc.order || 'sort.asc,id.asc')) +
+             '&limit=500';
     return api(sc.table + '?' + qs)
-      .then(function (r) { if (my === epoch) rows = r || []; })
+      .then(function (r) {
+        if (my !== epoch) return;
+        rows = r || [];
+        if (sc.clientOrder) rows.sort(cmp(sc.clientOrder));
+      })
       .catch(function (e) { if (my === epoch) { rows = []; err = e.message; } });
   }
 
@@ -291,6 +368,13 @@ window.IAQ_SCREENS = (function () {
     if (col.f === 'link') {
       if (!norm(v)) return '<span class="muted">—</span>';
       return '<a href="' + esc(v) + '" target="_blank" rel="noopener" class="mono small">رابط</a>';
+    }
+    if (col.f === 'file') {
+      var u = norm(v);
+      if (!u) return '<span class="muted">—</span>';
+      var nm = u.split('/').pop();
+      return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="mono small" ' +
+        'title="' + esc(u) + '">' + esc(nm.length > 22 ? nm.slice(0, 22) + '…' : nm) + '</a>';
     }
     if (col.f === 'date') {
       return norm(v) ? '<span style="white-space:nowrap">' + esc(arDate(v)) + '</span>'
@@ -431,6 +515,9 @@ window.IAQ_SCREENS = (function () {
       h += '<input type="text" id="' + id + '" list="' + id + '-dl" value="' + esc(val == null ? '' : val) + '">' +
         '<datalist id="' + id + '-dl">' +
         tags.map(function (t) { return '<option value="' + esc(t) + '"></option>'; }).join('') + '</datalist>';
+    } else if (f.t === 'file') {
+      h += '<input type="file" id="' + id + '" accept=".pdf,application/pdf" ' +
+        'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
     } else if (f.t === 'area' || f.t === 'lines' || f.t === 'pairs') {
       var txt = f.t === 'lines' ? linesToText(val) : (f.t === 'pairs' ? pairsToText(val) : String(val == null ? '' : val));
       h += '<textarea id="' + id + '" rows="' + (f.t === 'area' ? 3 : 7) +
@@ -470,6 +557,12 @@ window.IAQ_SCREENS = (function () {
 
   function saveForm(id) {
     var sc = S0(), rec = {}, bad = null;
+    /* الملف المختار يُعرف قبل التحقّق: حقلٌ يملؤه الرفع لا يُطالَب بقيمة الآن،
+       وإلا رُفض الحفظ بحجّة «مطلوب» قبل أن يجري الرفع الذي يملؤه. */
+    var upField = null;
+    sc.fields.forEach(function (f) { if (f.t === 'file') upField = f; });
+    var upInput = upField ? $('#sc-f-' + upField.k) : null;
+    var upFile = (upInput && upInput.files && upInput.files[0]) || null;
     fieldsOf(sc).forEach(function (f) {
       if (bad) return;
       var el = $('#sc-f-' + f.k);
@@ -497,25 +590,38 @@ window.IAQ_SCREENS = (function () {
         return;
       }
       v = norm(v);
-      if (f.req && !v) { bad = f.l + ': مطلوب'; return; }
+      if (f.req && !v && !(f.viaFile && upFile)) { bad = f.l + ': مطلوب'; return; }
       rec[f.k] = v;
     });
     if (bad) { var e0 = $('#sc-formerr'); if (e0) e0.textContent = bad; return; }
     for (var k in sc.fixed) if (sc.fixed.hasOwnProperty(k)) rec[k] = sc.fixed[k];
-    rec.updated_by = (S && S.email) || '';
+    /* عمود التوثيق لا يوجد في كل الجداول (news و documents بلا updated_by)،
+       وإرسال عمود غير موجود يُرفض بخطأ 400. فيُرسل حيث صُرّح به فقط. */
+    if (auditOn(sc)) rec.updated_by = (S && S.email) || '';
     if (busy) return;
     busy = true;
-    var p;
+    /* إن اختار المدير ملفًّا فيُرفع أوّلًا: نجاح الرفع شرطٌ لكتابة الرابط،
+       فلا يُسجَّل في القاعدة مسارٌ لملفٍ لم يصل. */
+    if (upField) delete rec[upField.k];   /* ليس عمودًا في القاعدة */
+    var pre = upFile ? uploadFile(upFile, rec.category).then(function (url) {
+      rec.storage_path = url;
+      var sp = $('#sc-f-storage_path');
+      if (sp) sp.value = url;
+    }) : Promise.resolve();
+    var p = pre.then(function () {
+    var q2;
     if (id) {
-      p = api(sc.table + '?id=eq.' + Number(id) + '&select=id', { method: 'PATCH', body: JSON.stringify(rec) });
+      q2 = api(sc.table + '?id=eq.' + Number(id) + '&select=id', { method: 'PATCH', body: JSON.stringify(rec) });
     } else {
-      if (!sc.nosort) {
+      if (!sc.nosort || hasCol('sort')) {
         var mx = 0;
         rows.forEach(function (r) { if (r.sort > mx) mx = r.sort; });
-        if (rec.sort == null) rec.sort = mx + 10;
+        if (rec.sort == null && (!sc.nosort || hasCol('sort'))) rec.sort = mx + 10;
       }
-      p = api(sc.table + '?select=id', { method: 'POST', body: JSON.stringify([rec]) });
+      q2 = api(sc.table + '?select=id', { method: 'POST', body: JSON.stringify([rec]) });
     }
+    return q2;
+    });
     p.then(function (out) {
       if (!out || !out.length) throw new Error('لم يتغيّر أي صفّ — تحقّق من صلاحية حسابك.');
       close();
@@ -550,6 +656,50 @@ window.IAQ_SCREENS = (function () {
       })
       .catch(function (ex) { err = ex.message; close(); paint(); })
       .then(function () { busy = false; });
+  }
+
+  /* ============================== رفع الملفات ============================== */
+  /* يُرفع إلى دلو iaq-files العامّ: القراءة للجميع والكتابة للمدير وحده
+     (سياسات storage.objects في schema-v2). ويعاد رابط عامّ ثابت. */
+  function safeName(name) {
+    var dot = String(name || '').lastIndexOf('.');
+    var ext = dot > -1 ? String(name).slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : 'pdf';
+    var base = (dot > -1 ? String(name).slice(0, dot) : String(name || 'file'))
+      .replace(/[^\u0621-\u064Aa-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    /* الاسم العربي يُرمَّز في الرابط؛ نُبقيه لأنه أوضح للمدير في القاعدة */
+    return (base || 'file') + '.' + (ext || 'pdf');
+  }
+  function uploadFile(file, category) {
+    if (file.size > 25 * 1024 * 1024) {
+      return Promise.reject(new Error('حجم الملف يتجاوز 25 ميجابايت — اضغطه أو ارفعه بوسيلة أخرى.'));
+    }
+    /* بصمة وقت الرفع: تمنع تصادم الأسماء، وتضمن رابطًا جديدًا عند استبدال
+       وثيقة فلا تُخدَم نسخةٌ قديمة من ذاكرة الوسيط. */
+    var stamp = Date.now().toString(36);
+    var path = 'docs/' + (category || 'other') + '/' + stamp + '-' + safeName(file.name);
+    var el = $('#sc-formerr');
+    if (el) { el.style.color = ''; el.textContent = 'جارٍ رفع الملف…'; }
+    return fetch(CFG.url + '/storage/v1/object/' + encodeURI('iaq-files/' + path) + '?upsert=true', {
+      method: 'POST',
+      headers: {
+        apikey: CFG.key,
+        Authorization: 'Bearer ' + (S ? S.access_token : ''),
+        'x-upsert': 'true',
+        'Content-Type': file.type || 'application/pdf'
+      },
+      body: file
+    }).then(function (r) {
+      if (r.ok) {
+        if (el) { el.style.color = '#8c3d1c'; el.textContent = ''; }
+        return CFG.url + '/storage/v1/object/public/' + encodeURI('iaq-files/' + path);
+      }
+      return r.text().then(function (b) {
+        var d = '';
+        try { var j = JSON.parse(b); d = j.message || j.error || ''; } catch (e) { d = String(b).slice(0, 140); }
+        if (r.status === 404) d = 'دلو التخزين iaq-files غير موجود — شغّل supabase/schema-v2.sql';
+        throw new Error('تعذّر رفع الملف (' + r.status + ') ' + d);
+      });
+    });
   }
 
   /* ============================ قالب الإكسل ============================ */
@@ -869,7 +1019,9 @@ window.IAQ_SCREENS = (function () {
     var mx = 0;
     rows.forEach(function (r) { if (r.sort > mx) mx = r.sort; });
     var payload = staged.map(function (r, i) {
-      var rec = { sort: mx + (i + 1) * 10, status: 'published', updated_by: (S && S.email) || '' };
+      var rec = { status: 'published' };
+      if (!sc.nosort) rec.sort = mx + (i + 1) * 10;
+      if (auditOn(sc)) rec.updated_by = (S && S.email) || '';
       for (var k in r) if (r.hasOwnProperty(k)) rec[k] = r[k];
       for (var k2 in sc.fixed) if (sc.fixed.hasOwnProperty(k2)) rec[k2] = sc.fixed[k2];
       return rec;
