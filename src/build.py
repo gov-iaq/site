@@ -673,19 +673,10 @@ PANEL     = os.path.join(HERE, "panel")
 PANEL_MODS= os.path.join(PANEL, "modules")
 
 def build_stamp():
-    """بصمة الإصدار: آخر مراجعة في المستودع + وقت البناء.
-    تظهر في اللوحة كي تُعرف النسخة المُشغَّلة من صورة الشاشة، فلا نضيع
-    في تشخيص نسخة قديمة محفوظة في المتصفّح."""
-    sha = ""
-    try:
-        import subprocess
-        sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
-                                     cwd=os.path.dirname(HERE),
-                                     stderr=subprocess.DEVNULL).decode().strip()
-    except Exception:
-        sha = "?"
+    """وقت البناء — يظهر في اللوحة كي تُعرف النسخة المُشغَّلة من صورة الشاشة.
+    لا نستخدم مراجعة git لأن البناء يسبق الإيداع فتظهر المراجعة السابقة."""
     import time
-    return sha + " · " + time.strftime("%H:%M")
+    return time.strftime("%Y-%m-%d %H:%M")
 
 def panel_real():
     """بيانات الموقع المعروفة وقت البناء — تُحقن جاهزة في اللوحة بلا انتظار شبكة."""
