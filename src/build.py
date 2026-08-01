@@ -761,6 +761,9 @@ SCREEN_ICON_PATHS = {
     # استبيان: قائمة بعلامات ونجمة تقييم
     "poll": '<path d="M4.5 7h9M4.5 12h9M4.5 17h5"/>'
             '<path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/>',
+    # عرض وحركة: مؤشّرات ضبط
+    "sliders": '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/>'
+               '<circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
 }
 SCREEN_ICONS = "".join(
     ' %s:\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
@@ -778,6 +781,7 @@ SCREEN_NAV = [
     ("docs",        "الوثائق والملفات", "docs"),
     ("subslist",    "الطلبات والنماذج", "inbox2"),
     ("surveylist",  "استجابات الرضا",   "poll"),
+    ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
 
 def build_panel(out_dir, cmap, amap):

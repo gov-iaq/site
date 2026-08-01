@@ -144,6 +144,30 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
+    sitecfg: {
+      nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
+      sub: 'خيارات تسري على الموقع مباشرةً عند أوّل تحميل لصفحة الزائر.',
+      kind: 'settings',
+      rows: [
+        { key: 'partners_strip_mode', l: 'حركة شريط الشركاء', t: 'select', def: 'auto',
+          o: { auto: 'شريط متّصل — تمرير دائري لا يتوقّف',
+               manual: 'تحريك يدوي — أسهم ونقاط وسحب',
+               fade: 'تبديل بالتلاشي — مجموعات تتعاقب' },
+          hint: 'الأنماط الثلاثة مبنيّة في الموقع؛ هذا الخيار يبدّل بينها.' },
+        { key: 'partners_strip_speed', l: 'زمن دورة الشريط المتّصل', t: 'int', def: 34,
+          min: 8, max: 180, unit: 'ثانية',
+          hint: 'الأصغر أسرع. يعمل مع النمط المتّصل وحده، ويُقيَّد بين 8 و180 ثانية.' },
+        { key: 'site_logo', l: 'شعار الموقع', t: 'img', def: '',
+          accept: '.png,.svg,.webp,.jpg,.jpeg,image/*',
+          hint: 'اختر صورة فتُرفع ويُستبدل الشعار في الترويسة والتذييل وخلفية الترويسة. ' +
+                'يُفضَّل PNG أو SVG بخلفية شفّافة وارتفاع 120 بكسلًا على الأقل. ' +
+                'واتركه فارغًا فيبقى الشعار المبنيّ.' },
+        { key: 'lists_from_db', l: 'قاعدة البيانات هي مصدر القوائم', t: 'bool', def: false,
+          hint: 'مُطفأ: القائمة المبنيّة تبقى إن خلت القاعدة — وهو الأسلم. ' +
+                'مُشعَل: قائمةٌ فارغة في القاعدة تُفرّغ القائمة في الموقع، ' +
+                'فلا تُشعله إلا بعد التأكّد من اكتمال البيانات.' }
+      ]
+    },
     subslist: {
       nav: 'الطلبات والنماذج', h1: 'الطلبات والنماذج الواردة',
       sub: 'ما يرسله الزوّار من نماذج التواصل والتطوّع والعضوية والتوظيف — عرض ومتابعة حالة.',
@@ -285,9 +309,12 @@ window.IAQ_SCREENS = (function () {
 
   /* ------------------------------- الحالة ------------------------------- */
   var cur = 'assembly', rows = [], q = '', err = null, busy = false, staged = null;
-  /* عدّاد التبديل: قراءةٌ لم تكتمل قبل الانتقال إلى شاشة أخرى تُهمَل، وإلا
-     رُسمت بيانات الشاشة السابقة في جدول الشاشة الجديدة (نفس المعرّفات). */
+  /* حارس التبديل: قراءةٌ لم تكتمل قبل الانتقال إلى شاشة أخرى تُهمَل، وإلا
+     رُسمت بيانات الشاشة السابقة في جدول الشاشة الجديدة (نفس المعرّفات).
+     والحارس بمفتاح الشاشة لا بعدّاد: لو أُعيد بناء العرض لنفس الشاشة مرّتين
+     (وهو ما يفعله بعض مسارات التصميم) لَأَلغى العدّادُ الرسمَ فبقيت فارغة. */
   var epoch = 0;
+  function alive(key) { return key === cur; }
   function S0() { return SCREENS[cur]; }
 
   /* ------------------------------- أدوات ------------------------------- */
@@ -302,9 +329,12 @@ window.IAQ_SCREENS = (function () {
     if (json) h['Content-Type'] = 'application/json';
     return h;
   }
-  function api(path, opt) {
+  function api(path, opt, extraHeaders) {
     opt = opt || {};
     opt.headers = hdr(!!opt.body);
+    if (extraHeaders) {
+      for (var hk in extraHeaders) if (extraHeaders.hasOwnProperty(hk)) opt.headers[hk] = extraHeaders[hk];
+    }
     return fetch(CFG.url + '/rest/v1/' + path, opt).then(function (r) {
       if (r.ok) return r.status === 204 ? null : r.json();
       return r.text().then(function (b) {
@@ -407,7 +437,7 @@ window.IAQ_SCREENS = (function () {
 
   /* ------------------------------ القراءة ------------------------------ */
   function load() {
-    var sc = S0(), my = epoch;
+    var sc = S0(), myKey = cur;
     err = null;
     var cols = ['id'];
     fieldsOf(sc).forEach(function (f) { if (cols.indexOf(f.k) < 0) cols.push(f.k); });
@@ -422,11 +452,11 @@ window.IAQ_SCREENS = (function () {
              '&limit=500';
     return api(sc.table + '?' + qs)
       .then(function (r) {
-        if (my !== epoch) return;
+        if (!alive(myKey)) return;
         rows = r || [];
         if (sc.clientOrder) rows.sort(cmp(sc.clientOrder));
       })
-      .catch(function (e) { if (my === epoch) { rows = []; err = e.message; } });
+      .catch(function (e) { if (alive(myKey)) { rows = []; err = e.message; } });
   }
 
   /* ------------------------------- العرض ------------------------------- */
@@ -434,8 +464,9 @@ window.IAQ_SCREENS = (function () {
     if (SCREENS[key]) cur = key;
     q = ''; staged = null; err = null; rows = [];
     epoch++;
-    var my = epoch, sc = S0();
-    setTimeout(function () { load().then(function () { if (my === epoch) paint(); }); }, 0);
+    var myKey = cur, sc = S0();
+    if (sc.kind === 'settings') return settingsView(sc, myKey);
+    setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
       ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
@@ -446,6 +477,150 @@ window.IAQ_SCREENS = (function () {
       '<div class="iaq-card"><div id="sc-list"></div>' +
         '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p></div>';
   }
+  /* ======================= شاشة إعدادات (نموذج) =======================
+     تقرأ صفوفًا مُسمّاة من جدول settings وتكتبها عامّةً — فيقرأها الموقع.
+     ليست جدول سجلّات فلا تُستخدم دوالّ القوائم هنا. */
+  var setVals = {};
+
+  function settingsView(sc, myKey) {
+    setVals = {};
+    setTimeout(function () {
+      loadSettings(sc).then(function () { if (alive(myKey)) paintSettings(sc); });
+    }, 0);
+    return '<div class="view-head"><h1>' + esc(sc.h1) +
+      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '<p>' + esc(sc.sub) + '</p></div>' +
+      '<div id="sc-err"></div>' +
+      '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
+  }
+
+  function loadSettings(sc) {
+    err = null;
+    var keys = sc.rows.map(function (r) { return r.key; });
+    return api('settings?select=key,value&key=in.(' + encodeURIComponent(keys.join(',')) + ')')
+      .then(function (r) {
+        setVals = {};
+        (r || []).forEach(function (row) { setVals[row.key] = row.value; });
+      })
+      .catch(function (e) { err = e.message; });
+  }
+
+  function setCtl(r) {
+    var id = 'sc-s-' + r.key;
+    var v = setVals.hasOwnProperty(r.key) && setVals[r.key] !== null ? setVals[r.key] : r.def;
+    var h = '<div class="fld"><label for="' + id + '">' + esc(r.l) + '</label>';
+    if (r.t === 'select') {
+      h += '<select id="' + id + '">';
+      for (var k in r.o) if (r.o.hasOwnProperty(k)) {
+        h += '<option value="' + esc(k) + '"' + (String(v) === k ? ' selected' : '') + '>' +
+          esc(r.o[k]) + '</option>';
+      }
+      h += '</select>';
+    } else if (r.t === 'bool') {
+      h += '<select id="' + id + '">' +
+        '<option value="0"' + (v === true ? '' : ' selected') + '>مُطفأ</option>' +
+        '<option value="1"' + (v === true ? ' selected' : '') + '>مُشعَل</option></select>';
+    } else if (r.t === 'img') {
+      /* الرابط الحالي مرئيّ ومعاينته ظاهرة، والرفع يستبدله */
+      h += (v ? '<div style="margin-block-end:8px"><img src="' + esc(v) + '" alt="" ' +
+                'style="height:56px;max-width:220px;object-fit:contain;background:#fff;' +
+                'border:1px solid var(--line);border-radius:10px;padding:6px"></div>' : '') +
+        '<input type="text" id="' + id + '" value="' + esc(v == null ? '' : v) + '" ' +
+        'placeholder="لا شعار مخصّص — يُستخدم المبنيّ" style="margin-block-end:8px">' +
+        '<input type="file" id="' + id + '-f" accept="' + esc(r.accept || 'image/*') + '" ' +
+        'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
+    } else {
+      h += '<input type="text" id="' + id + '" value="' + esc(v == null ? '' : v) + '"' +
+        (r.unit ? ' aria-describedby="' + id + '-u"' : '') + '>' +
+        (r.unit ? '<div class="muted small" id="' + id + '-u">بـ' + esc(r.unit) + '</div>' : '');
+    }
+    if (r.hint) h += '<div class="muted small" style="margin-block-start:4px">' + esc(r.hint) + '</div>';
+    return h + '</div>';
+  }
+
+  function paintSettings(sc) {
+    var box = $('#sc-form'), ep = $('#sc-err');
+    if (!box) return;
+    if (ep) ep.innerHTML = err
+      ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
+        '<b>تعذّر تنفيذ الإجراء</b><br>' + esc(err) + '</div>' : '';
+    box.innerHTML = sc.rows.map(setCtl).join('') +
+      '<div id="sc-setmsg" class="muted small" style="margin-block-end:10px"></div>' +
+      '<div class="btnbar" style="justify-content:flex-start">' +
+      '<button class="btn" data-sc="setsave">حفظ الإعدادات</button>' +
+      '<button class="btn ghost" data-sc="reload">استرجاع المحفوظ</button></div>' +
+      '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach ||
+        'يسري على الموقع عند أوّل تحميل لصفحة الزائر — وقد يظهر بعد تحديث الصفحة إن كانت نسخةٌ محفوظة في متصفّحه.') +
+      '</p>';
+  }
+
+  function saveSettings(sc) {
+    if (busy) return;
+    /* الرفع أوّلًا: لا يُسجَّل رابطٌ لصورة لم تصل */
+    var upRow = null, upFile = null;
+    sc.rows.forEach(function (r) {
+      if (r.t !== 'img' || upFile) return;
+      var fi = $('#sc-s-' + r.key + '-f');
+      if (fi && fi.files && fi.files[0]) { upRow = r; upFile = fi.files[0]; }
+    });
+    if (upFile) {
+      var m0 = $('#sc-setmsg');
+      if (m0) { m0.style.color = ''; m0.textContent = 'جارٍ رفع الصورة…'; }
+      busy = true;
+      uploadFile(upFile, 'brand').then(function (url) {
+        var el = $('#sc-s-' + upRow.key);
+        if (el) el.value = url;
+        var fi2 = $('#sc-s-' + upRow.key + '-f');
+        if (fi2) fi2.value = '';
+        busy = false;
+        saveSettings(sc);
+      }).catch(function (e) {
+        busy = false;
+        var m1 = $('#sc-setmsg');
+        if (m1) { m1.style.color = '#8c3d1c'; m1.textContent = e.message; }
+      });
+      return;
+    }
+    var out = [], bad = null;
+    sc.rows.forEach(function (r) {
+      if (bad) return;
+      var el = $('#sc-s-' + r.key);
+      if (!el) return;
+      var v;
+      if (r.t === 'bool') v = (el.value === '1');
+      else if (r.t === 'int') {
+        var s2 = norm(el.value);
+        if (s2 === '') { v = r.def; }
+        else {
+          var n = Number(s2);
+          if (!isFinite(n) || Math.floor(n) !== n) { bad = r.l + ': يجب أن يكون عددًا صحيحًا'; return; }
+          if (r.min != null && n < r.min) { bad = r.l + ': أقلّ من الحدّ ' + r.min; return; }
+          if (r.max != null && n > r.max) { bad = r.l + ': أكبر من الحدّ ' + r.max; return; }
+          v = n;
+        }
+      } else v = norm(el.value);
+      out.push({ key: r.key, value: v, label: r.l, is_public: true,
+                 updated_by: (S && S.email) || '' });
+    });
+    var msg = $('#sc-setmsg');
+    if (bad) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = bad; } return; }
+    if (!out.length) return;
+    busy = true;
+    if (msg) { msg.style.color = ''; msg.textContent = 'جارٍ الحفظ…'; }
+    api('settings?on_conflict=key&select=key', {
+      method: 'POST',
+      headers: null,
+      body: JSON.stringify(out)
+    }, { Prefer: 'resolution=merge-duplicates,return=representation' })
+      .then(function (res) {
+        if (!res || !res.length) throw new Error('لم يُحفظ شيء — تحقّق من صلاحية حسابك.');
+        if (msg) { msg.style.color = '#0c6c6c'; msg.textContent = 'حُفظ ' + res.length + ' إعدادًا · يسري على الموقع عند أوّل تحميل.'; }
+        return loadSettings(sc);
+      })
+      .catch(function (e) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = e.message; } })
+      .then(function () { busy = false; });
+  }
+
   function toolbar(sc) {
     return '<div class="addrow" style="margin-block-end:14px">' +
       '<input id="sc-q" type="text" value="' + esc(q) + '" placeholder="بحث بالاسم…" style="flex:2;min-width:170px">' +
@@ -1274,7 +1449,14 @@ window.IAQ_SCREENS = (function () {
     if (a === 'save') { e.preventDefault(); saveForm(id); return; }
     if (a === 'del') { e.preventDefault(); askDelete(id); return; }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
-    if (a === 'reload') { e.preventDefault(); load().then(paint); return; }
+    if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
+    if (a === 'reload') {
+      e.preventDefault();
+      var sc0 = S0();
+      if (sc0.kind === 'settings') loadSettings(sc0).then(function () { paintSettings(sc0); });
+      else load().then(paint);
+      return;
+    }
     if (a === 'search') {
       e.preventDefault();
       var i2 = $('#sc-q');

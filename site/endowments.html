@@ -1124,6 +1124,25 @@ var IAQ_PATH = (function () {
     return n;
   }
 
+  /* ------------------------------- الشعار ------------------------------- */
+  /* الشعار المبنيّ صورةٌ مضمّنة (base64) في الترويسة والتذييل، وخلفيةُ زخرفةٍ
+     في الترويسة العليا. فيُستبدل الثلاثة معًا وإلا ظهر شعارٌ جديد وزخرفةٌ
+     بالشعار القديم. وإن خلا الإعداد بقي المبنيّ كما هو. */
+  function applyLogo(url) {
+    var u = String(url || '').trim();
+    if (!u) return 0;
+    /* منعٌ صريح للمخطّطات المُنفِّذة بدل سماحٍ ضيّق: المسار النسبيّ مشروع
+       (مثل img/logo.png) وكان الحارس السابق يرفضه. */
+    if (/^\s*(javascript|vbscript|file)\s*:/i.test(u)) return 0;
+    if (/^\s*data\s*:/i.test(u) && !/^\s*data\s*:\s*image\//i.test(u)) return 0;
+    var n = 0;
+    [].slice.call(document.querySelectorAll('img.brand-mark')).forEach(function (im) {
+      if (im.getAttribute('src') !== u) { im.setAttribute('src', u); n++; }
+    });
+    root.style.setProperty('--emblem-url', "url('" + u.replace(/'/g, '%27') + "')");
+    return n + 1;
+  }
+
   /* --------------------------- أقسام الرئيسة --------------------------- */
   /* مفتاح القسم في اللوحة هو مُعرِّفه في الصفحة نفسها (البنّاء يستخرجه من
      id="..." في مصدر الرئيسة)، فالحلّ هُويّةٌ لا خريطة: قسمٌ يُضاف مستقبلًا
@@ -1221,10 +1240,11 @@ var IAQ_PATH = (function () {
   function applyAll() {
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
-    var done = { theme: t, secVars: 0, sections: 0, code: 0 };
+    var done = { theme: t, secVars: 0, logo: 0, sections: 0, code: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
+      done.logo = applyLogo(IAQ.setting('site_logo'));
       done.sections = applySections(IAQ.setting('sections'));
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */
