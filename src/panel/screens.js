@@ -29,6 +29,33 @@ window.IAQ_SCREENS = (function () {
   var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
   var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
   var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  /* الأهداف المسموحة: صفحات الموقع كما بناها البنّاء (IAQ_REAL.pages)، ومراسي
+     الصفحة الرئيسة. تُحسب مرّةً وتُستعمل في الحقل وفي التحقّق معًا — فلا
+     يفترقان ولا يمرّ رابطٌ غير موجود. */
+  var ANCHORS = ['#about', '#news', '#programs', '#stats', '#testimonials', '#partners'];
+  var TARGETS = null;
+  function targets() {
+    if (TARGETS) return TARGETS;
+    TARGETS = [];
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    pages.forEach(function (p) {
+      if (!p || !p.slug) return;
+      TARGETS.push({ v: p.slug + '.html', l: (p.title || p.slug) + '  (' + p.slug + '.html)' });
+    });
+    ANCHORS.forEach(function (a) {
+      TARGETS.push({ v: a, l: 'قسم في الرئيسة: ' + a });
+    });
+    return TARGETS;
+  }
+  function targetOk(v) {
+    var s = norm(v);
+    if (!s) return true;                      /* فارغ = عنصرٌ يفتح منسدلة فقط */
+    if (/^https?:\/\//i.test(s)) return true;  /* رابط خارجي كامل */
+    var list = targets();
+    for (var i = 0; i < list.length; i++) if (list[i].v === s) return true;
+    return false;
+  }
+
   var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
                 doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
@@ -178,6 +205,41 @@ window.IAQ_SCREENS = (function () {
              { k: 'status', l: 'الحالة', f: 'status' }],
       stats: [{ l: 'إجمالي الشرائح' }, { l: 'ظاهرة', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
+    },
+    menuitems: {
+      nav: 'القوائم الرئيسية', h1: 'عناصر القائمة الرئيسية',
+      sub: 'تسميات عناصر القائمة وروابطها وترتيبها وظهورها — بمستويين.',
+      table: 'menu_items', filter: '', fixed: {}, audit: 1, selectAll: 1,
+      clientOrder: [['parent', 1], ['sort', 1], ['id', 1]],
+      nameKey: 'label', searchKeys: ['label', 'href', 'mkey'],
+      noAdd: 1, noDelete: 1,
+      /* لا إضافة ولا حذف: كل عنصرٍ مرتبطٌ بعنصرٍ مبنيٍّ بمفتاحه (أيقونته
+         وموضعه)، وعنصرٌ بلا مقابلٍ مبنيّ لا يظهر في الموقع. الإخفاء يكفي. */
+      reach: 'يسري على القائمة في كل صفحات الموقع عند أوّل تحميل. ولا تُفرَّغ القائمة أبدًا: ' +
+             'إن لم يبقَ عنصرٌ رئيسٌ ظاهر بقيت القائمة المبنيّة.',
+      fields: [
+        { k: 'label', l: 'التسمية', t: 'text', req: 1 },
+        { k: 'href', l: 'الرابط', t: 'href',
+          hint: 'يُختار من صفحات الموقع فقط، أو مرساة في الصفحة الرئيسة، أو رابط خارجي كامل. ' +
+                'فلا يمكن أن يُفضي إلى صفحة غير موجودة.' },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا — داخل مستواه' },
+        { k: 'visible', l: 'الظهور', t: 'bool', half: 1, def: true }
+      ],
+      list: [{ k: 'mkey', l: 'المفتاح', f: 'mono' },
+             { k: 'parent', l: 'المستوى', f: 'level' },
+             { k: 'label', l: 'التسمية', f: 'text' },
+             { k: 'href', l: 'الرابط', f: 'hrefcell' },
+             { k: 'sort', l: 'الترتيب', f: 'text' },
+             { k: 'visible', l: 'الظهور', f: 'bool' }],
+      stats: [{ l: 'إجمالي العناصر' }, { l: 'عناصر رئيسة', c: 'parent', v: '' },
+              { l: 'ظاهرة', boolTrue: 'visible' }, { l: 'مخفيّة', boolFalse: 'visible' }]
+    },
+    pagelist: {
+      nav: 'صفحات الموقع', h1: 'جرد صفحات الموقع',
+      sub: 'الصفحات المبنيّة فعلًا وروابطها — للاطّلاع والمعاينة.',
+      kind: 'pages',
+      reach: 'إنشاء صفحة جديدة أو تغيير عنوانها يحتاج إعادة بناء — لا تُولَّد صفحة في المتصفّح. ' +
+             'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
     },
     sitecfg: {
       nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
@@ -512,6 +574,7 @@ window.IAQ_SCREENS = (function () {
     epoch++;
     var myKey = cur, sc = S0();
     if (sc.kind === 'settings') return settingsView(sc, myKey);
+    if (sc.kind === 'pages') return pagesView(sc);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
@@ -538,6 +601,31 @@ window.IAQ_SCREENS = (function () {
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' +
       '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
+  }
+
+  /* ---------------------- شاشة جرد الصفحات (للاطّلاع) ---------------------- */
+  function pagesView(sc) {
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    var rowsHtml = pages.map(function (p, i) {
+      var f = p.slug + '.html';
+      return '<tr><td class="mono small">' + (i + 1) + '</td>' +
+        '<td><b>' + esc(p.title || p.slug) + '</b></td>' +
+        '<td class="mono small">' + esc(f) + '</td>' +
+        '<td>' + (p.type ? '<span class="chip">' + esc(p.type) + '</span>' : '—') + '</td>' +
+        '<td><a href="' + esc(f) + '" target="_blank" rel="noopener" class="mono small">معاينة</a></td></tr>';
+    }).join('');
+    return '<div class="view-head"><h1>' + esc(sc.h1) +
+      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '<p>' + esc(sc.sub) + '</p></div>' +
+      '<div class="iaq-card">' +
+        '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:16px">' +
+          box(pages.length, 'صفحة مبنيّة') + box(1, 'لوحة تحكّم') + '</div>' +
+        (pages.length
+          ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>العنوان</th>' +
+            '<th>الملف</th><th>النوع</th><th></th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+          : '<div class="muted" style="padding:28px;text-align:center">لم تُقرأ قائمة الصفحات.</div>') +
+        '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p>' +
+      '</div>';
   }
 
   function loadSettings(sc) {
@@ -683,6 +771,8 @@ window.IAQ_SCREENS = (function () {
   function statVal(spec) {
     if (spec.hidden) return rows.filter(function (r) { return r.status !== 'published'; }).length;
     if (spec.has) return rows.filter(function (r) { return norm(r[spec.has]) !== ''; }).length;
+    if (spec.boolTrue) return rows.filter(function (r) { return r[spec.boolTrue] !== false; }).length;
+    if (spec.boolFalse) return rows.filter(function (r) { return r[spec.boolFalse] === false; }).length;
     if (spec.c) {
       var vals = (spec.v instanceof Array) ? spec.v : [spec.v];
       return rows.filter(function (r) { return vals.indexOf(r[spec.c]) > -1; }).length;
@@ -726,6 +816,24 @@ window.IAQ_SCREENS = (function () {
       var nm = u.split('/').pop();
       return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="mono small" ' +
         'title="' + esc(u) + '">' + esc(nm.length > 22 ? nm.slice(0, 22) + '…' : nm) + '</a>';
+    }
+    if (col.f === 'mono') {
+      return '<span class="mono small muted">' + esc(v) + '</span>';
+    }
+    if (col.f === 'level') {
+      return norm(v) ? '<span class="chip">فرعي ← ' + esc(v) + '</span>'
+                     : '<span class="chip" style="background:#f8efdb;color:#7a5518">رئيس</span>';
+    }
+    if (col.f === 'bool') {
+      return v === false ? '<span class="chip" style="background:#f4e9d4;color:#7a5518">مخفي</span>'
+                         : '<span class="chip">ظاهر</span>';
+    }
+    if (col.f === 'hrefcell') {
+      var s3 = norm(v);
+      if (!s3) return '<span class="muted">منسدلة فقط</span>';
+      var ok = targetOk(s3);
+      return '<span class="mono small"' + (ok ? '' : ' style="color:#8c3d1c"') + '>' +
+        (ok ? '' : '⚠ ') + esc(s3) + '</span>';
     }
     if (col.f === 'datetime') {
       return '<span style="white-space:nowrap" class="small">' + esc(dtLabel(v)) + '</span>';
@@ -866,6 +974,15 @@ window.IAQ_SCREENS = (function () {
       (footHtml ? '<div class="btnbar" style="padding:0 22px 20px">' + footHtml + '</div>' : '') + '</div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    /* اختيار «رابط خارجي» يُظهر حقل النصّ، وغيره يُخفيه */
+    ov.addEventListener('change', function (e) {
+      var s = e.target;
+      if (!s.id || s.tagName !== 'SELECT') return;
+      var ext = document.getElementById(s.id + '-ext');
+      if (!ext) return;
+      ext.style.display = (s.value === '__ext__') ? '' : 'none';
+      if (s.value === '__ext__') ext.focus();
+    });
     var f = ov.querySelector('input,select,textarea');
     if (f) f.focus();
     return ov;
@@ -923,6 +1040,27 @@ window.IAQ_SCREENS = (function () {
       h += '<input type="text" id="' + id + '" list="' + id + '-dl" value="' + esc(val == null ? '' : val) + '">' +
         '<datalist id="' + id + '-dl">' +
         tags.map(function (t) { return '<option value="' + esc(t) + '"></option>'; }).join('') + '</datalist>';
+    } else if (f.t === 'href') {
+      var cur0 = String(val == null ? '' : val).trim();
+      var isExt = /^https?:\/\//i.test(cur0);
+      var known = targetOk(cur0) && !isExt;
+      h += '<select id="' + id + '">' +
+        '<option value=""' + (cur0 === '' ? ' selected' : '') + '>— بلا رابط (يفتح منسدلة فقط) —</option>' +
+        targets().map(function (o) {
+          return '<option value="' + esc(o.v) + '"' + (o.v === cur0 ? ' selected' : '') + '>' +
+            esc(o.l) + '</option>';
+        }).join('') +
+        '<option value="__ext__"' + (isExt ? ' selected' : '') + '>رابط خارجي كامل…</option>' +
+        (known || isExt || cur0 === '' ? '' :
+          '<option value="' + esc(cur0) + '" selected>⚠ ' + esc(cur0) + ' — غير موجود</option>') +
+        '</select>' +
+        '<input type="text" id="' + id + '-ext" placeholder="https://example.org" value="' +
+        (isExt ? esc(cur0) : '') + '" style="margin-block-start:8px' +
+        (isExt ? '' : ';display:none') + '">';
+    } else if (f.t === 'bool') {
+      h += '<select id="' + id + '">' +
+        '<option value="1"' + (val === false ? '' : ' selected') + '>ظاهر</option>' +
+        '<option value="0"' + (val === false ? ' selected' : '') + '>مخفي</option></select>';
     } else if (f.t === 'file') {
       h += '<input type="file" id="' + id + '" accept=".pdf,application/pdf" ' +
         'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
@@ -981,6 +1119,19 @@ window.IAQ_SCREENS = (function () {
       var el = $('#sc-f-' + f.k);
       if (!el) return;
       var v = el.value;
+      if (f.t === 'bool') { rec[f.k] = (v === '1'); return; }
+      if (f.t === 'href') {
+        var pick = norm(v);
+        if (pick === '__ext__') {
+          var ex = $('#sc-f-' + f.k + '-ext');
+          pick = ex ? norm(ex.value) : '';
+          if (!/^https?:\/\//i.test(pick)) { bad = f.l + ': الرابط الخارجي يبدأ بـ https://'; return; }
+        }
+        /* القاعدة: لا رابطَ إلا لهدفٍ موجود — فلا زرَّ يُفضي إلى 404 */
+        if (!targetOk(pick)) { bad = f.l + ': لا توجد صفحة بهذا الرابط — اختر من القائمة'; return; }
+        rec[f.k] = pick;
+        return;
+      }
       if (f.t === 'lines') { rec[f.k] = textToLines(v); return; }
       if (f.t === 'pairs') { rec[f.k] = textToPairs(v); return; }
       if (f.t === 'area') { rec[f.k] = String(v || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim(); return; }

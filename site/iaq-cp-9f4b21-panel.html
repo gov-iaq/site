@@ -15,7 +15,7 @@ window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{metho
 headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}
 try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();
 window.IAQ_REAL={"settings": {"address": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان", "phone": "0505144421", "email": "info@iaq.org.sa", "reg": "2253", "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}}, "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}, "brand": {"ar": "حاضنة الجمعيات", "en": "ASSOCIATION INCUBATOR"}, "pages": [{"id": "pabout", "title": "عن الجمعية", "slug": "about", "type": "محتوى", "status": "منشورة"}, {"id": "passembly", "title": "الجمعية العمومية", "slug": "assembly", "type": "محتوى", "status": "منشورة"}, {"id": "pboard", "title": "مجلس الإدارة", "slug": "board", "type": "محتوى", "status": "منشورة"}, {"id": "pcommittees", "title": "اللجان الفرعية", "slug": "committees", "type": "محتوى", "status": "منشورة"}, {"id": "pcontact", "title": "تواصل معنا", "slug": "contact", "type": "محتوى", "status": "منشورة"}, {"id": "pendowments", "title": "الأوقاف والاستثمارات", "slug": "endowments", "type": "محتوى", "status": "منشورة"}, {"id": "pgovernance", "title": "الحوكمة", "slug": "governance", "type": "محتوى", "status": "منشورة"}, {"id": "pindex", "title": "الرئيسية", "slug": "index", "type": "محتوى", "status": "منشورة"}, {"id": "pjobs", "title": "الوظائف", "slug": "jobs", "type": "محتوى", "status": "منشورة"}, {"id": "plicenses", "title": "التراخيص", "slug": "licenses", "type": "محتوى", "status": "منشورة"}, {"id": "pmembership", "title": "طلب العضوية", "slug": "membership", "type": "محتوى", "status": "منشورة"}, {"id": "pnews", "title": "المركز الإعلامي", "slug": "news", "type": "محتوى", "status": "منشورة"}, {"id": "pprograms", "title": "برامجنا", "slug": "programs", "type": "محتوى", "status": "منشورة"}, {"id": "psatisfaction", "title": "قياس الرضا", "slug": "satisfaction", "type": "محتوى", "status": "منشورة"}, {"id": "pteam", "title": "فريق العمل", "slug": "team", "type": "محتوى", "status": "منشورة"}, {"id": "pvolunteer", "title": "تطوّع معنا", "slug": "volunteer", "type": "محتوى", "status": "منشورة"}, {"id": "pprivacy", "title": "سياسة الخصوصية", "slug": "privacy", "type": "محتوى", "status": "منشورة"}, {"id": "pterms", "title": "شروط الاستخدام", "slug": "terms", "type": "محتوى", "status": "منشورة"}], "seoTitle": "جمعية حاضنة الجمعيات", "sections": [{"id": "sabout", "key": "about", "name": "من نحن", "visible": true, "editable": true, "title": "جمعية تُعنى بتمكين القطاع غير الربحي", "subtitle": "نؤمن بأن جمعية واحدة ممكَّنة تصنع أثرًا مضاعفًا في مجتمعها؛ لذلك نجعل من الاحتضان والتطوير المؤسسي رسالتنا."}, {"id": "snews", "key": "news", "name": "المركز الإعلامي", "visible": true, "editable": true, "title": "أحدث أخبار الجمعية", "subtitle": "تابع مستجدّاتنا وأنشطتنا وشراكاتنا، منشورة أولًا بأول عبر حساب الجمعية في منصّة إكس."}, {"id": "sprograms", "key": "programs", "name": "برامجنا", "visible": true, "editable": true, "title": "مسارات تمكين متكاملة", "subtitle": "برامج مصمّمة لتغطي رحلة الجمعية كاملة، من لحظة التأسيس حتى بلوغ الاستدامة وقياس الأثر."}, {"id": "sstats", "key": "stats", "name": "أثرنا بالأرقام", "visible": true, "editable": true, "title": "حصيلة نفخر بها", "subtitle": ""}, {"id": "stestimonials", "key": "testimonials", "name": "قالوا عنا", "visible": true, "editable": true, "title": "شهادات شركائنا والمستفيدين", "subtitle": "كلمات من قيادات جمعيات رافقناها في رحلتها نحو التمكين والاستدامة."}, {"id": "spartners", "key": "partners", "name": "شركاء النجاح", "visible": true, "editable": true, "title": "بثقة شركائنا نصنع الأثر", "subtitle": "نعتزّ بشراكاتنا مع الجهات الداعمة والمنظمات التي تشاركنا الرسالة."}]};
-window.IAQ_BUILD="2026-08-01 22:11";
+window.IAQ_BUILD="2026-08-01 22:34";
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -498,7 +498,7 @@ function roleName(id){var r=config.roles.filter(function(x){return x.id===id;})[
 
 /* ---------- icons ---------- */
 var I={
- assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>', inbox2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/><path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/><path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/></svg>', poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h9M4.5 12h9M4.5 17h5"/><path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/></svg>', sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>', hero:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7.5 11.8l2-2 2 2"/><path d="M9 20h6"/><path d="M16.6 9.4l-1.6 1.6 1.6 1.6"/></svg>',
+ assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>', inbox2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/><path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/><path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/></svg>', poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h9M4.5 12h9M4.5 17h5"/><path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/></svg>', sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>', hero:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7.5 11.8l2-2 2 2"/><path d="M9 20h6"/><path d="M16.6 9.4l-1.6 1.6 1.6 1.6"/></svg>', menu2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h10"/><path d="M17 12h3M17 18h3"/><circle cx="14.5" cy="12" r="0.6"/></svg>', pages2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="12" height="15" rx="2"/><path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/><path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/></svg>',
  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>',
  theme:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.3-1-1.5-1-2.5 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7-9-7Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>',
  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3c3 4 3 14 0 18M12 3C9 7 9 17 12 21M3 12h18"/></svg>',
@@ -773,7 +773,7 @@ function vCode(){
 }
 function previewCode(codeStr){var f=$('#codePreview');if(!f)return;f.srcdoc='<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>body{margin:0;padding:12px;font-family:Tajawal,sans-serif}</style></head><body>'+(codeStr||'<p style="color:#888;font-family:sans-serif">لا يوجد كود للمعاينة.</p>')+'</body></html>';}
 
-var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},subslist:function(){return window.IAQ_SCREENS.view("subslist");},surveylist:function(){return window.IAQ_SCREENS.view("surveylist");},heroslides:function(){return window.IAQ_SCREENS.view("heroslides");},sitecfg:function(){return window.IAQ_SCREENS.view("sitecfg");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
+var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},subslist:function(){return window.IAQ_SCREENS.view("subslist");},surveylist:function(){return window.IAQ_SCREENS.view("surveylist");},heroslides:function(){return window.IAQ_SCREENS.view("heroslides");},menuitems:function(){return window.IAQ_SCREENS.view("menuitems");},pagelist:function(){return window.IAQ_SCREENS.view("pagelist");},sitecfg:function(){return window.IAQ_SCREENS.view("sitecfg");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
 
 function vSettings(){
  return '<div class="view-head"><h1>الإعدادات العامة</h1><p>بيانات التواصل وروابط التواصل الاجتماعي وتحسين محركات البحث، وإدارة الإعدادات.</p></div>'
@@ -788,7 +788,7 @@ function vSettings(){
 var NAV=[
  {k:"dashboard",label:"لوحة التحكم",icon:"dash"},
  {group:"التصميم والهوية"},{k:"theme",label:"المظهر والثيم",icon:"theme"},{k:"logo",label:"الشعار والهوية",icon:"logo"},
- {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"subslist",label:"الطلبات والنماذج",icon:"inbox2"},{k:"surveylist",label:"استجابات الرضا",icon:"poll"},{k:"heroslides",label:"السلايدر الرئيسي",icon:"hero"},{k:"sitecfg",label:"العرض والحركة",icon:"sliders"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
+ {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"subslist",label:"الطلبات والنماذج",icon:"inbox2"},{k:"surveylist",label:"استجابات الرضا",icon:"poll"},{k:"heroslides",label:"السلايدر الرئيسي",icon:"hero"},{k:"menuitems",label:"القوائم الرئيسية",icon:"menu2"},{k:"pagelist",label:"صفحات الموقع",icon:"pages2"},{k:"sitecfg",label:"العرض والحركة",icon:"sliders"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
  {group:"التفاعل"},
  {group:"الإدارة"},{k:"users",label:"المستخدمون والأدوار",icon:"users"},
  {group:"النظام"},{k:"settings",label:"الإعدادات العامة",icon:"gear"}
@@ -909,6 +909,33 @@ window.IAQ_SCREENS = (function () {
   var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
   var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
   var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  /* الأهداف المسموحة: صفحات الموقع كما بناها البنّاء (IAQ_REAL.pages)، ومراسي
+     الصفحة الرئيسة. تُحسب مرّةً وتُستعمل في الحقل وفي التحقّق معًا — فلا
+     يفترقان ولا يمرّ رابطٌ غير موجود. */
+  var ANCHORS = ['#about', '#news', '#programs', '#stats', '#testimonials', '#partners'];
+  var TARGETS = null;
+  function targets() {
+    if (TARGETS) return TARGETS;
+    TARGETS = [];
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    pages.forEach(function (p) {
+      if (!p || !p.slug) return;
+      TARGETS.push({ v: p.slug + '.html', l: (p.title || p.slug) + '  (' + p.slug + '.html)' });
+    });
+    ANCHORS.forEach(function (a) {
+      TARGETS.push({ v: a, l: 'قسم في الرئيسة: ' + a });
+    });
+    return TARGETS;
+  }
+  function targetOk(v) {
+    var s = norm(v);
+    if (!s) return true;                      /* فارغ = عنصرٌ يفتح منسدلة فقط */
+    if (/^https?:\/\//i.test(s)) return true;  /* رابط خارجي كامل */
+    var list = targets();
+    for (var i = 0; i < list.length; i++) if (list[i].v === s) return true;
+    return false;
+  }
+
   var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
                 doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
@@ -1058,6 +1085,41 @@ window.IAQ_SCREENS = (function () {
              { k: 'status', l: 'الحالة', f: 'status' }],
       stats: [{ l: 'إجمالي الشرائح' }, { l: 'ظاهرة', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
+    },
+    menuitems: {
+      nav: 'القوائم الرئيسية', h1: 'عناصر القائمة الرئيسية',
+      sub: 'تسميات عناصر القائمة وروابطها وترتيبها وظهورها — بمستويين.',
+      table: 'menu_items', filter: '', fixed: {}, audit: 1, selectAll: 1,
+      clientOrder: [['parent', 1], ['sort', 1], ['id', 1]],
+      nameKey: 'label', searchKeys: ['label', 'href', 'mkey'],
+      noAdd: 1, noDelete: 1,
+      /* لا إضافة ولا حذف: كل عنصرٍ مرتبطٌ بعنصرٍ مبنيٍّ بمفتاحه (أيقونته
+         وموضعه)، وعنصرٌ بلا مقابلٍ مبنيّ لا يظهر في الموقع. الإخفاء يكفي. */
+      reach: 'يسري على القائمة في كل صفحات الموقع عند أوّل تحميل. ولا تُفرَّغ القائمة أبدًا: ' +
+             'إن لم يبقَ عنصرٌ رئيسٌ ظاهر بقيت القائمة المبنيّة.',
+      fields: [
+        { k: 'label', l: 'التسمية', t: 'text', req: 1 },
+        { k: 'href', l: 'الرابط', t: 'href',
+          hint: 'يُختار من صفحات الموقع فقط، أو مرساة في الصفحة الرئيسة، أو رابط خارجي كامل. ' +
+                'فلا يمكن أن يُفضي إلى صفحة غير موجودة.' },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا — داخل مستواه' },
+        { k: 'visible', l: 'الظهور', t: 'bool', half: 1, def: true }
+      ],
+      list: [{ k: 'mkey', l: 'المفتاح', f: 'mono' },
+             { k: 'parent', l: 'المستوى', f: 'level' },
+             { k: 'label', l: 'التسمية', f: 'text' },
+             { k: 'href', l: 'الرابط', f: 'hrefcell' },
+             { k: 'sort', l: 'الترتيب', f: 'text' },
+             { k: 'visible', l: 'الظهور', f: 'bool' }],
+      stats: [{ l: 'إجمالي العناصر' }, { l: 'عناصر رئيسة', c: 'parent', v: '' },
+              { l: 'ظاهرة', boolTrue: 'visible' }, { l: 'مخفيّة', boolFalse: 'visible' }]
+    },
+    pagelist: {
+      nav: 'صفحات الموقع', h1: 'جرد صفحات الموقع',
+      sub: 'الصفحات المبنيّة فعلًا وروابطها — للاطّلاع والمعاينة.',
+      kind: 'pages',
+      reach: 'إنشاء صفحة جديدة أو تغيير عنوانها يحتاج إعادة بناء — لا تُولَّد صفحة في المتصفّح. ' +
+             'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
     },
     sitecfg: {
       nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
@@ -1392,6 +1454,7 @@ window.IAQ_SCREENS = (function () {
     epoch++;
     var myKey = cur, sc = S0();
     if (sc.kind === 'settings') return settingsView(sc, myKey);
+    if (sc.kind === 'pages') return pagesView(sc);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
@@ -1418,6 +1481,31 @@ window.IAQ_SCREENS = (function () {
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' +
       '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
+  }
+
+  /* ---------------------- شاشة جرد الصفحات (للاطّلاع) ---------------------- */
+  function pagesView(sc) {
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    var rowsHtml = pages.map(function (p, i) {
+      var f = p.slug + '.html';
+      return '<tr><td class="mono small">' + (i + 1) + '</td>' +
+        '<td><b>' + esc(p.title || p.slug) + '</b></td>' +
+        '<td class="mono small">' + esc(f) + '</td>' +
+        '<td>' + (p.type ? '<span class="chip">' + esc(p.type) + '</span>' : '—') + '</td>' +
+        '<td><a href="' + esc(f) + '" target="_blank" rel="noopener" class="mono small">معاينة</a></td></tr>';
+    }).join('');
+    return '<div class="view-head"><h1>' + esc(sc.h1) +
+      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '<p>' + esc(sc.sub) + '</p></div>' +
+      '<div class="iaq-card">' +
+        '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:16px">' +
+          box(pages.length, 'صفحة مبنيّة') + box(1, 'لوحة تحكّم') + '</div>' +
+        (pages.length
+          ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>العنوان</th>' +
+            '<th>الملف</th><th>النوع</th><th></th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+          : '<div class="muted" style="padding:28px;text-align:center">لم تُقرأ قائمة الصفحات.</div>') +
+        '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p>' +
+      '</div>';
   }
 
   function loadSettings(sc) {
@@ -1563,6 +1651,8 @@ window.IAQ_SCREENS = (function () {
   function statVal(spec) {
     if (spec.hidden) return rows.filter(function (r) { return r.status !== 'published'; }).length;
     if (spec.has) return rows.filter(function (r) { return norm(r[spec.has]) !== ''; }).length;
+    if (spec.boolTrue) return rows.filter(function (r) { return r[spec.boolTrue] !== false; }).length;
+    if (spec.boolFalse) return rows.filter(function (r) { return r[spec.boolFalse] === false; }).length;
     if (spec.c) {
       var vals = (spec.v instanceof Array) ? spec.v : [spec.v];
       return rows.filter(function (r) { return vals.indexOf(r[spec.c]) > -1; }).length;
@@ -1606,6 +1696,24 @@ window.IAQ_SCREENS = (function () {
       var nm = u.split('/').pop();
       return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="mono small" ' +
         'title="' + esc(u) + '">' + esc(nm.length > 22 ? nm.slice(0, 22) + '…' : nm) + '</a>';
+    }
+    if (col.f === 'mono') {
+      return '<span class="mono small muted">' + esc(v) + '</span>';
+    }
+    if (col.f === 'level') {
+      return norm(v) ? '<span class="chip">فرعي ← ' + esc(v) + '</span>'
+                     : '<span class="chip" style="background:#f8efdb;color:#7a5518">رئيس</span>';
+    }
+    if (col.f === 'bool') {
+      return v === false ? '<span class="chip" style="background:#f4e9d4;color:#7a5518">مخفي</span>'
+                         : '<span class="chip">ظاهر</span>';
+    }
+    if (col.f === 'hrefcell') {
+      var s3 = norm(v);
+      if (!s3) return '<span class="muted">منسدلة فقط</span>';
+      var ok = targetOk(s3);
+      return '<span class="mono small"' + (ok ? '' : ' style="color:#8c3d1c"') + '>' +
+        (ok ? '' : '⚠ ') + esc(s3) + '</span>';
     }
     if (col.f === 'datetime') {
       return '<span style="white-space:nowrap" class="small">' + esc(dtLabel(v)) + '</span>';
@@ -1746,6 +1854,15 @@ window.IAQ_SCREENS = (function () {
       (footHtml ? '<div class="btnbar" style="padding:0 22px 20px">' + footHtml + '</div>' : '') + '</div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    /* اختيار «رابط خارجي» يُظهر حقل النصّ، وغيره يُخفيه */
+    ov.addEventListener('change', function (e) {
+      var s = e.target;
+      if (!s.id || s.tagName !== 'SELECT') return;
+      var ext = document.getElementById(s.id + '-ext');
+      if (!ext) return;
+      ext.style.display = (s.value === '__ext__') ? '' : 'none';
+      if (s.value === '__ext__') ext.focus();
+    });
     var f = ov.querySelector('input,select,textarea');
     if (f) f.focus();
     return ov;
@@ -1803,6 +1920,27 @@ window.IAQ_SCREENS = (function () {
       h += '<input type="text" id="' + id + '" list="' + id + '-dl" value="' + esc(val == null ? '' : val) + '">' +
         '<datalist id="' + id + '-dl">' +
         tags.map(function (t) { return '<option value="' + esc(t) + '"></option>'; }).join('') + '</datalist>';
+    } else if (f.t === 'href') {
+      var cur0 = String(val == null ? '' : val).trim();
+      var isExt = /^https?:\/\//i.test(cur0);
+      var known = targetOk(cur0) && !isExt;
+      h += '<select id="' + id + '">' +
+        '<option value=""' + (cur0 === '' ? ' selected' : '') + '>— بلا رابط (يفتح منسدلة فقط) —</option>' +
+        targets().map(function (o) {
+          return '<option value="' + esc(o.v) + '"' + (o.v === cur0 ? ' selected' : '') + '>' +
+            esc(o.l) + '</option>';
+        }).join('') +
+        '<option value="__ext__"' + (isExt ? ' selected' : '') + '>رابط خارجي كامل…</option>' +
+        (known || isExt || cur0 === '' ? '' :
+          '<option value="' + esc(cur0) + '" selected>⚠ ' + esc(cur0) + ' — غير موجود</option>') +
+        '</select>' +
+        '<input type="text" id="' + id + '-ext" placeholder="https://example.org" value="' +
+        (isExt ? esc(cur0) : '') + '" style="margin-block-start:8px' +
+        (isExt ? '' : ';display:none') + '">';
+    } else if (f.t === 'bool') {
+      h += '<select id="' + id + '">' +
+        '<option value="1"' + (val === false ? '' : ' selected') + '>ظاهر</option>' +
+        '<option value="0"' + (val === false ? ' selected' : '') + '>مخفي</option></select>';
     } else if (f.t === 'file') {
       h += '<input type="file" id="' + id + '" accept=".pdf,application/pdf" ' +
         'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
@@ -1861,6 +1999,19 @@ window.IAQ_SCREENS = (function () {
       var el = $('#sc-f-' + f.k);
       if (!el) return;
       var v = el.value;
+      if (f.t === 'bool') { rec[f.k] = (v === '1'); return; }
+      if (f.t === 'href') {
+        var pick = norm(v);
+        if (pick === '__ext__') {
+          var ex = $('#sc-f-' + f.k + '-ext');
+          pick = ex ? norm(ex.value) : '';
+          if (!/^https?:\/\//i.test(pick)) { bad = f.l + ': الرابط الخارجي يبدأ بـ https://'; return; }
+        }
+        /* القاعدة: لا رابطَ إلا لهدفٍ موجود — فلا زرَّ يُفضي إلى 404 */
+        if (!targetOk(pick)) { bad = f.l + ': لا توجد صفحة بهذا الرابط — اختر من القائمة'; return; }
+        rec[f.k] = pick;
+        return;
+      }
       if (f.t === 'lines') { rec[f.k] = textToLines(v); return; }
       if (f.t === 'pairs') { rec[f.k] = textToPairs(v); return; }
       if (f.t === 'area') { rec[f.k] = String(v || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim(); return; }

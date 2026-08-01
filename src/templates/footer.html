@@ -15,13 +15,41 @@
   if(header){ var os=function(){header.classList.toggle('scrolled',window.scrollY>20);}; window.addEventListener('scroll',os,{passive:true}); os(); }
 
   var toggle=$('#navToggle'), menu=$('#navMenu'), overlay=$('#navOverlay');
-  var navItems=$$('.nav-item.has-dropdown');
-  function closeDD(x){navItems.forEach(function(it){if(it!==x){it.classList.remove('open');var t=$('.nav-trigger',it);if(t)t.setAttribute('aria-expanded','false');}});}
-  function closeMenu(){if(!menu)return;menu.classList.remove('open');if(overlay)overlay.classList.remove('show');if(toggle)toggle.setAttribute('aria-expanded','false');document.body.style.overflow='';closeDD(null);}
+    /* مستمعات القائمة مفوَّضة لا مربوطة بعناصر بعينها: القائمة قد تُعاد بناؤها
+     من قاعدة البيانات بعد التحميل، فإشارةٌ محفوظة لعنصرٍ مقتلَع لا تعمل. */
+  function closeDD(x){
+    $$('.nav-item.has-dropdown').forEach(function(it){
+      if(it===x) return;
+      it.classList.remove('open');
+      var b=$('.nav-trigger',it);
+      if(b)b.setAttribute('aria-expanded','false');
+    });
+  }
+  function closeMenu(){
+    if(!menu)return;
+    menu.classList.remove('open');
+    if(overlay)overlay.classList.remove('show');
+    if(toggle)toggle.setAttribute('aria-expanded','false');
+    document.body.style.overflow='';
+    closeDD(null);
+  }
   if(toggle&&menu){toggle.addEventListener('click',function(){var o=menu.classList.toggle('open');if(overlay)overlay.classList.toggle('show',o);toggle.setAttribute('aria-expanded',String(o));document.body.style.overflow=o?'hidden':'';if(!o)closeDD(null);});}
   if(overlay)overlay.addEventListener('click',closeMenu);
-  if(menu)$$('a',menu).forEach(function(a){a.addEventListener('click',closeMenu);});
-  navItems.forEach(function(it){var t=$('.nav-trigger',it);if(!t)return;t.addEventListener('click',function(e){e.stopPropagation();var w=!it.classList.contains('open');closeDD(it);it.classList.toggle('open',w);t.setAttribute('aria-expanded',String(w));});});
+  if(menu)menu.addEventListener('click',function(e){
+    var tg=e.target.closest&&e.target.closest('.nav-trigger');
+    if(tg){
+      e.stopPropagation();
+      var it=tg.closest('.nav-item.has-dropdown');
+      if(!it)return;
+      var w=!it.classList.contains('open');
+      closeDD(it);
+      it.classList.toggle('open',w);
+      tg.setAttribute('aria-expanded',String(w));
+      return;
+    }
+    /* أي رابط في القائمة يُغلق درج الجوال */
+    if(e.target.closest&&e.target.closest('a'))closeMenu();
+  });
   document.addEventListener('click',function(e){if(!e.target.closest('.nav-item.has-dropdown'))closeDD(null);});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDD(null);}});
 

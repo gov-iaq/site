@@ -1912,6 +1912,142 @@ var IAQ_PATH = (function () {
       });
   }
 
+  /* ---------------------------- القائمة الرئيسية ----------------------------
+     أخطرُ ما في هذه الطبقة: القائمة في 19 صفحة، وخطؤها يقطع التنقّل. فالحمايات
+     صريحة ومتقدّمة على أي تحديث:
+       • لا تُعاد القائمة إلا إذا جاء عنصرٌ رئيسٌ ظاهرٌ واحد على الأقل.
+       • كل عنصرٍ يُستنسخ من العنصر المبنيّ صاحب مفتاحه، فتُحفظ أيقونته
+         وأصنافه؛ ومفتاحٌ لا مقابل له في الصفحة يُتجاهَل (لا نرسم عنصرًا
+         من عندنا في القائمة).
+       • رابطٌ لا ينتهي بصفحةٍ موجودة يُتجاهَل — التحقّق الحقيقي في اللوحة،
+         وهذا حرزٌ ثانٍ في الموقع.
+       • عند أي شكّ يبقى المبنيّ كما هو. */
+  function menu() {
+    var nav = document.getElementById('navMenu');
+    if (!nav) return;
+    var keyed = nav.querySelectorAll('[data-mk]');
+    if (!keyed.length) return;            /* قائمةٌ غير موسومة (صفحة 404 الثابتة) */
+    return get('menu_items?select=mkey,parent,label,href,sort,visible&order=sort.asc,id.asc')
+      .then(function (rows) {
+        if (!rows || !rows.length) return;   // فشل قراءة أو جدولٌ فارغ → يبقى المبنيّ
+
+        /* فهرس العناصر المبنيّة بمفتاحها */
+        var byKey = {};
+        [].slice.call(keyed).forEach(function (el) { byKey[el.getAttribute('data-mk')] = el; });
+
+        var tops = [], kids = {};
+        rows.forEach(function (r) {
+          if (!r || !r.mkey || !byKey[r.mkey]) return;   /* مفتاح لا مقابل له */
+          if (r.parent) (kids[r.parent] = kids[r.parent] || []).push(r);
+          else tops.push(r);
+        });
+        var vis = tops.filter(function (r) { return r.visible !== false; });
+        if (!vis.length) return;             /* قائمةٌ بلا عنصر ظاهر: لا تُطبَّق */
+
+        var frag = document.createDocumentFragment(), n = 0;
+        vis.forEach(function (r) {
+          var built = byKey[r.mkey];
+          /* العنصر الرئيس: إمّا رابط، وإمّا زرُّ منسدلة داخل حاويته */
+          var host = built.closest('.nav-item.has-dropdown');
+          var node = (host || built).cloneNode(true);
+          if (host) {
+            var btn = node.querySelector('[data-mk="' + r.mkey + '"]');
+            if (btn) setLabel(btn, r.label);
+            var inner = node.querySelector('.dropdown-inner');
+            if (inner) {
+              var list = (kids[r.mkey] || []).filter(function (c) { return c.visible !== false; });
+              var olds = [].slice.call(inner.children);
+              if (list.length) {
+                var kf = document.createDocumentFragment();
+                list.forEach(function (c) {
+                  var src = byKey[c.mkey];
+                  if (!src) return;
+                  var a = src.cloneNode(true);
+                  setLabel(a, c.label);
+                  if (okHref(c.href)) a.setAttribute('href', c.href);
+                  kf.appendChild(a);
+                });
+                if (kf.childNodes.length) {
+                  olds.forEach(function (o) { o.parentNode.removeChild(o); });
+                  inner.appendChild(kf);
+                }
+              }
+              /* منسدلةٌ بلا أبناء ظاهرين: تُصبح رابطًا إن كان لها رابط،
+                 وإلا تُتجاهَل — قائمةٌ تفتح فراغًا أسوأ من إخفائها. */
+              if (!inner.children.length) {
+                if (!okHref(r.href)) return;
+                var solo = document.createElement('a');
+                solo.className = 'nav-link';
+                solo.setAttribute('href', r.href);
+                solo.setAttribute('data-mk', r.mkey);
+                var ic = built.querySelector('svg');
+                if (ic) solo.appendChild(ic.cloneNode(true));
+                solo.appendChild(document.createTextNode(r.label || ''));
+                frag.appendChild(solo);
+                n++;
+                return;
+              }
+            }
+          } else {
+            setLabel(node, r.label);
+            if (okHref(r.href)) node.setAttribute('href', r.href);
+          }
+          frag.appendChild(node);
+          n++;
+        });
+        if (!n) return;
+        nav.innerHTML = '';
+        nav.appendChild(frag);
+        markActive(nav);
+        document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'menu', count: n } }));
+      });
+  }
+  /* الرابط المقبول: صفحةٌ من صفحات الموقع، أو مرساة، أو رابط https كامل.
+     قائمة الصفحات تُستخرج من روابط القائمة المبنيّة نفسها — فلا مصدر خارجي. */
+  var PAGES = null;
+  function pageSet() {
+    if (PAGES) return PAGES;
+    PAGES = {};
+    [].slice.call(document.querySelectorAll('#navMenu a[href], .footer-links a[href]'))
+      .forEach(function (a) {
+        var h = (a.getAttribute('href') || '').split('#')[0].split('?')[0];
+        if (h && /\.html$/.test(h)) PAGES[h] = true;
+      });
+    PAGES['index.html'] = true;
+    return PAGES;
+  }
+  function okHref(h) {
+    var s = String(h == null ? '' : h).trim();
+    if (!s) return false;
+    if (/^\s*(javascript|vbscript|data|file)\s*:/i.test(s)) return false;
+    if (/^https?:\/\//i.test(s)) return true;          /* رابط خارجي كامل */
+    if (s.charAt(0) === '#') return true;              /* مرساة في الصفحة */
+    var page = s.split('#')[0].split('?')[0];
+    return !!pageSet()[page];
+  }
+  /* يستبدل نصّ العنصر ويُبقي أيقونته ووسومه الداخلية */
+  function setLabel(el, label) {
+    if (label == null) return;
+    txtNodeSet(el, String(label));
+  }
+  /* الحالة النشطة تُحسب من اسم الصفحة الحالية */
+  function markActive(nav) {
+    var here = (location.pathname.split('/').pop() || 'index.html');
+    [].slice.call(nav.querySelectorAll('.nav-link')).forEach(function (el) {
+      el.classList.remove('active');
+    });
+    [].slice.call(nav.querySelectorAll('a[href]')).forEach(function (a) {
+      var h = (a.getAttribute('href') || '').split('#')[0];
+      if (!h || h !== here) return;
+      if (a.classList.contains('nav-link')) a.classList.add('active');
+      else {
+        var host = a.closest('.nav-item.has-dropdown');
+        var btn = host ? host.querySelector('.nav-trigger') : null;
+        if (btn) btn.classList.add('active');
+      }
+    });
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var JOBS = { assembly: [function () { return people('assembly'); }],
                board:    [function () { return people('board'); }],
@@ -1930,8 +2066,9 @@ var IAQ_PATH = (function () {
     } catch (x) { }
   }
   function run() {
-    var jobs = JOBS[slug];
-    if (!jobs) return;
+    /* القائمة الرئيسية في كل صفحة، ولو لم يكن للصفحة مهامٌّ أخرى */
+    var jobs = (JOBS[slug] || []).concat([menu]);
+    if (!jobs.length) return;
     /* كل وظيفة مستقلّة: سقوط إحداها لا يمنع الأخرى، والبناء الثابت يبقى */
     jobs.forEach(function (job) {
       var p;

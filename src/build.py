@@ -768,6 +768,13 @@ SCREEN_ICON_PATHS = {
     "hero": '<rect x="3" y="5" width="18" height="12" rx="2"/>'
             '<path d="M7.5 11.8l2-2 2 2"/><path d="M9 20h6"/>'
             '<path d="M16.6 9.4l-1.6 1.6 1.6 1.6"/>',
+    # قوائم: أسطر بمستويين
+    "menu2": '<path d="M4 6h16M4 12h10M4 18h10"/>'
+             '<path d="M17 12h3M17 18h3"/><circle cx="14.5" cy="12" r="0.6"/>',
+    # صفحات: ورقتان متراكبتان
+    "pages2": '<rect x="7" y="3" width="12" height="15" rx="2"/>'
+              '<path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/>'
+              '<path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/>',
 }
 SCREEN_ICONS = "".join(
     ' %s:\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
@@ -786,6 +793,8 @@ SCREEN_NAV = [
     ("subslist",    "الطلبات والنماذج", "inbox2"),
     ("surveylist",  "استجابات الرضا",   "poll"),
     ("heroslides",  "السلايدر الرئيسي", "hero"),
+    ("menuitems",   "القوائم الرئيسية", "menu2"),
+    ("pagelist",    "صفحات الموقع",     "pages2"),
     ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
 
