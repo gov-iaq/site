@@ -726,14 +726,32 @@ def panel_name():
             login = json.load(f).get("admin_login_url") or login
     return login.replace(".html", "-panel.html")
 
+# أيقونات شاشات القوائم — تُضاف إلى خريطة I في تصميم المدير بنفس أسلوب رسمها
+SCREEN_ICONS = (
+    " assembly:'<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"><circle cx=\"12\" cy=\"12\" r=\"2.5\"/><circle cx=\"12\" cy=\"4.3\" r=\"1.5\"/><circle cx=\"18.7\" cy=\"8.2\" r=\"1.5\"/><circle cx=\"18.7\" cy=\"15.8\" r=\"1.5\"/><circle cx=\"12\" cy=\"19.7\" r=\"1.5\"/><circle cx=\"5.3\" cy=\"15.8\" r=\"1.5\"/><circle cx=\"5.3\" cy=\"8.2\" r=\"1.5\"/></svg>',"
+    " board:'<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"><circle cx=\"12\" cy=\"6\" r=\"2.3\"/><path d=\"M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20\"/><circle cx=\"4.6\" cy=\"9.6\" r=\"1.7\"/><path d=\"M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5\"/><circle cx=\"19.4\" cy=\"9.6\" r=\"1.7\"/><path d=\"M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5\"/></svg>',"
+    " team:'<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"><circle cx=\"8.6\" cy=\"7.4\" r=\"2.6\"/><path d=\"M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4\"/><rect x=\"12.4\" y=\"12.6\" width=\"8.6\" height=\"7\" rx=\"1.6\"/><path d=\"M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2\"/></svg>',"
+    " partners:'<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"><circle cx=\"9.2\" cy=\"12\" r=\"5.3\"/><circle cx=\"14.8\" cy=\"12\" r=\"5.3\"/></svg>',")
+
+# مفاتيح الشاشات كما في src/panel/screens.js — لا تتعارض مع مفاتيح التصميم
+SCREEN_NAV = [
+    ("assembly",    "الجمعية العمومية", "assembly"),
+    ("board",       "مجلس الإدارة",     "board"),
+    ("team",        "فريق العمل",       "team"),
+    ("partnerlist", "الشركاء",          "partners"),
+]
+
 def build_panel(out_dir, cmap, amap):
     """يبني صفحة اللوحة من تصميم المدير كما هو، مع استبدال طبقة التخزين وحدها.
 
-    أربع عمليات دقيقة على الملف الأصلي، ولا شيء غيرها:
+    عمليات دقيقة معدودة على الملف الأصلي، ولا شيء غيرها:
       1) بوّابة الجلسة وإعداد الاتصال في <head>.
       2) تغليف السكربت الرئيسي في دالّة تُنادى بعد وصول البيانات.
       3) load()  يقرأ من الجسر بدل الذاكرة المحلية.
-      4) save()  يكتب في القاعدة بدل الذاكرة المحلية.
+      4) شاشات القوائم: أيقونات + مُدخلات القائمة الجانبية + خريطة العرض.
+      5) save()  يكتب في القاعدة بدل الذاكرة المحلية.
+      6) وصل ملفَّي screens.js و adapter.js قبل </body>.
+      7) استبدال ad-card بـ iaq-card كي لا تحجبها مانعات الإعلانات.
     """
     src = os.path.join(PANEL, "design.html")
     if not os.path.exists(src):
@@ -787,16 +805,23 @@ def build_panel(out_dir, cmap, amap):
         "if(window.IAQ_AFTER_LOAD)window.IAQ_AFTER_LOAD(d);return d;}", 1)
     steps.append("load")
 
-    # 5) شاشة أعضاء الجمعية العمومية: إدخالان فقط في تصميم المدير
+    # 5) شاشات القوائم الأربع: أيقونات، ومُدخلات في القائمة الجانبية، وخريطة العرض
+    a = "var I={"
+    assert page.count(a) == 1, "icon map"
+    page = page.replace(a, "var I={" + NLS + SCREEN_ICONS, 1)
+
     a = '{group:"المحتوى"},'
     assert page.count(a) == 1, "nav group content"
-    page = page.replace(a, a + '{k:"assembly",label:"الجمعية '
-                              'العمومية",icon:"users"},', 1)
+    nav_add = "".join('{k:"%s",label:"%s",icon:"%s"},' % (k, lbl, ic)
+                      for k, lbl, ic in SCREEN_NAV)
+    page = page.replace(a, a + nav_add, 1)
+
     a = "var views={dashboard:vDashboard,"
     assert page.count(a) == 1, "views map"
-    page = page.replace(a, "var views={assembly:function(){return window.IAQ_ASSEMBLY.view();},"
-                           "dashboard:vDashboard,", 1)
-    steps.append("assembly")
+    view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
+                       for k, _lbl, _ic in SCREEN_NAV)
+    page = page.replace(a, "var views={" + view_add + "dashboard:vDashboard,", 1)
+    steps.append("screens(%d)" % len(SCREEN_NAV))
 
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"
     assert page.count(a) == 1, "save fn"
@@ -806,9 +831,9 @@ def build_panel(out_dir, cmap, amap):
     # الجسر بعد السكربت الرئيسي
     adapter = os.path.join(PANEL, "adapter.js")
     bridge = rb(adapter).decode("utf-8") if os.path.exists(adapter) else ""
-    asm = os.path.join(PANEL, "assembly.js")
-    if os.path.exists(asm):
-        bridge = rb(asm).decode("utf-8") + NLS + bridge
+    scr = os.path.join(PANEL, "screens.js")
+    if os.path.exists(scr):
+        bridge = rb(scr).decode("utf-8") + NLS + bridge
     # </body> يتكرّر: الأول داخل نصّ جافاسكربت لمعاينة الأكواد. نرسو على الذيل.
     a = "</script>" + NLS + "</body>"
     assert page.count(a) == 1, "body close"
