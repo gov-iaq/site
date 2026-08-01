@@ -750,6 +750,13 @@ SCREEN_ICON_PATHS = {
     # وثائق: ورقة بطيّة زاوية وسطور
     "docs": '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
             '<path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/>',
+    # طلبات واردة: صندوق بريد وسهم يهبط إليه
+    "inbox2": '<path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/>'
+              '<path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/>'
+              '<path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/>',
+    # استبيان: قائمة بعلامات ونجمة تقييم
+    "poll": '<path d="M4.5 7h9M4.5 12h9M4.5 17h5"/>'
+            '<path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/>',
 }
 SCREEN_ICONS = "".join(
     ' %s:\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
@@ -765,6 +772,8 @@ SCREEN_NAV = [
     ("partnerlist", "الشركاء",          "partners"),
     ("newslist",    "الأخبار",          "news"),
     ("docs",        "الوثائق والملفات", "docs"),
+    ("subslist",    "الطلبات والنماذج", "inbox2"),
+    ("surveylist",  "استجابات الرضا",   "poll"),
 ]
 
 def build_panel(out_dir, cmap, amap):
@@ -841,6 +850,12 @@ def build_panel(out_dir, cmap, amap):
     # نفسه، فلا يرى المدير «أخبار» مكرّرتين إحداهما لا تفعل شيئًا.
     a = '{k:"news",label:"الأخبار",icon:"news"},'
     assert page.count(a) == 1, "design news nav"
+    page = page.replace(a, "", 1)
+
+    # وكذلك «الطلبات والنماذج»: شاشة التصميم تُغيّر الحالة في مخزن
+    # الإعدادات لا في جدول submissions، فلا يُحفظ التغيير أصلًا.
+    a = '{k:"subs",label:"الطلبات والنماذج",icon:"inbox"},'
+    assert page.count(a) == 1, "design subs nav"
     page = page.replace(a, "", 1)
 
     a = '{group:"المحتوى"},'

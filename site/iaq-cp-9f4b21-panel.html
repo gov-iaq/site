@@ -15,7 +15,7 @@ window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{metho
 headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}
 try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();
 window.IAQ_REAL={"settings": {"address": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان", "phone": "0505144421", "email": "info@iaq.org.sa", "reg": "2253", "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}}, "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}, "brand": {"ar": "حاضنة الجمعيات", "en": "ASSOCIATION INCUBATOR"}, "pages": [{"id": "pabout", "title": "عن الجمعية", "slug": "about", "type": "محتوى", "status": "منشورة"}, {"id": "passembly", "title": "الجمعية العمومية", "slug": "assembly", "type": "محتوى", "status": "منشورة"}, {"id": "pboard", "title": "مجلس الإدارة", "slug": "board", "type": "محتوى", "status": "منشورة"}, {"id": "pcommittees", "title": "اللجان الفرعية", "slug": "committees", "type": "محتوى", "status": "منشورة"}, {"id": "pcontact", "title": "تواصل معنا", "slug": "contact", "type": "محتوى", "status": "منشورة"}, {"id": "pendowments", "title": "الأوقاف والاستثمارات", "slug": "endowments", "type": "محتوى", "status": "منشورة"}, {"id": "pgovernance", "title": "الحوكمة", "slug": "governance", "type": "محتوى", "status": "منشورة"}, {"id": "pindex", "title": "الرئيسية", "slug": "index", "type": "محتوى", "status": "منشورة"}, {"id": "pjobs", "title": "الوظائف", "slug": "jobs", "type": "محتوى", "status": "منشورة"}, {"id": "plicenses", "title": "التراخيص", "slug": "licenses", "type": "محتوى", "status": "منشورة"}, {"id": "pmembership", "title": "طلب العضوية", "slug": "membership", "type": "محتوى", "status": "منشورة"}, {"id": "pnews", "title": "المركز الإعلامي", "slug": "news", "type": "محتوى", "status": "منشورة"}, {"id": "pprograms", "title": "برامجنا", "slug": "programs", "type": "محتوى", "status": "منشورة"}, {"id": "psatisfaction", "title": "قياس الرضا", "slug": "satisfaction", "type": "محتوى", "status": "منشورة"}, {"id": "pteam", "title": "فريق العمل", "slug": "team", "type": "محتوى", "status": "منشورة"}, {"id": "pvolunteer", "title": "تطوّع معنا", "slug": "volunteer", "type": "محتوى", "status": "منشورة"}, {"id": "pprivacy", "title": "سياسة الخصوصية", "slug": "privacy", "type": "محتوى", "status": "منشورة"}, {"id": "pterms", "title": "شروط الاستخدام", "slug": "terms", "type": "محتوى", "status": "منشورة"}], "seoTitle": "جمعية حاضنة الجمعيات", "sections": [{"id": "sabout", "key": "about", "name": "من نحن", "visible": true, "editable": true, "title": "جمعية تُعنى بتمكين القطاع غير الربحي", "subtitle": "نؤمن بأن جمعية واحدة ممكَّنة تصنع أثرًا مضاعفًا في مجتمعها؛ لذلك نجعل من الاحتضان والتطوير المؤسسي رسالتنا."}, {"id": "snews", "key": "news", "name": "المركز الإعلامي", "visible": true, "editable": true, "title": "أحدث أخبار الجمعية", "subtitle": "تابع مستجدّاتنا وأنشطتنا وشراكاتنا، منشورة أولًا بأول عبر حساب الجمعية في منصّة إكس."}, {"id": "sprograms", "key": "programs", "name": "برامجنا", "visible": true, "editable": true, "title": "مسارات تمكين متكاملة", "subtitle": "برامج مصمّمة لتغطي رحلة الجمعية كاملة، من لحظة التأسيس حتى بلوغ الاستدامة وقياس الأثر."}, {"id": "sstats", "key": "stats", "name": "أثرنا بالأرقام", "visible": true, "editable": true, "title": "حصيلة نفخر بها", "subtitle": ""}, {"id": "stestimonials", "key": "testimonials", "name": "قالوا عنا", "visible": true, "editable": true, "title": "شهادات شركائنا والمستفيدين", "subtitle": "كلمات من قيادات جمعيات رافقناها في رحلتها نحو التمكين والاستدامة."}, {"id": "spartners", "key": "partners", "name": "شركاء النجاح", "visible": true, "editable": true, "title": "بثقة شركائنا نصنع الأثر", "subtitle": "نعتزّ بشراكاتنا مع الجهات الداعمة والمنظمات التي تشاركنا الرسالة."}]};
-window.IAQ_BUILD="2026-08-01 20:38";
+window.IAQ_BUILD="2026-08-01 20:52";
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -498,7 +498,7 @@ function roleName(id){var r=config.roles.filter(function(x){return x.id===id;})[
 
 /* ---------- icons ---------- */
 var I={
- assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>',
+ assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>', inbox2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/><path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/><path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/></svg>', poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h9M4.5 12h9M4.5 17h5"/><path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/></svg>',
  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>',
  theme:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.3-1-1.5-1-2.5 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7-9-7Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>',
  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3c3 4 3 14 0 18M12 3C9 7 9 17 12 21M3 12h18"/></svg>',
@@ -773,7 +773,7 @@ function vCode(){
 }
 function previewCode(codeStr){var f=$('#codePreview');if(!f)return;f.srcdoc='<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>body{margin:0;padding:12px;font-family:Tajawal,sans-serif}</style></head><body>'+(codeStr||'<p style="color:#888;font-family:sans-serif">لا يوجد كود للمعاينة.</p>')+'</body></html>';}
 
-var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
+var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},subslist:function(){return window.IAQ_SCREENS.view("subslist");},surveylist:function(){return window.IAQ_SCREENS.view("surveylist");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
 
 function vSettings(){
  return '<div class="view-head"><h1>الإعدادات العامة</h1><p>بيانات التواصل وروابط التواصل الاجتماعي وتحسين محركات البحث، وإدارة الإعدادات.</p></div>'
@@ -788,8 +788,8 @@ function vSettings(){
 var NAV=[
  {k:"dashboard",label:"لوحة التحكم",icon:"dash"},
  {group:"التصميم والهوية"},{k:"theme",label:"المظهر والثيم",icon:"theme"},{k:"logo",label:"الشعار والهوية",icon:"logo"},
- {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
- {group:"التفاعل"},{k:"subs",label:"الطلبات والنماذج",icon:"inbox"},
+ {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"subslist",label:"الطلبات والنماذج",icon:"inbox2"},{k:"surveylist",label:"استجابات الرضا",icon:"poll"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
+ {group:"التفاعل"},
  {group:"الإدارة"},{k:"users",label:"المستخدمون والأدوار",icon:"users"},
  {group:"النظام"},{k:"settings",label:"الإعدادات العامة",icon:"gear"}
 ];
@@ -906,6 +906,10 @@ window.IAQ_SCREENS = (function () {
   var RANK = { chair: 'رئيس المجلس', vice: 'نائب الرئيس', member: 'عضو', lead: 'مدير تنفيذي' };
   var ST = { published: 'ظاهر', hidden: 'مخفي', draft: 'مسودّة' };
   /* تصنيفات الوثائق — القيم مقيَّدة في القاعدة بـ check، فلا تُزَد من هنا */
+  var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
+  var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
+  var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
   var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
                  financials: 'القوائم المالية', annual: 'التقارير السنوية',
                  surveys: 'قياس الرضا', licenses: 'التراخيص' };
@@ -994,7 +998,8 @@ window.IAQ_SCREENS = (function () {
       nav: 'الأخبار', h1: 'الأخبار والمركز الإعلامي',
       sub: 'أخبار الجمعية — تحرير كامل للنصّ والبيانات ورابط التسجيل، وإضافة خبر جديد.',
       /* جدول الأخبار لا عمود ترتيب فيه: الترتيب بالتاريخ، الأحدث أوّلًا. */
-      table: 'news', filter: '', fixed: {}, nosort: 1, order: 'date.desc,id.desc',
+      /* audit: العمود updated_by أضافته ترقية schema-v4 */
+      table: 'news', filter: '', fixed: {}, nosort: 1, order: 'date.desc,id.desc', audit: 1,
       nameKey: 'title', searchKeys: ['title', 'lead', 'tag'],
       reach: 'التعديل والحذف والإضافة تسري على صفحة «المركز الإعلامي» وشريط الأخبار في الصفحة الرئيسة عند أوّل تحميل، بلا إعادة بناء.',
       fields: [
@@ -1018,6 +1023,86 @@ window.IAQ_SCREENS = (function () {
              { k: 'status', l: 'الحالة', f: 'status' }],
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
+    },
+    subslist: {
+      nav: 'الطلبات والنماذج', h1: 'الطلبات والنماذج الواردة',
+      sub: 'ما يرسله الزوّار من نماذج التواصل والتطوّع والعضوية والتوظيف — عرض ومتابعة حالة.',
+      table: 'submissions', filter: '', fixed: {}, nosort: 1, selectAll: 1,
+      clientOrder: [['created_at', -1], ['id', -1]],
+      /* الوارد لا يُنشأ من اللوحة ولا يُمحى: لا سياسة حذف في القاعدة، ومحو
+         طلبٍ وصل يُفقد أثرًا قد يُسأل عنه. الأرشفة تكفي لإخفائه. */
+      noAdd: 1, noDelete: 1, audit: 0,
+      nameKey: 'id',
+      reach: 'هذه بيانات واردة من زوّار الموقع، لا تُنشر عليه. تغيير الحالة والأولوية للمتابعة الداخلية فقط.',
+      searchFn: function (r) {
+        return (KIND[r.kind] || r.kind || '') + ' ' + (SUBST[r.status] || '') + ' ' +
+               JSON.stringify(r.payload || {});
+      },
+      detail: function (r) {
+        return pairsBox('بيانات الطلب', r.payload) +
+          '<p class="muted small">وصل في ' + esc(dtLabel(r.created_at)) + '</p>';
+      },
+      fields: [
+        { k: 'status', l: 'الحالة', t: 'select', o: SUBST, def: 'new', half: 1 },
+        { k: 'priority', l: 'الأولوية', t: 'select', o: PRIO, def: 'normal', half: 1 }
+      ],
+      list: [{ k: 'created_at', l: 'وصل في', f: 'datetime' },
+             { k: 'kind', l: 'النموذج', f: 'chip', o: KIND },
+             { k: 'payload', l: 'المُرسِل', f: 'who' },
+             { k: 'payload', l: 'المحتوى', f: 'gist' },
+             { k: 'status', l: 'الحالة', f: 'chip', o: SUBST },
+             { k: 'priority', l: 'الأولوية', f: 'chip', o: PRIO }],
+      stats: [{ l: 'إجمالي الطلبات' }, { l: 'جديد', c: 'status', v: 'new' },
+              { l: 'قيد المعالجة', c: 'status', v: 'in_progress' },
+              { l: 'أولوية عالية', c: 'priority', v: 'high' }],
+      exportCols: [
+        { l: 'وصل في', w: 20, get: function (r) { return dtLabel(r.created_at); } },
+        { l: 'النموذج', w: 14, get: function (r) { return KIND[r.kind] || r.kind || ''; } },
+        { l: 'الحالة', w: 14, get: function (r) { return SUBST[r.status] || r.status || ''; } },
+        { l: 'الأولوية', w: 12, get: function (r) { return PRIO[r.priority] || r.priority || ''; } },
+        { l: 'البيانات', w: 80, get: function (r) { return flatPairs(r.payload); } }
+      ],
+      exportName: 'الطلبات-الواردة.xlsx'
+    },
+    surveylist: {
+      nav: 'استجابات قياس الرضا', h1: 'استجابات استبيانات الرضا',
+      sub: 'ما سجّله الزوّار والمستفيدون والمتبرّعون من درجات وملاحظات.',
+      table: 'survey_responses', filter: '', fixed: {}, nosort: 1, selectAll: 1,
+      clientOrder: [['created_at', -1], ['id', -1]],
+      /* القاعدة لا تمنح المدير غير القراءة على هذا الجدول (سياسة select وحدها)،
+         فلا نعرض أزرارًا تُفضي إلى رفض. */
+      noAdd: 1, noDelete: 1, viewOnly: 1, audit: 0,
+      nameKey: 'id',
+      reach: 'استجابات واردة من الزوّار — للقراءة والتحليل فقط، لا تُنشر على الموقع ولا تُعدَّل.',
+      searchFn: function (r) {
+        return (SURVEY[r.survey_type] || '') + ' ' + (r.program || '') + ' ' + (r.comment || '');
+      },
+      detail: function (r) {
+        return pairsBox('الدرجات', r.ratings) +
+          (norm(r.program) ? '<p><b>البرنامج:</b> ' + esc(r.program) + '</p>' : '') +
+          (norm(r.comment) ? '<p><b>الملاحظة:</b><br>' + esc(r.comment) + '</p>' : '') +
+          '<p class="muted small">وصلت في ' + esc(dtLabel(r.created_at)) + '</p>';
+      },
+      fields: [],
+      list: [{ k: 'created_at', l: 'وصلت في', f: 'datetime' },
+             { k: 'survey_type', l: 'الاستبيان', f: 'chip', o: SURVEY },
+             { k: 'ratings', l: 'المتوسّط', f: 'avg' },
+             { k: 'ratings', l: 'عدد الأسئلة', f: 'keys' },
+             { k: 'program', l: 'البرنامج', f: 'clip' },
+             { k: 'comment', l: 'الملاحظة', f: 'clip' }],
+      stats: [{ l: 'إجمالي الاستجابات' },
+              { l: SURVEY.visitors, c: 'survey_type', v: 'visitors' },
+              { l: SURVEY.beneficiaries, c: 'survey_type', v: 'beneficiaries' },
+              { l: SURVEY.donors, c: 'survey_type', v: 'donors' }],
+      exportCols: [
+        { l: 'وصلت في', w: 20, get: function (r) { return dtLabel(r.created_at); } },
+        { l: 'الاستبيان', w: 16, get: function (r) { return SURVEY[r.survey_type] || r.survey_type || ''; } },
+        { l: 'المتوسّط', w: 10, get: function (r) { return avgOf(r.ratings); } },
+        { l: 'البرنامج', w: 24, get: function (r) { return r.program || ''; } },
+        { l: 'الدرجات', w: 70, get: function (r) { return flatPairs(r.ratings); } },
+        { l: 'الملاحظة', w: 60, get: function (r) { return r.comment || ''; } }
+      ],
+      exportName: 'استجابات-قياس-الرضا.xlsx'
     },
     docs: {
       nav: 'الوثائق والملفات', h1: 'الوثائق والملفات',
@@ -1115,7 +1200,8 @@ window.IAQ_SCREENS = (function () {
     trash: '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
     up: '<path d="M12 20V6M6 12l6-6 6 6"/><path d="M4 20h16"/>',
     down: '<path d="M12 4v14M6 12l6 6 6-6"/><path d="M4 20h16"/>',
-    x: '<path d="M6 6l12 12M18 6L6 18"/>'
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>' + '<circle cx="12" cy="12" r="3"/>'
   };
   function ico(k) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
@@ -1149,6 +1235,47 @@ window.IAQ_SCREENS = (function () {
      لا وجود له قبل ترقية المخطّط، بدل أن يُرسل فيُرفض الطلب. */
   function hasCol(k) { return !!(rows.length && rows[0].hasOwnProperty(k)); }
   function auditOn(sc) { return sc.audit === 'auto' ? hasCol('updated_by') : !!sc.audit; }
+  /* «2026-08-01T09:12:33Z» ← «1 أغسطس 2026 — 12:12 م» بتوقيت الرياض.
+     تُستعمل toLocaleString لأن الطابع كامل بمنطقة زمنية، بخلاف عمود التاريخ. */
+  function dtLabel(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var day = d.getDate(), mon = MONTHS[d.getMonth()] || (d.getMonth() + 1), yr = d.getFullYear();
+    var hh = d.getHours(), mm = d.getMinutes();
+    var am = hh < 12 ? 'ص' : 'م';
+    var h12 = hh % 12; if (!h12) h12 = 12;
+    return day + ' ' + mon + ' ' + yr + ' — ' + h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + am;
+  }
+  function objPairs(o) {
+    var out = [];
+    if (!o || typeof o !== 'object') return out;
+    for (var k in o) if (o.hasOwnProperty(k)) out.push([k, o[k]]);
+    return out;
+  }
+  function flatPairs(o) {
+    return objPairs(o).map(function (p) { return p[0] + ': ' + p[1]; }).join(' | ');
+  }
+  function avgOf(o) {
+    var v = objPairs(o).map(function (p) { return Number(p[1]); })
+      .filter(function (n) { return isFinite(n); });
+    if (!v.length) return '';
+    var s = 0;
+    v.forEach(function (n) { s += n; });
+    return (Math.round((s / v.length) * 10) / 10).toFixed(1);
+  }
+  /* جدول مفتاح/قيمة للعرض داخل النافذة — يُبنى من الكائن كما وصل، فلا يحتاج
+     معرفةً ببنية كل نموذج (النماذج تُرسل نصّ التسمية مفتاحًا). */
+  function pairsBox(title, o) {
+    var ps = objPairs(o);
+    if (!ps.length) return '<p class="muted">لا بيانات.</p>';
+    return '<div style="margin-block-end:14px"><b>' + esc(title) + '</b>' +
+      '<div style="overflow-x:auto;margin-block-start:8px"><table class="tbl"><tbody>' +
+      ps.map(function (p) {
+        return '<tr><td style="width:38%;vertical-align:top"><b>' + esc(p[0]) + '</b></td>' +
+          '<td style="white-space:pre-wrap">' + esc(p[1]) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
   function fieldsOf(sc) {
     return sc.fields.filter(function (f) { return f.needs ? hasCol(f.needs) : true; });
   }
@@ -1203,9 +1330,11 @@ window.IAQ_SCREENS = (function () {
     return '<div class="addrow" style="margin-block-end:14px">' +
       '<input id="sc-q" type="text" value="' + esc(q) + '" placeholder="بحث بالاسم…" style="flex:2;min-width:170px">' +
       '<button class="btn ghost" data-sc="search">بحث</button>' +
-      '<button class="btn" data-sc="add">' + ico('plus') + ' إضافة</button>' +
+      (sc.noAdd ? '' : '<button class="btn" data-sc="add">' + ico('plus') + ' إضافة</button>') +
       (sc.xlsx ? '<button class="btn ghost" data-sc="import">' + ico('up') + ' إضافة من إكسل</button>' +
                  '<button class="btn ghost" data-sc="tpl">' + ico('down') + ' تنزيل القالب</button>' : '') +
+      (sc.exportCols ? '<button class="btn ghost" data-sc="export">' + ico('down') +
+                       ' تنزيل جدول إكسل</button>' : '') +
       '<button class="btn ghost" data-sc="reload">تحديث</button></div>';
   }
 
@@ -1256,6 +1385,59 @@ window.IAQ_SCREENS = (function () {
       return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="mono small" ' +
         'title="' + esc(u) + '">' + esc(nm.length > 22 ? nm.slice(0, 22) + '…' : nm) + '</a>';
     }
+    if (col.f === 'datetime') {
+      return '<span style="white-space:nowrap" class="small">' + esc(dtLabel(v)) + '</span>';
+    }
+    if (col.f === 'who') {
+      /* أول قيمة تشبه اسمًا ثم أول ما يشبه جوالًا أو بريدًا — المفاتيح نصوص
+         تسميات النماذج فتختلف بين نموذج وآخر، فنبحث بالمعنى لا بالمفتاح. */
+      var ps = objPairs(v), nm = '', ct = '';
+      ps.forEach(function (p) {
+        var k = String(p[0]), val = String(p[1]);
+        if (!nm && /اسم/.test(k)) nm = val;
+        if (!ct && (/جوال|هاتف|بريد|إيميل/.test(k) || /@/.test(val) || /^0\d{9}$/.test(val))) ct = val;
+      });
+      if (!nm && ps.length) nm = String(ps[0][1]);
+      if (!nm && !ct) return '<span class="muted">—</span>';
+      return '<b>' + esc(nm) + '</b>' + (ct ? '<br><span class="mono small">' + esc(ct) + '</span>' : '');
+    }
+    if (col.f === 'gist') {
+      var ps2 = objPairs(v);
+      if (!ps2.length) return '<span class="muted">—</span>';
+      /* حقول الهوية والتواصل تظهر في عمود «المُرسِل»، فلا تُكرَّر هنا. وبلا هذا
+         الاستثناء كان الاسم أطولَ قيمة في النماذج القصيرة فيظهر مرّتين. */
+      var rest = ps2.filter(function (p) {
+        return !/اسم|جوال|هاتف|بريد|إيميل|هوية/.test(String(p[0]));
+      });
+      var pick = '';
+      rest.forEach(function (p) {
+        if (/رسالة|نبذة|ملاحظة|تفاصيل|موضوع|استفسار/.test(String(p[0]))) {
+          if (!pick) pick = String(p[1]);
+        }
+      });
+      if (!pick) {
+        rest.forEach(function (p) {
+          var s2 = String(p[1]);
+          if (s2.length > pick.length) pick = s2;
+        });
+      }
+      if (pick.length < 16) {
+        pick = rest.map(function (p) { return p[0] + ': ' + p[1]; }).join(' · ') || flatPairs(v);
+      }
+      return '<span class="small" title="' + esc(flatPairs(v)) + '">' +
+        esc(pick.length > 60 ? pick.slice(0, 60) + '…' : pick) + '</span>';
+    }
+    if (col.f === 'avg') {
+      var a = avgOf(v);
+      if (!a) return '<span class="muted">—</span>';
+      var gold = Number(a) >= 4;
+      return '<span class="chip"' + (gold ? ' style="background:#f8efdb;color:#7a5518"' : '') +
+        '>' + esc(a) + ' / 5</span>';
+    }
+    if (col.f === 'keys') {
+      var n2 = objPairs(v).length;
+      return n2 ? '<span class="chip">' + n2 + '</span>' : '<span class="muted">—</span>';
+    }
     if (col.f === 'date') {
       return norm(v) ? '<span style="white-space:nowrap">' + esc(arDate(v)) + '</span>'
                      : '<span class="muted">—</span>';
@@ -1283,8 +1465,9 @@ window.IAQ_SCREENS = (function () {
     var keys = sc.searchKeys || ['name', 'title', 'role'];
     var list = rows.filter(function (r) {
       if (!q) return true;
-      var hay = keys.map(function (k) { return norm(r[k]); }).join(' ').toLowerCase();
-      return hay.indexOf(q.toLowerCase()) > -1;
+      var hay = sc.searchFn ? sc.searchFn(r)
+        : keys.map(function (k) { return norm(r[k]); }).join(' ');
+      return String(hay).toLowerCase().indexOf(q.toLowerCase()) > -1;
     });
 
     if (st) st.innerHTML = '<div class="stat-grid" style="grid-template-columns:repeat(' +
@@ -1299,8 +1482,11 @@ window.IAQ_SCREENS = (function () {
       return '<tr><td class="mono small">' + (i + 1) + '</td>' +
         sc.list.map(function (c) { return '<td>' + cell(c, r) + '</td>'; }).join('') +
         '<td style="white-space:nowrap">' +
-          '<button class="ib sm" data-sc="edit" data-id="' + r.id + '" title="تعديل" aria-label="تعديل">' + ico('pen') + '</button> ' +
-          '<button class="ib sm danger" data-sc="del" data-id="' + r.id + '" title="حذف" aria-label="حذف">' + ico('trash') + '</button>' +
+          '<button class="ib sm" data-sc="edit" data-id="' + r.id + '" title="' +
+            (sc.viewOnly ? 'عرض' : 'تعديل') + '" aria-label="' + (sc.viewOnly ? 'عرض' : 'تعديل') + '">' +
+            ico(sc.viewOnly ? 'eye' : 'pen') + '</button>' +
+          (sc.noDelete ? '' : ' <button class="ib sm danger" data-sc="del" data-id="' + r.id +
+            '" title="حذف" aria-label="حذف">' + ico('trash') + '</button>') +
         '</td></tr>';
     }).join('');
 
@@ -1429,10 +1615,15 @@ window.IAQ_SCREENS = (function () {
       }
     }
     h += '<div id="sc-formerr" class="muted small" style="color:#8c3d1c"></div>';
-    modal(isNew ? 'إضافة سجلّ جديد — ' + sc.nav : 'تعديل — ' + sc.nav, h,
-      '<button class="btn ghost" data-sc="close">إلغاء</button>' +
-      '<button class="btn" data-sc="save" data-id="' + (row && row.id ? row.id : '') + '">' +
-      (isNew ? 'إضافة' : 'حفظ التعديل') + '</button>');
+    /* العرض التفصيلي يتقدّم الحقول: الغرض قراءة ما وصل ثم تحديد الحالة. */
+    if (sc.detail && row) h = sc.detail(row) + h;
+    var title = sc.viewOnly ? 'عرض — ' + sc.nav
+              : (isNew ? 'إضافة سجلّ جديد — ' + sc.nav : 'تعديل — ' + sc.nav);
+    modal(title, h,
+      '<button class="btn ghost" data-sc="close">' + (sc.viewOnly ? 'إغلاق' : 'إلغاء') + '</button>' +
+      (sc.viewOnly ? '' :
+        '<button class="btn" data-sc="save" data-id="' + (row && row.id ? row.id : '') + '">' +
+        (isNew ? 'إضافة' : 'حفظ التعديل') + '</button>'));
   }
 
   function saveForm(id) {
@@ -1630,14 +1821,17 @@ window.IAQ_SCREENS = (function () {
     return '<c r="' + ref + '" t="inlineStr"' + (styled ? ' s="1"' : '') + '><is><t xml:space="preserve">' +
       esc(text) + '</t></is></c>';
   }
-  var COLREF = ['A', 'B', 'C', 'D', 'E'];
+  var COLREF = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
   function templateBlob(sc) {
-    var cols = sc.xlsx.cols;
+    return xlsxBlob(sc.xlsx.cols, sc.xlsx.sample.concat([[]]), true);
+  }
+  /* كاتبٌ واحد للقالب وللتصدير: نفس الترميز والأنماط واتجاه الورقة، فلا
+     يتفرّق شكل الملفّين ولا يُصلح عيبٌ في أحدهما دون الآخر. */
+  function xlsxBlob(cols, bodyRows, withValidation) {
     var rowsXml = '<row r="1">' + cols.map(function (c, i) {
       return xcell(COLREF[i] + '1', c.l, true);
     }).join('') + '</row>';
-    var sample = sc.xlsx.sample.concat([[]]);
-    sample.forEach(function (sr, si) {
+    bodyRows.forEach(function (sr, si) {
       var r = si + 2;
       rowsXml += '<row r="' + r + '">' + cols.map(function (c, i) {
         return xcell(COLREF[i] + r, sr[i] == null ? '' : sr[i]);
@@ -1645,7 +1839,7 @@ window.IAQ_SCREENS = (function () {
     });
     var dv = '';
     cols.forEach(function (c, i) {
-      if (!c.o) return;
+      if (!c.o || !withValidation) return;
       var vals = [];
       for (var k in c.o) if (c.o.hasOwnProperty(k)) vals.push(c.o[k]);
       dv += '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1"' +
@@ -1698,6 +1892,29 @@ window.IAQ_SCREENS = (function () {
       { name: 'xl/worksheets/sheet1.xml', data: utf8(sheet) }
     ]);
   }
+  /* تصدير الصفوف المعروضة (بعد البحث) جدولَ إكسل — بنفس كاتب الحزمة */
+  function exportSheet() {
+    var sc = S0();
+    if (!sc.exportCols) return;
+    var list = rows.filter(function (r) {
+      if (!q) return true;
+      var hay = sc.searchFn ? sc.searchFn(r) : norm(r.name) + ' ' + norm(r.title);
+      return String(hay).toLowerCase().indexOf(q.toLowerCase()) > -1;
+    });
+    var body = list.map(function (r) {
+      return sc.exportCols.map(function (c) { return String(c.get(r) == null ? '' : c.get(r)); });
+    });
+    var blob = xlsxBlob(sc.exportCols, body, false);
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = sc.exportName || 'جدول.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
   function downloadTemplate() {
     var sc = S0();
     if (!sc.xlsx) return;
@@ -1930,6 +2147,7 @@ window.IAQ_SCREENS = (function () {
     var a = b.getAttribute('data-sc'), id = b.getAttribute('data-id');
     if (a === 'close') { e.preventDefault(); close(); return; }
     if (a === 'tpl') { e.preventDefault(); downloadTemplate(); return; }
+    if (a === 'export') { e.preventDefault(); exportSheet(); return; }
     if (a === 'add') { e.preventDefault(); openForm(null); return; }
     if (a === 'import') { e.preventDefault(); openImport(); return; }
     if (a === 'importgo') { e.preventDefault(); importGo(); return; }

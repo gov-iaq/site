@@ -26,6 +26,10 @@ window.IAQ_SCREENS = (function () {
   var RANK = { chair: 'رئيس المجلس', vice: 'نائب الرئيس', member: 'عضو', lead: 'مدير تنفيذي' };
   var ST = { published: 'ظاهر', hidden: 'مخفي', draft: 'مسودّة' };
   /* تصنيفات الوثائق — القيم مقيَّدة في القاعدة بـ check، فلا تُزَد من هنا */
+  var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
+  var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
+  var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
   var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
                  financials: 'القوائم المالية', annual: 'التقارير السنوية',
                  surveys: 'قياس الرضا', licenses: 'التراخيص' };
@@ -114,7 +118,8 @@ window.IAQ_SCREENS = (function () {
       nav: 'الأخبار', h1: 'الأخبار والمركز الإعلامي',
       sub: 'أخبار الجمعية — تحرير كامل للنصّ والبيانات ورابط التسجيل، وإضافة خبر جديد.',
       /* جدول الأخبار لا عمود ترتيب فيه: الترتيب بالتاريخ، الأحدث أوّلًا. */
-      table: 'news', filter: '', fixed: {}, nosort: 1, order: 'date.desc,id.desc',
+      /* audit: العمود updated_by أضافته ترقية schema-v4 */
+      table: 'news', filter: '', fixed: {}, nosort: 1, order: 'date.desc,id.desc', audit: 1,
       nameKey: 'title', searchKeys: ['title', 'lead', 'tag'],
       reach: 'التعديل والحذف والإضافة تسري على صفحة «المركز الإعلامي» وشريط الأخبار في الصفحة الرئيسة عند أوّل تحميل، بلا إعادة بناء.',
       fields: [
@@ -138,6 +143,86 @@ window.IAQ_SCREENS = (function () {
              { k: 'status', l: 'الحالة', f: 'status' }],
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
+    },
+    subslist: {
+      nav: 'الطلبات والنماذج', h1: 'الطلبات والنماذج الواردة',
+      sub: 'ما يرسله الزوّار من نماذج التواصل والتطوّع والعضوية والتوظيف — عرض ومتابعة حالة.',
+      table: 'submissions', filter: '', fixed: {}, nosort: 1, selectAll: 1,
+      clientOrder: [['created_at', -1], ['id', -1]],
+      /* الوارد لا يُنشأ من اللوحة ولا يُمحى: لا سياسة حذف في القاعدة، ومحو
+         طلبٍ وصل يُفقد أثرًا قد يُسأل عنه. الأرشفة تكفي لإخفائه. */
+      noAdd: 1, noDelete: 1, audit: 0,
+      nameKey: 'id',
+      reach: 'هذه بيانات واردة من زوّار الموقع، لا تُنشر عليه. تغيير الحالة والأولوية للمتابعة الداخلية فقط.',
+      searchFn: function (r) {
+        return (KIND[r.kind] || r.kind || '') + ' ' + (SUBST[r.status] || '') + ' ' +
+               JSON.stringify(r.payload || {});
+      },
+      detail: function (r) {
+        return pairsBox('بيانات الطلب', r.payload) +
+          '<p class="muted small">وصل في ' + esc(dtLabel(r.created_at)) + '</p>';
+      },
+      fields: [
+        { k: 'status', l: 'الحالة', t: 'select', o: SUBST, def: 'new', half: 1 },
+        { k: 'priority', l: 'الأولوية', t: 'select', o: PRIO, def: 'normal', half: 1 }
+      ],
+      list: [{ k: 'created_at', l: 'وصل في', f: 'datetime' },
+             { k: 'kind', l: 'النموذج', f: 'chip', o: KIND },
+             { k: 'payload', l: 'المُرسِل', f: 'who' },
+             { k: 'payload', l: 'المحتوى', f: 'gist' },
+             { k: 'status', l: 'الحالة', f: 'chip', o: SUBST },
+             { k: 'priority', l: 'الأولوية', f: 'chip', o: PRIO }],
+      stats: [{ l: 'إجمالي الطلبات' }, { l: 'جديد', c: 'status', v: 'new' },
+              { l: 'قيد المعالجة', c: 'status', v: 'in_progress' },
+              { l: 'أولوية عالية', c: 'priority', v: 'high' }],
+      exportCols: [
+        { l: 'وصل في', w: 20, get: function (r) { return dtLabel(r.created_at); } },
+        { l: 'النموذج', w: 14, get: function (r) { return KIND[r.kind] || r.kind || ''; } },
+        { l: 'الحالة', w: 14, get: function (r) { return SUBST[r.status] || r.status || ''; } },
+        { l: 'الأولوية', w: 12, get: function (r) { return PRIO[r.priority] || r.priority || ''; } },
+        { l: 'البيانات', w: 80, get: function (r) { return flatPairs(r.payload); } }
+      ],
+      exportName: 'الطلبات-الواردة.xlsx'
+    },
+    surveylist: {
+      nav: 'استجابات قياس الرضا', h1: 'استجابات استبيانات الرضا',
+      sub: 'ما سجّله الزوّار والمستفيدون والمتبرّعون من درجات وملاحظات.',
+      table: 'survey_responses', filter: '', fixed: {}, nosort: 1, selectAll: 1,
+      clientOrder: [['created_at', -1], ['id', -1]],
+      /* القاعدة لا تمنح المدير غير القراءة على هذا الجدول (سياسة select وحدها)،
+         فلا نعرض أزرارًا تُفضي إلى رفض. */
+      noAdd: 1, noDelete: 1, viewOnly: 1, audit: 0,
+      nameKey: 'id',
+      reach: 'استجابات واردة من الزوّار — للقراءة والتحليل فقط، لا تُنشر على الموقع ولا تُعدَّل.',
+      searchFn: function (r) {
+        return (SURVEY[r.survey_type] || '') + ' ' + (r.program || '') + ' ' + (r.comment || '');
+      },
+      detail: function (r) {
+        return pairsBox('الدرجات', r.ratings) +
+          (norm(r.program) ? '<p><b>البرنامج:</b> ' + esc(r.program) + '</p>' : '') +
+          (norm(r.comment) ? '<p><b>الملاحظة:</b><br>' + esc(r.comment) + '</p>' : '') +
+          '<p class="muted small">وصلت في ' + esc(dtLabel(r.created_at)) + '</p>';
+      },
+      fields: [],
+      list: [{ k: 'created_at', l: 'وصلت في', f: 'datetime' },
+             { k: 'survey_type', l: 'الاستبيان', f: 'chip', o: SURVEY },
+             { k: 'ratings', l: 'المتوسّط', f: 'avg' },
+             { k: 'ratings', l: 'عدد الأسئلة', f: 'keys' },
+             { k: 'program', l: 'البرنامج', f: 'clip' },
+             { k: 'comment', l: 'الملاحظة', f: 'clip' }],
+      stats: [{ l: 'إجمالي الاستجابات' },
+              { l: SURVEY.visitors, c: 'survey_type', v: 'visitors' },
+              { l: SURVEY.beneficiaries, c: 'survey_type', v: 'beneficiaries' },
+              { l: SURVEY.donors, c: 'survey_type', v: 'donors' }],
+      exportCols: [
+        { l: 'وصلت في', w: 20, get: function (r) { return dtLabel(r.created_at); } },
+        { l: 'الاستبيان', w: 16, get: function (r) { return SURVEY[r.survey_type] || r.survey_type || ''; } },
+        { l: 'المتوسّط', w: 10, get: function (r) { return avgOf(r.ratings); } },
+        { l: 'البرنامج', w: 24, get: function (r) { return r.program || ''; } },
+        { l: 'الدرجات', w: 70, get: function (r) { return flatPairs(r.ratings); } },
+        { l: 'الملاحظة', w: 60, get: function (r) { return r.comment || ''; } }
+      ],
+      exportName: 'استجابات-قياس-الرضا.xlsx'
     },
     docs: {
       nav: 'الوثائق والملفات', h1: 'الوثائق والملفات',
@@ -235,7 +320,8 @@ window.IAQ_SCREENS = (function () {
     trash: '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
     up: '<path d="M12 20V6M6 12l6-6 6 6"/><path d="M4 20h16"/>',
     down: '<path d="M12 4v14M6 12l6 6 6-6"/><path d="M4 20h16"/>',
-    x: '<path d="M6 6l12 12M18 6L6 18"/>'
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>' + '<circle cx="12" cy="12" r="3"/>'
   };
   function ico(k) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
@@ -269,6 +355,47 @@ window.IAQ_SCREENS = (function () {
      لا وجود له قبل ترقية المخطّط، بدل أن يُرسل فيُرفض الطلب. */
   function hasCol(k) { return !!(rows.length && rows[0].hasOwnProperty(k)); }
   function auditOn(sc) { return sc.audit === 'auto' ? hasCol('updated_by') : !!sc.audit; }
+  /* «2026-08-01T09:12:33Z» ← «1 أغسطس 2026 — 12:12 م» بتوقيت الرياض.
+     تُستعمل toLocaleString لأن الطابع كامل بمنطقة زمنية، بخلاف عمود التاريخ. */
+  function dtLabel(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var day = d.getDate(), mon = MONTHS[d.getMonth()] || (d.getMonth() + 1), yr = d.getFullYear();
+    var hh = d.getHours(), mm = d.getMinutes();
+    var am = hh < 12 ? 'ص' : 'م';
+    var h12 = hh % 12; if (!h12) h12 = 12;
+    return day + ' ' + mon + ' ' + yr + ' — ' + h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + am;
+  }
+  function objPairs(o) {
+    var out = [];
+    if (!o || typeof o !== 'object') return out;
+    for (var k in o) if (o.hasOwnProperty(k)) out.push([k, o[k]]);
+    return out;
+  }
+  function flatPairs(o) {
+    return objPairs(o).map(function (p) { return p[0] + ': ' + p[1]; }).join(' | ');
+  }
+  function avgOf(o) {
+    var v = objPairs(o).map(function (p) { return Number(p[1]); })
+      .filter(function (n) { return isFinite(n); });
+    if (!v.length) return '';
+    var s = 0;
+    v.forEach(function (n) { s += n; });
+    return (Math.round((s / v.length) * 10) / 10).toFixed(1);
+  }
+  /* جدول مفتاح/قيمة للعرض داخل النافذة — يُبنى من الكائن كما وصل، فلا يحتاج
+     معرفةً ببنية كل نموذج (النماذج تُرسل نصّ التسمية مفتاحًا). */
+  function pairsBox(title, o) {
+    var ps = objPairs(o);
+    if (!ps.length) return '<p class="muted">لا بيانات.</p>';
+    return '<div style="margin-block-end:14px"><b>' + esc(title) + '</b>' +
+      '<div style="overflow-x:auto;margin-block-start:8px"><table class="tbl"><tbody>' +
+      ps.map(function (p) {
+        return '<tr><td style="width:38%;vertical-align:top"><b>' + esc(p[0]) + '</b></td>' +
+          '<td style="white-space:pre-wrap">' + esc(p[1]) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
   function fieldsOf(sc) {
     return sc.fields.filter(function (f) { return f.needs ? hasCol(f.needs) : true; });
   }
@@ -323,9 +450,11 @@ window.IAQ_SCREENS = (function () {
     return '<div class="addrow" style="margin-block-end:14px">' +
       '<input id="sc-q" type="text" value="' + esc(q) + '" placeholder="بحث بالاسم…" style="flex:2;min-width:170px">' +
       '<button class="btn ghost" data-sc="search">بحث</button>' +
-      '<button class="btn" data-sc="add">' + ico('plus') + ' إضافة</button>' +
+      (sc.noAdd ? '' : '<button class="btn" data-sc="add">' + ico('plus') + ' إضافة</button>') +
       (sc.xlsx ? '<button class="btn ghost" data-sc="import">' + ico('up') + ' إضافة من إكسل</button>' +
                  '<button class="btn ghost" data-sc="tpl">' + ico('down') + ' تنزيل القالب</button>' : '') +
+      (sc.exportCols ? '<button class="btn ghost" data-sc="export">' + ico('down') +
+                       ' تنزيل جدول إكسل</button>' : '') +
       '<button class="btn ghost" data-sc="reload">تحديث</button></div>';
   }
 
@@ -376,6 +505,59 @@ window.IAQ_SCREENS = (function () {
       return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="mono small" ' +
         'title="' + esc(u) + '">' + esc(nm.length > 22 ? nm.slice(0, 22) + '…' : nm) + '</a>';
     }
+    if (col.f === 'datetime') {
+      return '<span style="white-space:nowrap" class="small">' + esc(dtLabel(v)) + '</span>';
+    }
+    if (col.f === 'who') {
+      /* أول قيمة تشبه اسمًا ثم أول ما يشبه جوالًا أو بريدًا — المفاتيح نصوص
+         تسميات النماذج فتختلف بين نموذج وآخر، فنبحث بالمعنى لا بالمفتاح. */
+      var ps = objPairs(v), nm = '', ct = '';
+      ps.forEach(function (p) {
+        var k = String(p[0]), val = String(p[1]);
+        if (!nm && /اسم/.test(k)) nm = val;
+        if (!ct && (/جوال|هاتف|بريد|إيميل/.test(k) || /@/.test(val) || /^0\d{9}$/.test(val))) ct = val;
+      });
+      if (!nm && ps.length) nm = String(ps[0][1]);
+      if (!nm && !ct) return '<span class="muted">—</span>';
+      return '<b>' + esc(nm) + '</b>' + (ct ? '<br><span class="mono small">' + esc(ct) + '</span>' : '');
+    }
+    if (col.f === 'gist') {
+      var ps2 = objPairs(v);
+      if (!ps2.length) return '<span class="muted">—</span>';
+      /* حقول الهوية والتواصل تظهر في عمود «المُرسِل»، فلا تُكرَّر هنا. وبلا هذا
+         الاستثناء كان الاسم أطولَ قيمة في النماذج القصيرة فيظهر مرّتين. */
+      var rest = ps2.filter(function (p) {
+        return !/اسم|جوال|هاتف|بريد|إيميل|هوية/.test(String(p[0]));
+      });
+      var pick = '';
+      rest.forEach(function (p) {
+        if (/رسالة|نبذة|ملاحظة|تفاصيل|موضوع|استفسار/.test(String(p[0]))) {
+          if (!pick) pick = String(p[1]);
+        }
+      });
+      if (!pick) {
+        rest.forEach(function (p) {
+          var s2 = String(p[1]);
+          if (s2.length > pick.length) pick = s2;
+        });
+      }
+      if (pick.length < 16) {
+        pick = rest.map(function (p) { return p[0] + ': ' + p[1]; }).join(' · ') || flatPairs(v);
+      }
+      return '<span class="small" title="' + esc(flatPairs(v)) + '">' +
+        esc(pick.length > 60 ? pick.slice(0, 60) + '…' : pick) + '</span>';
+    }
+    if (col.f === 'avg') {
+      var a = avgOf(v);
+      if (!a) return '<span class="muted">—</span>';
+      var gold = Number(a) >= 4;
+      return '<span class="chip"' + (gold ? ' style="background:#f8efdb;color:#7a5518"' : '') +
+        '>' + esc(a) + ' / 5</span>';
+    }
+    if (col.f === 'keys') {
+      var n2 = objPairs(v).length;
+      return n2 ? '<span class="chip">' + n2 + '</span>' : '<span class="muted">—</span>';
+    }
     if (col.f === 'date') {
       return norm(v) ? '<span style="white-space:nowrap">' + esc(arDate(v)) + '</span>'
                      : '<span class="muted">—</span>';
@@ -403,8 +585,9 @@ window.IAQ_SCREENS = (function () {
     var keys = sc.searchKeys || ['name', 'title', 'role'];
     var list = rows.filter(function (r) {
       if (!q) return true;
-      var hay = keys.map(function (k) { return norm(r[k]); }).join(' ').toLowerCase();
-      return hay.indexOf(q.toLowerCase()) > -1;
+      var hay = sc.searchFn ? sc.searchFn(r)
+        : keys.map(function (k) { return norm(r[k]); }).join(' ');
+      return String(hay).toLowerCase().indexOf(q.toLowerCase()) > -1;
     });
 
     if (st) st.innerHTML = '<div class="stat-grid" style="grid-template-columns:repeat(' +
@@ -419,8 +602,11 @@ window.IAQ_SCREENS = (function () {
       return '<tr><td class="mono small">' + (i + 1) + '</td>' +
         sc.list.map(function (c) { return '<td>' + cell(c, r) + '</td>'; }).join('') +
         '<td style="white-space:nowrap">' +
-          '<button class="ib sm" data-sc="edit" data-id="' + r.id + '" title="تعديل" aria-label="تعديل">' + ico('pen') + '</button> ' +
-          '<button class="ib sm danger" data-sc="del" data-id="' + r.id + '" title="حذف" aria-label="حذف">' + ico('trash') + '</button>' +
+          '<button class="ib sm" data-sc="edit" data-id="' + r.id + '" title="' +
+            (sc.viewOnly ? 'عرض' : 'تعديل') + '" aria-label="' + (sc.viewOnly ? 'عرض' : 'تعديل') + '">' +
+            ico(sc.viewOnly ? 'eye' : 'pen') + '</button>' +
+          (sc.noDelete ? '' : ' <button class="ib sm danger" data-sc="del" data-id="' + r.id +
+            '" title="حذف" aria-label="حذف">' + ico('trash') + '</button>') +
         '</td></tr>';
     }).join('');
 
@@ -549,10 +735,15 @@ window.IAQ_SCREENS = (function () {
       }
     }
     h += '<div id="sc-formerr" class="muted small" style="color:#8c3d1c"></div>';
-    modal(isNew ? 'إضافة سجلّ جديد — ' + sc.nav : 'تعديل — ' + sc.nav, h,
-      '<button class="btn ghost" data-sc="close">إلغاء</button>' +
-      '<button class="btn" data-sc="save" data-id="' + (row && row.id ? row.id : '') + '">' +
-      (isNew ? 'إضافة' : 'حفظ التعديل') + '</button>');
+    /* العرض التفصيلي يتقدّم الحقول: الغرض قراءة ما وصل ثم تحديد الحالة. */
+    if (sc.detail && row) h = sc.detail(row) + h;
+    var title = sc.viewOnly ? 'عرض — ' + sc.nav
+              : (isNew ? 'إضافة سجلّ جديد — ' + sc.nav : 'تعديل — ' + sc.nav);
+    modal(title, h,
+      '<button class="btn ghost" data-sc="close">' + (sc.viewOnly ? 'إغلاق' : 'إلغاء') + '</button>' +
+      (sc.viewOnly ? '' :
+        '<button class="btn" data-sc="save" data-id="' + (row && row.id ? row.id : '') + '">' +
+        (isNew ? 'إضافة' : 'حفظ التعديل') + '</button>'));
   }
 
   function saveForm(id) {
@@ -750,14 +941,17 @@ window.IAQ_SCREENS = (function () {
     return '<c r="' + ref + '" t="inlineStr"' + (styled ? ' s="1"' : '') + '><is><t xml:space="preserve">' +
       esc(text) + '</t></is></c>';
   }
-  var COLREF = ['A', 'B', 'C', 'D', 'E'];
+  var COLREF = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
   function templateBlob(sc) {
-    var cols = sc.xlsx.cols;
+    return xlsxBlob(sc.xlsx.cols, sc.xlsx.sample.concat([[]]), true);
+  }
+  /* كاتبٌ واحد للقالب وللتصدير: نفس الترميز والأنماط واتجاه الورقة، فلا
+     يتفرّق شكل الملفّين ولا يُصلح عيبٌ في أحدهما دون الآخر. */
+  function xlsxBlob(cols, bodyRows, withValidation) {
     var rowsXml = '<row r="1">' + cols.map(function (c, i) {
       return xcell(COLREF[i] + '1', c.l, true);
     }).join('') + '</row>';
-    var sample = sc.xlsx.sample.concat([[]]);
-    sample.forEach(function (sr, si) {
+    bodyRows.forEach(function (sr, si) {
       var r = si + 2;
       rowsXml += '<row r="' + r + '">' + cols.map(function (c, i) {
         return xcell(COLREF[i] + r, sr[i] == null ? '' : sr[i]);
@@ -765,7 +959,7 @@ window.IAQ_SCREENS = (function () {
     });
     var dv = '';
     cols.forEach(function (c, i) {
-      if (!c.o) return;
+      if (!c.o || !withValidation) return;
       var vals = [];
       for (var k in c.o) if (c.o.hasOwnProperty(k)) vals.push(c.o[k]);
       dv += '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1"' +
@@ -818,6 +1012,29 @@ window.IAQ_SCREENS = (function () {
       { name: 'xl/worksheets/sheet1.xml', data: utf8(sheet) }
     ]);
   }
+  /* تصدير الصفوف المعروضة (بعد البحث) جدولَ إكسل — بنفس كاتب الحزمة */
+  function exportSheet() {
+    var sc = S0();
+    if (!sc.exportCols) return;
+    var list = rows.filter(function (r) {
+      if (!q) return true;
+      var hay = sc.searchFn ? sc.searchFn(r) : norm(r.name) + ' ' + norm(r.title);
+      return String(hay).toLowerCase().indexOf(q.toLowerCase()) > -1;
+    });
+    var body = list.map(function (r) {
+      return sc.exportCols.map(function (c) { return String(c.get(r) == null ? '' : c.get(r)); });
+    });
+    var blob = xlsxBlob(sc.exportCols, body, false);
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = sc.exportName || 'جدول.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
   function downloadTemplate() {
     var sc = S0();
     if (!sc.xlsx) return;
@@ -1050,6 +1267,7 @@ window.IAQ_SCREENS = (function () {
     var a = b.getAttribute('data-sc'), id = b.getAttribute('data-id');
     if (a === 'close') { e.preventDefault(); close(); return; }
     if (a === 'tpl') { e.preventDefault(); downloadTemplate(); return; }
+    if (a === 'export') { e.preventDefault(); exportSheet(); return; }
     if (a === 'add') { e.preventDefault(); openForm(null); return; }
     if (a === 'import') { e.preventDefault(); openImport(); return; }
     if (a === 'importgo') { e.preventDefault(); importGo(); return; }
