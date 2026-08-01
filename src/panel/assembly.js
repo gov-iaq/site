@@ -17,6 +17,7 @@ window.IAQ_ASSEMBLY = (function () {
   var ST = { published: 'ظاهر', hidden: 'مخفي', draft: 'مسودّة' };
 
   var rows = [], q = '', err = null, busy = false, staged = null;
+  var BUILD = window.IAQ_BUILD || '—';
 
   /* ------------------------------- أدوات ------------------------------- */
   function esc(s) {
@@ -58,9 +59,29 @@ window.IAQ_ASSEMBLY = (function () {
   /* ------------------------------- العرض ------------------------------- */
   function view() {
     setTimeout(function () { load().then(paint); }, 0);
-    return '<div class="view-head"><h1>أعضاء الجمعية العمومية</h1>' +
+    /* الأزرار والبحث في الهيكل الثابت لا في دالّة الرسم: لو تعذّرت القراءة
+       تبقى الشاشة صالحة للاستخدام ويظهر سبب التعذّر، لا صفحة فارغة. */
+    return '<div class="view-head"><h1>أعضاء الجمعية العمومية ' +
+      '<span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
       '<p>بيانات الأعضاء الحاليين — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.</p></div>' +
-      '<div id="am-root">' + card('<div class="muted" style="padding:24px;text-align:center">جارٍ تحميل الأعضاء…</div>') + '</div>';
+      '<div id="am-err"></div>' +
+      '<div id="am-stats"></div>' +
+      '<div class="ad-card">' + toolbar() +
+        '<div id="am-list"><div class="muted" style="padding:26px;text-align:center">جارٍ تحميل الأعضاء…</div></div>' +
+        '<p class="muted small" style="margin-block-start:12px">التعديل والحذف والإضافة تسري على صفحة ' +
+        '«الجمعية العمومية» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.</p>' +
+      '</div>';
+  }
+
+  function toolbar() {
+    return '<div class="addrow" style="margin-block-end:14px">' +
+      '<input id="am-q" type="text" value="' + esc(q) + '" placeholder="بحث بالاسم…" style="flex:2;min-width:170px">' +
+      '<button class="btn ghost" data-am="search">بحث</button>' +
+      '<button class="btn" data-am="add">' + ico('plus') + ' إضافة عضو</button>' +
+      '<button class="btn ghost" data-am="import">' + ico('up') + ' إضافة من إكسل</button>' +
+      '<button class="btn ghost" data-am="tpl">' + ico('down') + ' تنزيل القالب</button>' +
+      '<button class="btn ghost" data-am="reload">تحديث</button>' +
+      '</div>';
   }
   function card(inner) { return '<div class="ad-card">' + inner + '</div>'; }
 
@@ -74,30 +95,24 @@ window.IAQ_ASSEMBLY = (function () {
   }
 
   function paint() {
-    var root = $('#am-root');
-    if (!root) return;
+    var st = $('#am-stats'), ls = $('#am-list'), ep = $('#am-err');
+    if (!ls) return;
     var c = counts();
     var list = rows.filter(function (r) {
       if (!q) return true;
       return (norm(r.name) + ' ' + norm(r.title)).toLowerCase().indexOf(q.toLowerCase()) > -1;
     });
 
-    var head =
+    if (st) st.innerHTML =
       '<div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-block-end:16px">' +
         box(rows.length, 'إجمالي الأعضاء') +
         box(c.f, CAT.founder) +
         box(c.w, CAT.working) +
         box(c.h, 'غير ظاهر على الموقع') +
       '</div>';
-
-    var tools =
-      '<div class="addrow" style="margin-block-end:14px">' +
-        '<input id="am-q" type="text" value="' + esc(q) + '" placeholder="بحث بالاسم…" style="flex:2;min-width:170px">' +
-        '<button class="btn ghost" data-am="search">بحث</button>' +
-        '<button class="btn" data-am="add">' + ico('plus') + ' إضافة عضو</button>' +
-        '<button class="btn ghost" data-am="import">' + ico('up') + ' إضافة من إكسل</button>' +
-        '<button class="btn ghost" data-am="tpl">' + ico('down') + ' تنزيل القالب</button>' +
-      '</div>';
+    if (ep) ep.innerHTML = err
+      ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
+        '<b>تعذّر تنفيذ الإجراء</b><br>' + esc(err) + '</div>' : '';
 
     var body = list.length ? list.map(function (r, i) {
       return '<tr>' +
@@ -118,12 +133,9 @@ window.IAQ_ASSEMBLY = (function () {
       : '<div class="muted" style="padding:28px;text-align:center">' +
         (rows.length ? 'لا نتائج مطابقة للبحث.' : 'لا أعضاء بعد — أضِف عضوًا أو استورد ملف إكسل.') + '</div>';
 
-    root.innerHTML =
-      (err ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
-             '<b>تعذّر تنفيذ الإجراء</b><br>' + esc(err) + '</div>' : '') +
-      head + card(tools + table +
-        '<p class="muted small" style="margin-block-start:12px">التعديل والحذف والإضافة تسري على صفحة ' +
-        '«الجمعية العمومية» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.</p>');
+    ls.innerHTML = table;
+    var qi = $('#am-q');
+    if (qi && qi.value !== q) qi.value = q;
   }
   function box(n, label) {
     return '<div class="stat-box"><div class="sb-val">' + esc(String(n)) + '</div>' +
@@ -591,14 +603,9 @@ window.IAQ_ASSEMBLY = (function () {
         close();
         return load().then(function () {
           paint();
-          var root = $('#am-root');
-          if (root) {
-            var b = document.createElement('div');
-            b.className = 'notice';
-            b.style.cssText = 'background:#eef4f3;border-color:#d6e5e3;color:#0c6c6c';
-            b.innerHTML = '<b>أُضيف ' + n + ' عضوًا.</b> يظهرون في صفحة الجمعية العمومية عند أوّل تحميل لها.';
-            root.insertBefore(b, root.firstChild);
-          }
+          var ep2 = $('#am-err');
+          if (ep2) ep2.innerHTML = '<div class="notice" style="background:#eef4f3;border-color:#d6e5e3;color:#0c6c6c">' +
+            '<b>أُضيف ' + n + ' عضوًا.</b> يظهرون في صفحة الجمعية العمومية عند أوّل تحميل لها.</div>';
         });
       })
       .catch(function (e) { err = e.message; close(); paint(); })
@@ -618,10 +625,11 @@ window.IAQ_ASSEMBLY = (function () {
     if (a === 'save') { e.preventDefault(); saveForm(id); return; }
     if (a === 'del') { e.preventDefault(); askDelete(id); return; }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
+    if (a === 'reload') { e.preventDefault(); load().then(paint); return; }
     if (a === 'search') {
       e.preventDefault();
-      var i = $('#am-q');
-      q = i ? norm(i.value) : '';
+      var i2 = $('#am-q');
+      q = i2 ? norm(i2.value) : '';
       paint();
       return;
     }

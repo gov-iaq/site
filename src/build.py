@@ -672,6 +672,21 @@ def check_tokens(name, data):
 PANEL     = os.path.join(HERE, "panel")
 PANEL_MODS= os.path.join(PANEL, "modules")
 
+def build_stamp():
+    """بصمة الإصدار: آخر مراجعة في المستودع + وقت البناء.
+    تظهر في اللوحة كي تُعرف النسخة المُشغَّلة من صورة الشاشة، فلا نضيع
+    في تشخيص نسخة قديمة محفوظة في المتصفّح."""
+    sha = ""
+    try:
+        import subprocess
+        sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                     cwd=os.path.dirname(HERE),
+                                     stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        sha = "?"
+    import time
+    return sha + " · " + time.strftime("%H:%M")
+
 def panel_real():
     """بيانات الموقع المعروفة وقت البناء — تُحقن جاهزة في اللوحة بلا انتظار شبكة."""
     real = {}
@@ -753,6 +768,7 @@ def build_panel(out_dir, cmap, amap):
         'headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}' + NLS +
         'try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();' + NLS +
         'window.IAQ_REAL=' + json.dumps(panel_real(), ensure_ascii=False) + ';' + NLS +
+        'window.IAQ_BUILD=' + json.dumps(build_stamp()) + ';' + NLS +
         '</script>' + NLS)
 
     steps = []
