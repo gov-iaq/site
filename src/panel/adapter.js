@@ -403,13 +403,13 @@
                           updated_by: (S && S.email) || '' }], 'key')
       .then(function () {
         lastJson = body;
-        return Promise.all([syncNews(config), applySite(config)]);
+        return Promise.all([syncPublic(config), applySite(config)]);
       })
       .then(function (r) {
-        var n = r[0], live = r[1];
+        var pub = r[0], live = r[1];
         status('حُفظ في قاعدة البيانات' +
                (live ? ' · سرى ' + live + ' تعديلًا على الموقع (يظهر للزائر عند أوّل تحميل)' : '') +
-               (n ? ' · حُدِّث ' + n + ' خبرًا' : ''), 'ok');
+               (pub ? ' · حُدِّث المظهر والأقسام' : ''), 'ok');
       })
       .catch(function (e) {
         status('فشل الحفظ: ' + (e && e.message ? e.message : e), 'err');
@@ -420,23 +420,46 @@
       });
   }
 
-  /* الأخبار جدول حقيقي: نُعيد إليه ما يقبل التطابق (التصنيف والعنوان والمقدّمة).
-     التاريخ لا يُكتب لأن التصميم يعرضه نصًّا عربيًّا لا تاريخًا قابلًا للتحويل. */
-  function syncNews(config) {
-    var list = (config && config.news) || [], jobs = [];
-    for (var i = 0; i < list.length; i++) {
-      var n = list[i];
-      if (!n.dbid) continue;
-      jobs.push({ id: n.dbid, tag: n.tag || '', title: n.title || '', lead: n.excerpt || '' });
+  /* ------------------------- الصفوف العامّة للموقع -------------------------
+     مخزن اللوحة (panel_config) غير عامّ: فيه بُرد المدراء ومحتوى الطلبات،
+     ونشره تسريب. فنكتب صفوفًا عامّة مُنتقاة صراحةً — قائمةُ سماحٍ لا استثناء —
+     تحوي ما يحتاجه العرض العلنيّ وحده.
+
+     ولا تُكتب الأخبار من هنا: لها شاشتها التي تكتب في جدولها مباشرةً. كاتبان
+     لجدول واحد يفسدانه — وكان الكاتب القديم معطوبًا أصلًا (يقرأ مفتاحًا لم
+     يضعه فيصير id=eq.NaN) فيُفشل كلَّ حفظ في اللوحة ولو كان تغيير لون. */
+  function syncPublic(config) {
+    if (!config) return Promise.resolve(0);
+    var rows = [];
+    var th = config.theme;
+    if (th) {
+      rows.push({ key: 'theme', label: 'المظهر والألوان', is_public: true,
+        value: { primary: th.primary, accent: th.accent, deep: th.deep, bg: th.bg,
+                 surface: th.surface, surface2: th.surface2, ink: th.ink, body: th.body,
+                 heroBg: th.heroBg, headFont: th.headFont, bodyFont: th.bodyFont,
+                 radius: th.radius } });
     }
-    if (!jobs.length) return Promise.resolve(0);
-    var done = 0;
-    return jobs.reduce(function (p, j) {
-      return p.then(function () {
-        return patch('news', 'id=eq.' + Number(j.dbid), { tag: j.tag, title: j.title, lead: j.lead })
-          .then(function () { done++; });
-      });
-    }, Promise.resolve()).then(function () { return done; });
+    var secs = config.sections;
+    if (secs instanceof Array) {
+      /* المفتاح والظهور فقط؛ العناوين تسري عبر طبقة تجاوز المحتوى */
+      rows.push({ key: 'sections', label: 'أقسام الصفحة الرئيسة', is_public: true,
+        value: secs.map(function (s) { return { key: s.key, visible: s.visible !== false }; }) });
+    }
+    var cc = config.customCode;
+    if (cc && cc.pages) {
+      var pages = {};
+      for (var slug in cc.pages) {
+        if (!cc.pages.hasOwnProperty(slug)) continue;
+        var list = (cc.pages[slug] || []).filter(function (b) {
+          return b && b.enabled !== false && String(b.code || '').trim();
+        }).map(function (b) { return { pos: b.pos || 'bottom', code: String(b.code) }; });
+        if (list.length) pages[slug] = list;
+      }
+      rows.push({ key: 'code', label: 'أكواد مخصّصة', is_public: true, value: { pages: pages } });
+    }
+    if (!rows.length) return Promise.resolve(0);
+    rows.forEach(function (r) { r.updated_by = (S && S.email) || ''; });
+    return upsert('settings', rows, 'key').then(function () { return rows.length; });
   }
 
   /* ------------------------------- الإقلاع ------------------------------- */

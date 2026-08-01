@@ -588,7 +588,11 @@ def runtime_script(slug):
     head = (b"var IAQ_SUPA=" + cfg + b",IAQ_SLUG=" +
             json.dumps(slug, ensure_ascii=False).encode("utf-8") + b";\n")
     lists = os.path.join(TEMPLATES, "iaq-lists.js")
+    skin = os.path.join(TEMPLATES, "iaq-skin.js")
     extra = rb(lists) if os.path.exists(lists) else b""
+    # المظهر قبل القوائم: يضبط متغيّرات CSS فورًا فلا يقع وميض لونيّ
+    if os.path.exists(skin):
+        extra = rb(skin) + b"\n" + extra
     return (b"<script>\n" + head + path_algo() + b"\n" + rb(body)
             + b"\n" + extra + b"</script>\n")
 

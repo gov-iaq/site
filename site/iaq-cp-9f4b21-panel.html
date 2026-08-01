@@ -15,7 +15,7 @@ window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{metho
 headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}
 try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();
 window.IAQ_REAL={"settings": {"address": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان", "phone": "0505144421", "email": "info@iaq.org.sa", "reg": "2253", "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}}, "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}, "brand": {"ar": "حاضنة الجمعيات", "en": "ASSOCIATION INCUBATOR"}, "pages": [{"id": "pabout", "title": "عن الجمعية", "slug": "about", "type": "محتوى", "status": "منشورة"}, {"id": "passembly", "title": "الجمعية العمومية", "slug": "assembly", "type": "محتوى", "status": "منشورة"}, {"id": "pboard", "title": "مجلس الإدارة", "slug": "board", "type": "محتوى", "status": "منشورة"}, {"id": "pcommittees", "title": "اللجان الفرعية", "slug": "committees", "type": "محتوى", "status": "منشورة"}, {"id": "pcontact", "title": "تواصل معنا", "slug": "contact", "type": "محتوى", "status": "منشورة"}, {"id": "pendowments", "title": "الأوقاف والاستثمارات", "slug": "endowments", "type": "محتوى", "status": "منشورة"}, {"id": "pgovernance", "title": "الحوكمة", "slug": "governance", "type": "محتوى", "status": "منشورة"}, {"id": "pindex", "title": "الرئيسية", "slug": "index", "type": "محتوى", "status": "منشورة"}, {"id": "pjobs", "title": "الوظائف", "slug": "jobs", "type": "محتوى", "status": "منشورة"}, {"id": "plicenses", "title": "التراخيص", "slug": "licenses", "type": "محتوى", "status": "منشورة"}, {"id": "pmembership", "title": "طلب العضوية", "slug": "membership", "type": "محتوى", "status": "منشورة"}, {"id": "pnews", "title": "المركز الإعلامي", "slug": "news", "type": "محتوى", "status": "منشورة"}, {"id": "pprograms", "title": "برامجنا", "slug": "programs", "type": "محتوى", "status": "منشورة"}, {"id": "psatisfaction", "title": "قياس الرضا", "slug": "satisfaction", "type": "محتوى", "status": "منشورة"}, {"id": "pteam", "title": "فريق العمل", "slug": "team", "type": "محتوى", "status": "منشورة"}, {"id": "pvolunteer", "title": "تطوّع معنا", "slug": "volunteer", "type": "محتوى", "status": "منشورة"}, {"id": "pprivacy", "title": "سياسة الخصوصية", "slug": "privacy", "type": "محتوى", "status": "منشورة"}, {"id": "pterms", "title": "شروط الاستخدام", "slug": "terms", "type": "محتوى", "status": "منشورة"}], "seoTitle": "جمعية حاضنة الجمعيات", "sections": [{"id": "sabout", "key": "about", "name": "من نحن", "visible": true, "editable": true, "title": "جمعية تُعنى بتمكين القطاع غير الربحي", "subtitle": "نؤمن بأن جمعية واحدة ممكَّنة تصنع أثرًا مضاعفًا في مجتمعها؛ لذلك نجعل من الاحتضان والتطوير المؤسسي رسالتنا."}, {"id": "snews", "key": "news", "name": "المركز الإعلامي", "visible": true, "editable": true, "title": "أحدث أخبار الجمعية", "subtitle": "تابع مستجدّاتنا وأنشطتنا وشراكاتنا، منشورة أولًا بأول عبر حساب الجمعية في منصّة إكس."}, {"id": "sprograms", "key": "programs", "name": "برامجنا", "visible": true, "editable": true, "title": "مسارات تمكين متكاملة", "subtitle": "برامج مصمّمة لتغطي رحلة الجمعية كاملة، من لحظة التأسيس حتى بلوغ الاستدامة وقياس الأثر."}, {"id": "sstats", "key": "stats", "name": "أثرنا بالأرقام", "visible": true, "editable": true, "title": "حصيلة نفخر بها", "subtitle": ""}, {"id": "stestimonials", "key": "testimonials", "name": "قالوا عنا", "visible": true, "editable": true, "title": "شهادات شركائنا والمستفيدين", "subtitle": "كلمات من قيادات جمعيات رافقناها في رحلتها نحو التمكين والاستدامة."}, {"id": "spartners", "key": "partners", "name": "شركاء النجاح", "visible": true, "editable": true, "title": "بثقة شركائنا نصنع الأثر", "subtitle": "نعتزّ بشراكاتنا مع الجهات الداعمة والمنظمات التي تشاركنا الرسالة."}]};
-window.IAQ_BUILD="2026-08-01 20:52";
+window.IAQ_BUILD="2026-08-01 21:25";
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2578,13 +2578,13 @@ window.IAQ_SCREENS = (function () {
                           updated_by: (S && S.email) || '' }], 'key')
       .then(function () {
         lastJson = body;
-        return Promise.all([syncNews(config), applySite(config)]);
+        return Promise.all([syncPublic(config), applySite(config)]);
       })
       .then(function (r) {
-        var n = r[0], live = r[1];
+        var pub = r[0], live = r[1];
         status('حُفظ في قاعدة البيانات' +
                (live ? ' · سرى ' + live + ' تعديلًا على الموقع (يظهر للزائر عند أوّل تحميل)' : '') +
-               (n ? ' · حُدِّث ' + n + ' خبرًا' : ''), 'ok');
+               (pub ? ' · حُدِّث المظهر والأقسام' : ''), 'ok');
       })
       .catch(function (e) {
         status('فشل الحفظ: ' + (e && e.message ? e.message : e), 'err');
@@ -2595,23 +2595,46 @@ window.IAQ_SCREENS = (function () {
       });
   }
 
-  /* الأخبار جدول حقيقي: نُعيد إليه ما يقبل التطابق (التصنيف والعنوان والمقدّمة).
-     التاريخ لا يُكتب لأن التصميم يعرضه نصًّا عربيًّا لا تاريخًا قابلًا للتحويل. */
-  function syncNews(config) {
-    var list = (config && config.news) || [], jobs = [];
-    for (var i = 0; i < list.length; i++) {
-      var n = list[i];
-      if (!n.dbid) continue;
-      jobs.push({ id: n.dbid, tag: n.tag || '', title: n.title || '', lead: n.excerpt || '' });
+  /* ------------------------- الصفوف العامّة للموقع -------------------------
+     مخزن اللوحة (panel_config) غير عامّ: فيه بُرد المدراء ومحتوى الطلبات،
+     ونشره تسريب. فنكتب صفوفًا عامّة مُنتقاة صراحةً — قائمةُ سماحٍ لا استثناء —
+     تحوي ما يحتاجه العرض العلنيّ وحده.
+
+     ولا تُكتب الأخبار من هنا: لها شاشتها التي تكتب في جدولها مباشرةً. كاتبان
+     لجدول واحد يفسدانه — وكان الكاتب القديم معطوبًا أصلًا (يقرأ مفتاحًا لم
+     يضعه فيصير id=eq.NaN) فيُفشل كلَّ حفظ في اللوحة ولو كان تغيير لون. */
+  function syncPublic(config) {
+    if (!config) return Promise.resolve(0);
+    var rows = [];
+    var th = config.theme;
+    if (th) {
+      rows.push({ key: 'theme', label: 'المظهر والألوان', is_public: true,
+        value: { primary: th.primary, accent: th.accent, deep: th.deep, bg: th.bg,
+                 surface: th.surface, surface2: th.surface2, ink: th.ink, body: th.body,
+                 heroBg: th.heroBg, headFont: th.headFont, bodyFont: th.bodyFont,
+                 radius: th.radius } });
     }
-    if (!jobs.length) return Promise.resolve(0);
-    var done = 0;
-    return jobs.reduce(function (p, j) {
-      return p.then(function () {
-        return patch('news', 'id=eq.' + Number(j.dbid), { tag: j.tag, title: j.title, lead: j.lead })
-          .then(function () { done++; });
-      });
-    }, Promise.resolve()).then(function () { return done; });
+    var secs = config.sections;
+    if (secs instanceof Array) {
+      /* المفتاح والظهور فقط؛ العناوين تسري عبر طبقة تجاوز المحتوى */
+      rows.push({ key: 'sections', label: 'أقسام الصفحة الرئيسة', is_public: true,
+        value: secs.map(function (s) { return { key: s.key, visible: s.visible !== false }; }) });
+    }
+    var cc = config.customCode;
+    if (cc && cc.pages) {
+      var pages = {};
+      for (var slug in cc.pages) {
+        if (!cc.pages.hasOwnProperty(slug)) continue;
+        var list = (cc.pages[slug] || []).filter(function (b) {
+          return b && b.enabled !== false && String(b.code || '').trim();
+        }).map(function (b) { return { pos: b.pos || 'bottom', code: String(b.code) }; });
+        if (list.length) pages[slug] = list;
+      }
+      rows.push({ key: 'code', label: 'أكواد مخصّصة', is_public: true, value: { pages: pages } });
+    }
+    if (!rows.length) return Promise.resolve(0);
+    rows.forEach(function (r) { r.updated_by = (S && S.email) || ''; });
+    return upsert('settings', rows, 'key').then(function () { return rows.length; });
   }
 
   /* ------------------------------- الإقلاع ------------------------------- */
