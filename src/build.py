@@ -777,6 +777,10 @@ SCREEN_ICON_PATHS = {
     "pages2": '<rect x="7" y="3" width="12" height="15" rx="2"/>'
               '<path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/>'
               '<path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/>',
+    # مستخدمون وأدوار: شخصٌ ومفتاح
+    "keys": '<circle cx="9" cy="8" r="3.2"/>'
+            '<path d="M3.5 20v-1.8A4.6 4.6 0 0 1 8 13.6h2"/>'
+            '<circle cx="17" cy="14" r="2.2"/><path d="M17 16.2V20M15.8 18.6h2.4"/>',
     # تواصل: سمّاعة ودائرة اتصال
     "phone2": '<path d="M15.5 20.5A12 12 0 0 1 3.5 8.5V6a2 2 0 0 1 2-2h2.2a1.6 1.6 0 0 1 1.6 1.4'
               'c.1.9.3 1.7.6 2.5a1.6 1.6 0 0 1-.4 1.7L8.2 11a13 13 0 0 0 4.8 4.8l.9-1.3a1.6 1.6 0 0 1 1.7-.4'
@@ -801,6 +805,7 @@ SCREEN_NAV = [
     ("heroslides",  "السلايدر الرئيسي", "hero"),
     ("menuitems",   "القوائم الرئيسية", "menu2"),
     ("pagelist",    "صفحات الموقع",     "pages2"),
+    ("adminlist",   "المستخدمون والأدوار", "keys"),
     ("contactcfg",  "التواصل والروابط", "phone2"),
     ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
@@ -885,6 +890,12 @@ def build_panel(out_dir, cmap, amap):
     # الإعدادات لا في جدول submissions، فلا يُحفظ التغيير أصلًا.
     a = '{k:"subs",label:"الطلبات والنماذج",icon:"inbox"},'
     assert page.count(a) == 1, "design subs nav"
+    page = page.replace(a, "", 1)
+
+    # و«المستخدمون والأدوار»: شاشة التصميم تُحرّر قائمةً في مخزن
+    # الإعدادات لا جدول admins، فلا تُنشئ حسابًا ولا تحذفه.
+    a = '{k:"users",label:"المستخدمون والأدوار",icon:"users"},'
+    assert page.count(a) == 1, "design users nav"
     page = page.replace(a, "", 1)
 
     a = '{group:"المحتوى"},'

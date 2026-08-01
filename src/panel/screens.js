@@ -67,6 +67,11 @@ window.IAQ_SCREENS = (function () {
     return (o == null) ? '' : o;
   }
 
+  var ROLE = { admin: 'مالك — يكتب ويدير الحسابات',
+               editor: 'محرّر — يكتب ولا يدير الحسابات',
+               viewer: 'قارئ — يقرأ ولا يكتب' };
+  var ROLE_SHORT = { admin: 'مالك', editor: 'محرّر', viewer: 'قارئ' };
+
   var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
                 doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
@@ -251,6 +256,32 @@ window.IAQ_SCREENS = (function () {
       kind: 'pages',
       reach: 'إنشاء صفحة جديدة أو تغيير عنوانها يحتاج إعادة بناء — لا تُولَّد صفحة في المتصفّح. ' +
              'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
+    },
+    adminlist: {
+      nav: 'المستخدمون والأدوار', h1: 'حسابات لوحة التحكّم وأدوارها',
+      sub: 'من يدخل اللوحة وماذا يستطيع. الإضافة والحذف للمالك وحده.',
+      table: 'admins', filter: '', fixed: {}, nosort: 1, selectAll: 1, audit: 0,
+      clientOrder: [['role', 1], ['email', 1]],
+      idText: 1,                 /* المفتاح uuid لا رقم */
+      delNote: 'يفقد صاحبه الدخول إلى اللوحة فورًا. ولا علاقة لهذا بالموقع العلني. ' +
+               'وإن أردت تقييده بلا حذفٍ فاجعل دوره «قارئ».',
+      nameKey: 'email', searchKeys: ['email', 'name', 'role'],
+      reach: 'هذه حسابات الدخول إلى اللوحة، لا علاقة لها بالموقع العلني. ' +
+             'ولإضافة حساب يجب أن يُنشئ صاحبه كلمة مروره بنفسه من صفحة الدخول بعد إضافة بريده هنا. ' +
+             'والقاعدة تمنع حذف المالك الأخير أو تنزيل دوره — فلا يُقفل النظام على أهله.',
+      fields: [
+        { k: 'email', l: 'البريد الإلكتروني', t: 'text', req: 1,
+          hint: 'يجب أن يطابق البريد الذي يسجّل به الدخول تمامًا' },
+        { k: 'name', l: 'الاسم', t: 'text' },
+        { k: 'role', l: 'الدور', t: 'select', o: ROLE, def: 'editor',
+          hint: 'المالك وحده يدير الحسابات. والقارئ يرى كل شيء ولا يُغيّر شيئًا.' }
+      ],
+      list: [{ k: 'email', l: 'البريد', f: 'mono' },
+             { k: 'name', l: 'الاسم', f: 'text' },
+             { k: 'role', l: 'الدور', f: 'chip', o: ROLE_SHORT },
+             { k: 'created_at', l: 'أُضيف في', f: 'datetime' }],
+      stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
+              { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
     contactcfg: {
       nav: 'التواصل والروابط', h1: 'بيانات التواصل والروابط الاجتماعية',
@@ -534,6 +565,11 @@ window.IAQ_SCREENS = (function () {
   /* هل يوجد العمود فعلًا في الصفوف المقروءة؟ يُستعمل مع select=* لإظهار حقلٍ
      لا وجود له قبل ترقية المخطّط، بدل أن يُرسل فيُرفض الطلب. */
   function hasCol(k) { return !!(rows.length && rows[0].hasOwnProperty(k)); }
+  /* المفتاح الأوّلي رقمٌ في كل الجداول إلا admins (uuid). فالرقم يُمرَّر عددًا
+     كي لا يُحقَن نصٌّ في المُصفّي، والنصّ يُرمَّز ترميز عنوان. */
+  function idPart(sc, id) {
+    return sc.idText ? encodeURIComponent(String(id)) : Number(id);
+  }
   function auditOn(sc) { return sc.audit === 'auto' ? hasCol('updated_by') : !!sc.audit; }
   /* «2026-08-01T09:12:33Z» ← «1 أغسطس 2026 — 12:12 م» بتوقيت الرياض.
      تُستعمل toLocaleString لأن الطابع كامل بمنطقة زمنية، بخلاف عمود التاريخ. */
@@ -1203,6 +1239,11 @@ window.IAQ_SCREENS = (function () {
       }
       v = norm(v);
       if (f.req && !v && !(f.viaFile && upFile)) { bad = f.l + ': مطلوب'; return; }
+      /* بريدٌ خاطئ في جدول الحسابات = حسابٌ لا يستطيع أحدٌ الدخول به */
+      if (f.k === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)) {
+        bad = f.l + ': صيغة البريد غير صحيحة';
+        return;
+      }
       rec[f.k] = v;
     });
     if (bad) { var e0 = $('#sc-formerr'); if (e0) e0.textContent = bad; return; }
@@ -1223,7 +1264,8 @@ window.IAQ_SCREENS = (function () {
     var p = pre.then(function () {
     var q2;
     if (id) {
-      q2 = api(sc.table + '?id=eq.' + Number(id) + '&select=id', { method: 'PATCH', body: JSON.stringify(rec) });
+      q2 = api(sc.table + '?id=eq.' + idPart(sc, id) + '&select=id',
+               { method: 'PATCH', body: JSON.stringify(rec) });
     } else {
       if (!sc.nosort || hasCol('sort')) {
         var mx = 0;
@@ -1250,9 +1292,10 @@ window.IAQ_SCREENS = (function () {
     if (!r) return;
     modal('تأكيد الحذف',
       '<p>حذف <b>' + esc(labelOf(sc, r)) + '</b> نهائيًّا من قاعدة البيانات؟</p>' +
-      '<p class="muted small">سيُرفع من الموقع عند أوّل تحميل للصفحة. وإن أردت إبقاءه في السجلّ ' +
-      'وإخفاءه فقط فاستخدم «تعديل» واختر ' +
-      (sc.table === 'news' ? '«مسودّة»' : '«مخفي»') + '.</p>',
+      '<p class="muted small">' + (sc.delNote ||
+        ('سيُرفع من الموقع عند أوّل تحميل للصفحة. وإن أردت إبقاءه في السجلّ ' +
+         'وإخفاءه فقط فاستخدم «تعديل» واختر ' +
+         (sc.table === 'news' ? '«مسودّة»' : '«مخفي»') + '.')) + '</p>',
       '<button class="btn ghost" data-sc="close">إلغاء</button>' +
       '<button class="btn danger" data-sc="delyes" data-id="' + r.id + '">حذف نهائي</button>');
   }
@@ -1260,7 +1303,7 @@ window.IAQ_SCREENS = (function () {
     if (busy) return;
     busy = true;
     var sc = S0();
-    api(sc.table + '?id=eq.' + Number(id) + '&select=id', { method: 'DELETE' })
+    api(sc.table + '?id=eq.' + idPart(sc, id) + '&select=id', { method: 'DELETE' })
       .then(function (out) {
         if (!out || !out.length) throw new Error('لم يُحذف شيء — قد يكون محذوفًا أو لا تسمح الصلاحية.');
         close();
