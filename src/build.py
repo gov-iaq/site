@@ -695,11 +695,13 @@ def panel_real():
         real["settings"] = {
             "address": c.get("address_line", ""), "phone": c.get("phone_display", ""),
             "email": c.get("email", ""), "reg": c.get("license_no", ""),
+            "phoneTel": c.get("phone_tel", ""),
             "social": {"x": s.get("x", ""), "instagram": s.get("instagram", ""),
                        "linkedin": s.get("linkedin", ""), "youtube": s.get("youtube", ""),
                        "whatsapp": s.get("whatsapp", "")},
         }
         real["social"] = real["settings"]["social"]
+        real["donate"] = c.get("donate_url", "")
     real["brand"] = {"ar": "حاضنة الجمعيات",
                      "en": "ASSOCIATION INCUBATOR"}
     with io.open(DATA, encoding="utf-8") as f:
@@ -775,6 +777,10 @@ SCREEN_ICON_PATHS = {
     "pages2": '<rect x="7" y="3" width="12" height="15" rx="2"/>'
               '<path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/>'
               '<path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/>',
+    # تواصل: سمّاعة ودائرة اتصال
+    "phone2": '<path d="M15.5 20.5A12 12 0 0 1 3.5 8.5V6a2 2 0 0 1 2-2h2.2a1.6 1.6 0 0 1 1.6 1.4'
+              'c.1.9.3 1.7.6 2.5a1.6 1.6 0 0 1-.4 1.7L8.2 11a13 13 0 0 0 4.8 4.8l.9-1.3a1.6 1.6 0 0 1 1.7-.4'
+              'c.8.3 1.6.5 2.5.6A1.6 1.6 0 0 1 19.5 16.3V18.5a2 2 0 0 1-2 2z"/>',
 }
 SCREEN_ICONS = "".join(
     ' %s:\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
@@ -795,6 +801,7 @@ SCREEN_NAV = [
     ("heroslides",  "السلايدر الرئيسي", "hero"),
     ("menuitems",   "القوائم الرئيسية", "menu2"),
     ("pagelist",    "صفحات الموقع",     "pages2"),
+    ("contactcfg",  "التواصل والروابط", "phone2"),
     ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
 
@@ -956,6 +963,9 @@ def build(out_dir):
     cmap.update(files_map())
     # رموز عامة تصل الصفحات المولّدة والثابتة معًا
     cmap[b"{{ORN}}"] = ORN_HTML.encode("utf-8")
+    # قواعد @font-face للخطوط المستضافة محليًّا (تُولَّد بسكربت الخطوط)
+    ff = os.path.join(TEMPLATES, "fonts.css")
+    cmap[b"{{FONT_FACES}}"] = rb(ff) if os.path.exists(ff) else b""
     cmap[b"{{MQ_MODE}}"] = strip_mode().encode("utf-8")
     cmap[b"{{MQ_SETS}}"] = str(MQ_SETS).encode("utf-8")
 

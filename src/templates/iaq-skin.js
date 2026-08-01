@@ -112,10 +112,6 @@
       set('--radius', r + 'px');
       set('--card-radius', r + 'px');
     }
-    /* الخطوط: لا نُحمّل ملفات خطوط جديدة — يُطبَّق الاسم إن كان متاحًا في
-       الجهاز، وإلا رجع المتصفّح إلى البديل في السلسلة نفسها. */
-    if (th.headFont) set('--font-display', "'" + String(th.headFont).replace(/['"\\]/g, '') + "',var(--font-fallback,system-ui),sans-serif");
-    if (th.bodyFont) set('--font-body', "'" + String(th.bodyFont).replace(/['"\\]/g, '') + "','Segoe UI',Tahoma,system-ui,sans-serif");
     return n;
   }
 
@@ -203,6 +199,26 @@
     return n + 1;
   }
 
+  /* ------------------------------- الخطّ ------------------------------- */
+  /* العائلات المستضافة محليًّا في fonts/. والعريضة منها تحتاج شدَّ فراغات
+     القائمة كي لا تفيض الترويسة — قياسًا لا تقديرًا: 1280px أحرجُ عرضٍ قبل
+     ظهور الدرج، وفرق عرض القائمة بين العائلات بلغ 71px. */
+  var FONTS = {
+    'IBM Plex Sans Arabic': { wide: false },
+    'Cairo': { wide: false },
+    'El Messiri': { wide: false },
+    'Tajawal': { wide: true },
+    'Readex Pro': { wide: true }
+  };
+  function applyFont(fam) {
+    var name = String(fam || '').trim();
+    if (!name || !FONTS.hasOwnProperty(name)) return 0;
+    root.style.setProperty('--font-fam', "'" + name.replace(/['"\\]/g, '') + "'");
+    if (FONTS[name].wide) root.setAttribute('data-font-wide', '1');
+    else root.removeAttribute('data-font-wide');
+    return 1;
+  }
+
   /* -------------------------- خلفية الترويسة --------------------------- */
   /* صورةٌ خلف الترويسة مع طبقة تعتيم كي يبقى النصّ مقروءًا — وهذا شرطٌ لا
      تحسين: صورةٌ فاتحة تحت نصٍّ أبيض تجعله غير مقروء. */
@@ -234,6 +250,60 @@
     if (isFinite(eo) && eo >= 0 && eo <= 60) {
       root.style.setProperty('--hero-emblem-op', String(eo / 100));
       n++;
+    }
+    return n;
+  }
+
+  /* -------------------------- التواصل والروابط --------------------------
+     تُحدَّث الروابط لا النصوص وحدها: هاتفٌ نصُّه صحيح ورابطه قديم يتّصل بالرقم
+     الخطأ. والروابط الاجتماعية تُطابَق بوسم aria-label الذي بناه البنّاء،
+     والفارغة تُخفى بدل أن تُفضي إلى صفحة خطأ. */
+  var SOC = { social_x: 'إكس', social_youtube: 'يوتيوب', social_linkedin: 'لينكدإن',
+              social_whatsapp: 'واتساب', social_instagram: 'إنستغرام' };
+  function okLink(u) {
+    var s2 = String(u == null ? '' : u).trim();
+    if (!s2) return '';
+    return /^https:\/\//i.test(s2) ? s2 : '';
+  }
+  function applyContact() {
+    var n = 0;
+    var disp = String(IAQ.setting('contact_phone_display') || '').trim();
+    var tel = String(IAQ.setting('contact_phone_tel') || '').trim();
+    if (tel && /^\+?[0-9\s-]{7,20}$/.test(tel)) {
+      var href = 'tel:' + tel.replace(/[\s-]/g, '');
+      [].slice.call(document.querySelectorAll('a[href^="tel:"]')).forEach(function (a) {
+        a.setAttribute('href', href);
+        if (disp) a.textContent = disp;
+        n++;
+      });
+    }
+    var mail = String(IAQ.setting('contact_email') || '').trim();
+    if (mail && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) {
+      [].slice.call(document.querySelectorAll('a[href^="mailto:"]')).forEach(function (a) {
+        a.setAttribute('href', 'mailto:' + mail);
+        if ((a.textContent || '').indexOf('@') > -1) a.textContent = mail;
+        n++;
+      });
+    }
+    for (var key in SOC) {
+      if (!SOC.hasOwnProperty(key)) continue;
+      var v = IAQ.settings()[key];
+      if (v === undefined) continue;               /* لم يُضبط: يبقى المبنيّ */
+      var url = okLink(v);
+      var sel = '[aria-label="' + SOC[key] + '"]';
+      [].slice.call(document.querySelectorAll(sel)).forEach(function (a) {
+        if (a.tagName !== 'A') return;
+        if (url) { a.setAttribute('href', url); a.hidden = false; }
+        else a.hidden = true;                      /* فارغ = يُخفى لا يُفضي لخطأ */
+        n++;
+      });
+    }
+    var don = okLink(IAQ.setting('donate_url'));
+    if (don) {
+      [].slice.call(document.querySelectorAll('a[data-iaq-donate], a.btn-donate')).forEach(function (a) {
+        a.setAttribute('href', don);
+        n++;
+      });
     }
     return n;
   }
@@ -335,11 +405,13 @@
   function applyAll() {
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
-    var done = { theme: t, secVars: 0, logo: 0, hero: 0, sections: 0, code: 0 };
+    var done = { theme: t, secVars: 0, font: 0, logo: 0, contact: 0, hero: 0, sections: 0, code: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
+      done.font = applyFont(IAQ.setting('site_font'));
       done.logo = applyLogo(IAQ.setting('site_logo'));
+      done.contact = applyContact();
       done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
                             IAQ.setting('hero_emblem_op'));
       done.sections = applySections(IAQ.setting('sections'));

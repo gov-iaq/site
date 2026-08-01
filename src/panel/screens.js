@@ -56,6 +56,17 @@ window.IAQ_SCREENS = (function () {
     return false;
   }
 
+  /* القيم المبنيّة وقت البناء (IAQ_REAL) — افتراضياتُ شاشة التواصل، كي لا
+     تُمحى روابطٌ عاملة بحفظِ حقلٍ فارغ لم يُحمَّل أصلًا. */
+  function realVal(path) {
+    var o = window.IAQ_REAL || {}, parts = String(path).split('.');
+    for (var i = 0; i < parts.length; i++) {
+      if (o == null || typeof o !== 'object') return '';
+      o = o[parts[i]];
+    }
+    return (o == null) ? '' : o;
+  }
+
   var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
                 doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
@@ -241,11 +252,42 @@ window.IAQ_SCREENS = (function () {
       reach: 'إنشاء صفحة جديدة أو تغيير عنوانها يحتاج إعادة بناء — لا تُولَّد صفحة في المتصفّح. ' +
              'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
     },
+    contactcfg: {
+      nav: 'التواصل والروابط', h1: 'بيانات التواصل والروابط الاجتماعية',
+      sub: 'الهاتف والبريد وروابط المنصّات — تسري على كل صفحات الموقع.',
+      kind: 'settings',
+      reach: 'يسري على الترويسة والتذييل وصفحة «تواصل معنا» في كل الصفحات عند أوّل تحميل. ' +
+             'أمّا العنوان وساعات العمل فنصوصٌ تُحرَّر من «النصوص والمحتوى».',
+      rows: [
+        { key: 'contact_phone_display', l: 'الجوال كما يظهر', t: 'text', dyn: 'settings.phone',
+          hint: 'مثل 0505144421 — هذا ما يقرأه الزائر' },
+        { key: 'contact_phone_tel', l: 'الجوال للاتصال', t: 'text', dyn: 'settings.phoneTel',
+          hint: 'بصيغة دولية مثل +966505144421 — هذا ما يُتصل به عند الضغط' },
+        { key: 'contact_email', l: 'البريد الإلكتروني', t: 'text', dyn: 'settings.email' },
+        { key: 'social_x', l: 'إكس (تويتر)', t: 'text', dyn: 'social.x',
+          hint: 'رابط كامل يبدأ بـ https — واتركه فارغًا فيُخفى الأيقونة' },
+        { key: 'social_youtube', l: 'يوتيوب', t: 'text', dyn: 'social.youtube' },
+        { key: 'social_linkedin', l: 'لينكدإن', t: 'text', dyn: 'social.linkedin' },
+        { key: 'social_whatsapp', l: 'واتساب', t: 'text', dyn: 'social.whatsapp' },
+        { key: 'social_instagram', l: 'إنستغرام', t: 'text', dyn: 'social.instagram' },
+        { key: 'donate_url', l: 'رابط التبرّع', t: 'text', dyn: 'donate',
+          hint: 'متجر جمع التبرّعات — يُستعمل في أزرار «تبرّع»' }
+      ]
+    },
     sitecfg: {
       nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
       sub: 'خيارات تسري على الموقع مباشرةً عند أوّل تحميل لصفحة الزائر.',
       kind: 'settings',
       rows: [
+        { key: 'site_font', l: 'خطّ المنصّة', t: 'select', def: 'IBM Plex Sans Arabic',
+          o: { 'IBM Plex Sans Arabic': 'آي بي إم بلكس عربي — هندسيّ مؤسسيّ (الموصى به)',
+               'Cairo': 'القاهرة — شائع في المواقع المؤسسية',
+               'Tajawal': 'تجوال — هندسيّ خفيف',
+               'Readex Pro': 'ريدكس برو — حديث مستدير',
+               'El Messiri': 'الميسري — بأثرٍ خطّيّ' },
+          hint: 'يسري على كل نصوص الموقع: العناوين والنصوص واسم الجمعية معًا. ' +
+                'الخطوط مستضافة في الموقع نفسه فلا اتصال بخدمة خارجية. ' +
+                'وفراغات القائمة تُشدّ آليًّا مع الخطوط العريضة كي لا تفيض الترويسة.' },
         { key: 'partners_strip_mode', l: 'حركة شريط الشركاء', t: 'select', def: 'auto',
           o: { auto: 'شريط متّصل — تمرير دائري لا يتوقّف',
                manual: 'تحريك يدوي — أسهم ونقاط وسحب',
@@ -641,7 +683,8 @@ window.IAQ_SCREENS = (function () {
 
   function setCtl(r) {
     var id = 'sc-s-' + r.key;
-    var v = setVals.hasOwnProperty(r.key) && setVals[r.key] !== null ? setVals[r.key] : r.def;
+    var v = setVals.hasOwnProperty(r.key) && setVals[r.key] !== null ? setVals[r.key]
+          : (r.dyn ? realVal(r.dyn) : r.def);
     var h = '<div class="fld"><label for="' + id + '">' + esc(r.l) + '</label>';
     if (r.t === 'select') {
       h += '<select id="' + id + '">';
@@ -734,6 +777,11 @@ window.IAQ_SCREENS = (function () {
           v = n;
         }
       } else v = norm(el.value);
+      /* رابطٌ غير فارغ يجب أن يكون https — وإلا كسر الأيقونة أو فتح مخطّطًا خطِرًا */
+      if (/^(social_|donate_)/.test(r.key) && v && !/^https:\/\//i.test(v)) {
+        bad = r.l + ': الرابط يبدأ بـ https:// أو يُترك فارغًا';
+        return;
+      }
       out.push({ key: r.key, value: v, label: r.l, is_public: true,
                  updated_by: (S && S.email) || '' });
     });
