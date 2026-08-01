@@ -815,6 +815,13 @@ def build_panel(out_dir, cmap, amap):
     page = page.replace(a, "</script>" + NLS + "<script>" + NLS + bridge + "</script>" + NLS + "</body>", 1)
     steps.append("bridge")
 
+    # 6) اسم الصنف ad-card تحجبه مانعات الإعلانات (يبدأ بـ ad-)، وهو الحاوية
+    #    الوحيدة لكل بطاقات اللوحة — فكانت الشاشات تبدو فارغة تمامًا للمدير.
+    #    نُبدّله عند البناء فيبقى ملف التصميم كما أرسله صاحبه.
+    n_ad = page.count("ad-card")
+    page = page.replace("ad-card", "iaq-card")
+    steps.append("unblock(%d)" % n_ad)
+
     data = page.encode("utf-8")
     for k, v in cmap.items():
         data = data.replace(k, v)
