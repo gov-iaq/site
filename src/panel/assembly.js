@@ -64,10 +64,12 @@ window.IAQ_ASSEMBLY = (function () {
     return '<div class="view-head"><h1>أعضاء الجمعية العمومية ' +
       '<span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
       '<p>بيانات الأعضاء الحاليين — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.</p></div>' +
+      '<div class="ad-card" style="margin-block-end:14px">' + toolbar() +
+        '<div id="am-diag" class="muted small">جارٍ تحميل الأعضاء…</div></div>' +
       '<div id="am-err"></div>' +
       '<div id="am-stats"></div>' +
-      '<div class="ad-card">' + toolbar() +
-        '<div id="am-list"><div class="muted" style="padding:26px;text-align:center">جارٍ تحميل الأعضاء…</div></div>' +
+      '<div class="ad-card">' +
+        '<div id="am-list"></div>' +
         '<p class="muted small" style="margin-block-start:12px">التعديل والحذف والإضافة تسري على صفحة ' +
         '«الجمعية العمومية» في الموقع عند أوّل تحميل لها، بلا إعادة بناء.</p>' +
       '</div>';
@@ -136,6 +138,17 @@ window.IAQ_ASSEMBLY = (function () {
     ls.innerHTML = table;
     var qi = $('#am-q');
     if (qi && qi.value !== q) qi.value = q;
+
+    /* سطر تشخيص ظاهر: يقول ما قُرئ وما وُجد في الصفحة فعلًا. وُضع لأن تشخيص
+       «لا يظهر شيء» من صورة شاشة وحدها أثبت أنه غير كافٍ. */
+    var dg = $('#am-diag');
+    if (dg) {
+      var card = ls.parentNode, cb = card ? card.getBoundingClientRect() : null;
+      dg.innerHTML = 'قُرئ <b>' + rows.length + '</b> عضوًا · معروض <b>' + list.length + '</b>' +
+        ' · صفوف الجدول في الصفحة: <b>' + (ls.querySelectorAll('tbody tr').length) + '</b>' +
+        ' · ارتفاع منطقة الجدول: <b>' + (cb ? Math.round(cb.height) : '؟') + 'px</b>' +
+        ' · إصدار ' + esc(BUILD);
+    }
   }
   function box(n, label) {
     return '<div class="stat-box"><div class="sb-val">' + esc(String(n)) + '</div>' +
