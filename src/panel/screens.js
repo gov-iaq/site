@@ -29,6 +29,8 @@ window.IAQ_SCREENS = (function () {
   var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
   var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
   var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
+                doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
   var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
                  financials: 'القوائم المالية', annual: 'التقارير السنوية',
@@ -144,6 +146,39 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
+    heroslides: {
+      nav: 'السلايدر الرئيسي', h1: 'شرائح السلايدر الرئيسي',
+      sub: 'الشرائح المتعاقبة في صدر الصفحة الرئيسة — نصوصها وروابطها وأيقوناتها.',
+      table: 'hero_slides', filter: '', fixed: {}, audit: 1,
+      nameKey: 'title', searchKeys: ['title', 'accent', 'eyebrow', 'text'],
+      reach: 'يسري على الصفحة الرئيسة عند أوّل تحميل. ولا تُفرَّغ الترويسة أبدًا: ' +
+             'إن لم تبقَ شريحةٌ ظاهرة بقيت الشرائح المبنيّة — فصفحةٌ رئيسة بلا عنوان أسوأ من عنوانٍ قديم.',
+      fields: [
+        { k: 'eyebrow', l: 'العنوان الصغير', t: 'text', hint: 'يظهر فوق العنوان بحرف صغير — اتركه فارغًا فيُخفى' },
+        { k: 'title', l: 'العنوان الرئيس', t: 'text', req: 1,
+          hint: 'الجزء العادي من العنوان، بلا الكلمات المميّزة' },
+        { k: 'accent', l: 'الكلمات المميّزة', t: 'text',
+          hint: 'تظهر في آخر العنوان بلون الهوية — مثل «أثرًا يدوم»' },
+        { k: 'text', l: 'نصّ الشريحة', t: 'area' },
+        { k: 'cta1_label', l: 'نصّ الزرّ الأول', t: 'text', half: 1 },
+        { k: 'cta1_url', l: 'رابط الزرّ الأول', t: 'text', half: 1,
+          hint: 'صفحة مثل programs.html أو مرساة مثل #about أو رابط كامل' },
+        { k: 'cta1_icon', l: 'أيقونة الزرّ الأول', t: 'select', o: CTAIC, def: 'arrow' },
+        { k: 'cta2_label', l: 'نصّ الزرّ الثاني', t: 'text', half: 1 },
+        { k: 'cta2_url', l: 'رابط الزرّ الثاني', t: 'text', half: 1 },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا' },
+        { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهرة', draft: 'مسودّة (لا تظهر)' }, def: 'published', half: 1 }
+      ],
+      list: [{ k: 'sort', l: 'الترتيب', f: 'text' },
+             { k: 'eyebrow', l: 'العنوان الصغير', f: 'text' },
+             { k: 'title', l: 'العنوان', f: 'clip' },
+             { k: 'accent', l: 'المميّز', f: 'chip' },
+             { k: 'cta1_label', l: 'الزرّ الأول', f: 'text' },
+             { k: 'cta2_label', l: 'الزرّ الثاني', f: 'text' },
+             { k: 'status', l: 'الحالة', f: 'status' }],
+      stats: [{ l: 'إجمالي الشرائح' }, { l: 'ظاهرة', c: 'status', v: 'published' },
+              { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
+    },
     sitecfg: {
       nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
       sub: 'خيارات تسري على الموقع مباشرةً عند أوّل تحميل لصفحة الزائر.',
@@ -157,6 +192,17 @@ window.IAQ_SCREENS = (function () {
         { key: 'partners_strip_speed', l: 'زمن دورة الشريط المتّصل', t: 'int', def: 34,
           min: 8, max: 180, unit: 'ثانية',
           hint: 'الأصغر أسرع. يعمل مع النمط المتّصل وحده، ويُقيَّد بين 8 و180 ثانية.' },
+        { key: 'hero_bg_image', l: 'صورة خلفية السلايدر', t: 'img', def: '',
+          accept: '.jpg,.jpeg,.png,.webp,image/*',
+          hint: 'تظهر خلف شرائح السلايدر. اتركها فارغة فتبقى الخلفية اللونية من «المظهر». ' +
+                'يُفضَّل صورة عريضة 1920×900 على الأقل.' },
+        { key: 'hero_overlay', l: 'تعتيم صورة الخلفية', t: 'int', def: 45,
+          min: 0, max: 90, unit: 'بالمئة',
+          hint: 'طبقةٌ داكنة فوق الصورة كي يبقى النصّ الأبيض مقروءًا. الأعلى أعتم. ' +
+                'الصور الفاتحة تحتاج 55 وما فوق.' },
+        { key: 'hero_emblem_op', l: 'ظهور شعار الخلفية في السلايدر', t: 'int', def: 10,
+          min: 0, max: 60, unit: 'بالمئة',
+          hint: 'الشعار الكبير الباهت في زاوية السلايدر. صفر يُخفيه.' },
         { key: 'site_logo', l: 'شعار الموقع', t: 'img', def: '',
           accept: '.png,.svg,.webp,.jpg,.jpeg,image/*',
           hint: 'اختر صورة فتُرفع ويُستبدل الشعار في الترويسة والتذييل وخلفية الترويسة. ' +
@@ -558,6 +604,7 @@ window.IAQ_SCREENS = (function () {
     if (busy) return;
     /* الرفع أوّلًا: لا يُسجَّل رابطٌ لصورة لم تصل */
     var upRow = null, upFile = null;
+    /* حقلا صورة في الشاشة: يُرفع واحدٌ في كل نداء ثم يُعاد النداء للآخر */
     sc.rows.forEach(function (r) {
       if (r.t !== 'img' || upFile) return;
       var fi = $('#sc-s-' + r.key + '-f');

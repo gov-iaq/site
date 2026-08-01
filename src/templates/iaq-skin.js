@@ -203,6 +203,41 @@
     return n + 1;
   }
 
+  /* -------------------------- خلفية الترويسة --------------------------- */
+  /* صورةٌ خلف الترويسة مع طبقة تعتيم كي يبقى النصّ مقروءًا — وهذا شرطٌ لا
+     تحسين: صورةٌ فاتحة تحت نصٍّ أبيض تجعله غير مقروء. */
+  function applyHero(img, overlay, emblemOp) {
+    var hero = document.querySelector('section.hero');
+    if (!hero) return 0;
+    var n = 0;
+    var u = String(img || '').trim();
+    if (/^\s*(javascript|vbscript|file)\s*:/i.test(u)) u = '';
+    if (/^\s*data\s*:/i.test(u) && !/^\s*data\s*:\s*image\//i.test(u)) u = '';
+    if (u) {
+      var a = Number(overlay);
+      if (!isFinite(a) || a < 0 || a > 90) a = 45;
+      var c = 'rgba(0,0,0,' + (a / 100) + ')';
+      hero.style.backgroundImage = 'linear-gradient(' + c + ',' + c + "),url('" +
+        u.replace(/'/g, '%27') + "')";
+      hero.style.backgroundSize = 'cover';
+      hero.style.backgroundPosition = 'center';
+      hero.style.backgroundRepeat = 'no-repeat';
+      n++;
+    } else if (hero.style.backgroundImage) {
+      hero.style.backgroundImage = '';
+      hero.style.backgroundSize = '';
+      hero.style.backgroundPosition = '';
+      hero.style.backgroundRepeat = '';
+      n++;
+    }
+    var eo = Number(emblemOp);
+    if (isFinite(eo) && eo >= 0 && eo <= 60) {
+      root.style.setProperty('--hero-emblem-op', String(eo / 100));
+      n++;
+    }
+    return n;
+  }
+
   /* --------------------------- أقسام الرئيسة --------------------------- */
   /* مفتاح القسم في اللوحة هو مُعرِّفه في الصفحة نفسها (البنّاء يستخرجه من
      id="..." في مصدر الرئيسة)، فالحلّ هُويّةٌ لا خريطة: قسمٌ يُضاف مستقبلًا
@@ -300,11 +335,13 @@
   function applyAll() {
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
-    var done = { theme: t, secVars: 0, logo: 0, sections: 0, code: 0 };
+    var done = { theme: t, secVars: 0, logo: 0, hero: 0, sections: 0, code: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
       done.logo = applyLogo(IAQ.setting('site_logo'));
+      done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
+                            IAQ.setting('hero_emblem_op'));
       done.sections = applySections(IAQ.setting('sections'));
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */

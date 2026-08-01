@@ -15,7 +15,7 @@ window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{metho
 headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}
 try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();
 window.IAQ_REAL={"settings": {"address": "حي الفايزية، تقاطع شارع الملك خالد والأمير سلطان", "phone": "0505144421", "email": "info@iaq.org.sa", "reg": "2253", "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}}, "social": {"x": "https://x.com/iaq_ksa", "instagram": "", "linkedin": "https://www.linkedin.com/company/%D8%AD%D8%A7%D8%B6%D9%86%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D9%8A%D8%A7%D8%AA/", "youtube": "https://www.youtube.com/@iaq_ksa", "whatsapp": "https://whatsapp.com/channel/0029VajZjS9H5JM2LGUoe53E"}, "brand": {"ar": "حاضنة الجمعيات", "en": "ASSOCIATION INCUBATOR"}, "pages": [{"id": "pabout", "title": "عن الجمعية", "slug": "about", "type": "محتوى", "status": "منشورة"}, {"id": "passembly", "title": "الجمعية العمومية", "slug": "assembly", "type": "محتوى", "status": "منشورة"}, {"id": "pboard", "title": "مجلس الإدارة", "slug": "board", "type": "محتوى", "status": "منشورة"}, {"id": "pcommittees", "title": "اللجان الفرعية", "slug": "committees", "type": "محتوى", "status": "منشورة"}, {"id": "pcontact", "title": "تواصل معنا", "slug": "contact", "type": "محتوى", "status": "منشورة"}, {"id": "pendowments", "title": "الأوقاف والاستثمارات", "slug": "endowments", "type": "محتوى", "status": "منشورة"}, {"id": "pgovernance", "title": "الحوكمة", "slug": "governance", "type": "محتوى", "status": "منشورة"}, {"id": "pindex", "title": "الرئيسية", "slug": "index", "type": "محتوى", "status": "منشورة"}, {"id": "pjobs", "title": "الوظائف", "slug": "jobs", "type": "محتوى", "status": "منشورة"}, {"id": "plicenses", "title": "التراخيص", "slug": "licenses", "type": "محتوى", "status": "منشورة"}, {"id": "pmembership", "title": "طلب العضوية", "slug": "membership", "type": "محتوى", "status": "منشورة"}, {"id": "pnews", "title": "المركز الإعلامي", "slug": "news", "type": "محتوى", "status": "منشورة"}, {"id": "pprograms", "title": "برامجنا", "slug": "programs", "type": "محتوى", "status": "منشورة"}, {"id": "psatisfaction", "title": "قياس الرضا", "slug": "satisfaction", "type": "محتوى", "status": "منشورة"}, {"id": "pteam", "title": "فريق العمل", "slug": "team", "type": "محتوى", "status": "منشورة"}, {"id": "pvolunteer", "title": "تطوّع معنا", "slug": "volunteer", "type": "محتوى", "status": "منشورة"}, {"id": "pprivacy", "title": "سياسة الخصوصية", "slug": "privacy", "type": "محتوى", "status": "منشورة"}, {"id": "pterms", "title": "شروط الاستخدام", "slug": "terms", "type": "محتوى", "status": "منشورة"}], "seoTitle": "جمعية حاضنة الجمعيات", "sections": [{"id": "sabout", "key": "about", "name": "من نحن", "visible": true, "editable": true, "title": "جمعية تُعنى بتمكين القطاع غير الربحي", "subtitle": "نؤمن بأن جمعية واحدة ممكَّنة تصنع أثرًا مضاعفًا في مجتمعها؛ لذلك نجعل من الاحتضان والتطوير المؤسسي رسالتنا."}, {"id": "snews", "key": "news", "name": "المركز الإعلامي", "visible": true, "editable": true, "title": "أحدث أخبار الجمعية", "subtitle": "تابع مستجدّاتنا وأنشطتنا وشراكاتنا، منشورة أولًا بأول عبر حساب الجمعية في منصّة إكس."}, {"id": "sprograms", "key": "programs", "name": "برامجنا", "visible": true, "editable": true, "title": "مسارات تمكين متكاملة", "subtitle": "برامج مصمّمة لتغطي رحلة الجمعية كاملة، من لحظة التأسيس حتى بلوغ الاستدامة وقياس الأثر."}, {"id": "sstats", "key": "stats", "name": "أثرنا بالأرقام", "visible": true, "editable": true, "title": "حصيلة نفخر بها", "subtitle": ""}, {"id": "stestimonials", "key": "testimonials", "name": "قالوا عنا", "visible": true, "editable": true, "title": "شهادات شركائنا والمستفيدين", "subtitle": "كلمات من قيادات جمعيات رافقناها في رحلتها نحو التمكين والاستدامة."}, {"id": "spartners", "key": "partners", "name": "شركاء النجاح", "visible": true, "editable": true, "title": "بثقة شركائنا نصنع الأثر", "subtitle": "نعتزّ بشراكاتنا مع الجهات الداعمة والمنظمات التي تشاركنا الرسالة."}]};
-window.IAQ_BUILD="2026-08-01 21:54";
+window.IAQ_BUILD="2026-08-01 22:11";
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -498,7 +498,7 @@ function roleName(id){var r=config.roles.filter(function(x){return x.id===id;})[
 
 /* ---------- icons ---------- */
 var I={
- assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>', inbox2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/><path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/><path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/></svg>', poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h9M4.5 12h9M4.5 17h5"/><path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/></svg>', sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+ assembly:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4.3" r="1.5"/><circle cx="18.7" cy="8.2" r="1.5"/><circle cx="18.7" cy="15.8" r="1.5"/><circle cx="12" cy="19.7" r="1.5"/><circle cx="5.3" cy="15.8" r="1.5"/><circle cx="5.3" cy="8.2" r="1.5"/></svg>', board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.3"/><path d="M8.2 20v-2.2a3.8 3.8 0 0 1 7.6 0V20"/><circle cx="4.6" cy="9.6" r="1.7"/><path d="M2 20v-1.5a2.6 2.6 0 0 1 3.3-2.5"/><circle cx="19.4" cy="9.6" r="1.7"/><path d="M22 20v-1.5a2.6 2.6 0 0 0-3.3-2.5"/></svg>', team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="7.4" r="2.6"/><path d="M3.6 20v-1.7A4.4 4.4 0 0 1 8 13.9h1.4"/><rect x="12.4" y="12.6" width="8.6" height="7" rx="1.6"/><path d="M15.5 12.6v-1.2a1.2 1.2 0 0 1 1.2-1.2h1.4a1.2 1.2 0 0 1 1.2 1.2v1.2"/></svg>', partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="12" r="5.3"/><circle cx="14.8" cy="12" r="5.3"/></svg>', docs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4.5"/></svg>', inbox2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5"/><path d="M4 13.5h4l1.4 2.2h5.2L16 13.5h4"/><path d="M12 3v7m0 0l-2.6-2.6M12 10l2.6-2.6"/></svg>', poll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h9M4.5 12h9M4.5 17h5"/><path d="M18 5.6l1.2 2.5 2.6.4-1.9 1.9.45 2.7L18 11.8l-2.35 1.3.45-2.7-1.9-1.9 2.6-.4z"/></svg>', sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>', hero:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7.5 11.8l2-2 2 2"/><path d="M9 20h6"/><path d="M16.6 9.4l-1.6 1.6 1.6 1.6"/></svg>',
  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>',
  theme:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.3-1-1.5-1-2.5 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7-9-7Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>',
  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3c3 4 3 14 0 18M12 3C9 7 9 17 12 21M3 12h18"/></svg>',
@@ -773,7 +773,7 @@ function vCode(){
 }
 function previewCode(codeStr){var f=$('#codePreview');if(!f)return;f.srcdoc='<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><style>body{margin:0;padding:12px;font-family:Tajawal,sans-serif}</style></head><body>'+(codeStr||'<p style="color:#888;font-family:sans-serif">لا يوجد كود للمعاينة.</p>')+'</body></html>';}
 
-var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},subslist:function(){return window.IAQ_SCREENS.view("subslist");},surveylist:function(){return window.IAQ_SCREENS.view("surveylist");},sitecfg:function(){return window.IAQ_SCREENS.view("sitecfg");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
+var views={assembly:function(){return window.IAQ_SCREENS.view("assembly");},board:function(){return window.IAQ_SCREENS.view("board");},team:function(){return window.IAQ_SCREENS.view("team");},partnerlist:function(){return window.IAQ_SCREENS.view("partnerlist");},newslist:function(){return window.IAQ_SCREENS.view("newslist");},docs:function(){return window.IAQ_SCREENS.view("docs");},subslist:function(){return window.IAQ_SCREENS.view("subslist");},surveylist:function(){return window.IAQ_SCREENS.view("surveylist");},heroslides:function(){return window.IAQ_SCREENS.view("heroslides");},sitecfg:function(){return window.IAQ_SCREENS.view("sitecfg");},dashboard:vDashboard,theme:vTheme,logo:vLogo,menu:vMenu,pages:vPages,sections:vSections,content:vContent,media:vMedia,news:vNews,code:vCode,subs:vSubs,users:vUsers,settings:vSettings};
 
 function vSettings(){
  return '<div class="view-head"><h1>الإعدادات العامة</h1><p>بيانات التواصل وروابط التواصل الاجتماعي وتحسين محركات البحث، وإدارة الإعدادات.</p></div>'
@@ -788,7 +788,7 @@ function vSettings(){
 var NAV=[
  {k:"dashboard",label:"لوحة التحكم",icon:"dash"},
  {group:"التصميم والهوية"},{k:"theme",label:"المظهر والثيم",icon:"theme"},{k:"logo",label:"الشعار والهوية",icon:"logo"},
- {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"subslist",label:"الطلبات والنماذج",icon:"inbox2"},{k:"surveylist",label:"استجابات الرضا",icon:"poll"},{k:"sitecfg",label:"العرض والحركة",icon:"sliders"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
+ {group:"المحتوى"},{k:"assembly",label:"الجمعية العمومية",icon:"assembly"},{k:"board",label:"مجلس الإدارة",icon:"board"},{k:"team",label:"فريق العمل",icon:"team"},{k:"partnerlist",label:"الشركاء",icon:"partners"},{k:"newslist",label:"الأخبار",icon:"news"},{k:"docs",label:"الوثائق والملفات",icon:"docs"},{k:"subslist",label:"الطلبات والنماذج",icon:"inbox2"},{k:"surveylist",label:"استجابات الرضا",icon:"poll"},{k:"heroslides",label:"السلايدر الرئيسي",icon:"hero"},{k:"sitecfg",label:"العرض والحركة",icon:"sliders"},{k:"menu",label:"القوائم الرئيسية",icon:"menu"},{k:"pages",label:"الصفحات",icon:"pages"},{k:"sections",label:"أقسام الرئيسية",icon:"sections"},{k:"content",label:"النصوص والمحتوى",icon:"text"},{k:"media",label:"الوسائط والصور",icon:"media"},{k:"code",label:"الأكواد المخصّصة",icon:"code"},
  {group:"التفاعل"},
  {group:"الإدارة"},{k:"users",label:"المستخدمون والأدوار",icon:"users"},
  {group:"النظام"},{k:"settings",label:"الإعدادات العامة",icon:"gear"}
@@ -909,6 +909,8 @@ window.IAQ_SCREENS = (function () {
   var KIND = { contact: 'تواصل', volunteer: 'تطوّع', membership: 'طلب عضوية', jobs: 'توظيف' };
   var SUBST = { 'new': 'جديد', in_progress: 'قيد المعالجة', closed: 'مُغلق', archived: 'مؤرشف' };
   var PRIO = { low: 'منخفضة', normal: 'عادية', high: 'عالية' };
+  var CTAIC = { arrow: 'سهم (الافتراضي)', none: 'بلا أيقونة', ext: 'رابط خارجي',
+                doc: 'مستند', users: 'أشخاص', star: 'نجمة', play: 'تشغيل' };
   var SURVEY = { visitors: 'زوّار الموقع', beneficiaries: 'المستفيدون', donors: 'المتبرّعون' };
   var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
                  financials: 'القوائم المالية', annual: 'التقارير السنوية',
@@ -1024,6 +1026,39 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
+    heroslides: {
+      nav: 'السلايدر الرئيسي', h1: 'شرائح السلايدر الرئيسي',
+      sub: 'الشرائح المتعاقبة في صدر الصفحة الرئيسة — نصوصها وروابطها وأيقوناتها.',
+      table: 'hero_slides', filter: '', fixed: {}, audit: 1,
+      nameKey: 'title', searchKeys: ['title', 'accent', 'eyebrow', 'text'],
+      reach: 'يسري على الصفحة الرئيسة عند أوّل تحميل. ولا تُفرَّغ الترويسة أبدًا: ' +
+             'إن لم تبقَ شريحةٌ ظاهرة بقيت الشرائح المبنيّة — فصفحةٌ رئيسة بلا عنوان أسوأ من عنوانٍ قديم.',
+      fields: [
+        { k: 'eyebrow', l: 'العنوان الصغير', t: 'text', hint: 'يظهر فوق العنوان بحرف صغير — اتركه فارغًا فيُخفى' },
+        { k: 'title', l: 'العنوان الرئيس', t: 'text', req: 1,
+          hint: 'الجزء العادي من العنوان، بلا الكلمات المميّزة' },
+        { k: 'accent', l: 'الكلمات المميّزة', t: 'text',
+          hint: 'تظهر في آخر العنوان بلون الهوية — مثل «أثرًا يدوم»' },
+        { k: 'text', l: 'نصّ الشريحة', t: 'area' },
+        { k: 'cta1_label', l: 'نصّ الزرّ الأول', t: 'text', half: 1 },
+        { k: 'cta1_url', l: 'رابط الزرّ الأول', t: 'text', half: 1,
+          hint: 'صفحة مثل programs.html أو مرساة مثل #about أو رابط كامل' },
+        { k: 'cta1_icon', l: 'أيقونة الزرّ الأول', t: 'select', o: CTAIC, def: 'arrow' },
+        { k: 'cta2_label', l: 'نصّ الزرّ الثاني', t: 'text', half: 1 },
+        { k: 'cta2_url', l: 'رابط الزرّ الثاني', t: 'text', half: 1 },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا' },
+        { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهرة', draft: 'مسودّة (لا تظهر)' }, def: 'published', half: 1 }
+      ],
+      list: [{ k: 'sort', l: 'الترتيب', f: 'text' },
+             { k: 'eyebrow', l: 'العنوان الصغير', f: 'text' },
+             { k: 'title', l: 'العنوان', f: 'clip' },
+             { k: 'accent', l: 'المميّز', f: 'chip' },
+             { k: 'cta1_label', l: 'الزرّ الأول', f: 'text' },
+             { k: 'cta2_label', l: 'الزرّ الثاني', f: 'text' },
+             { k: 'status', l: 'الحالة', f: 'status' }],
+      stats: [{ l: 'إجمالي الشرائح' }, { l: 'ظاهرة', c: 'status', v: 'published' },
+              { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
+    },
     sitecfg: {
       nav: 'العرض والحركة', h1: 'إعدادات العرض والحركة',
       sub: 'خيارات تسري على الموقع مباشرةً عند أوّل تحميل لصفحة الزائر.',
@@ -1037,6 +1072,17 @@ window.IAQ_SCREENS = (function () {
         { key: 'partners_strip_speed', l: 'زمن دورة الشريط المتّصل', t: 'int', def: 34,
           min: 8, max: 180, unit: 'ثانية',
           hint: 'الأصغر أسرع. يعمل مع النمط المتّصل وحده، ويُقيَّد بين 8 و180 ثانية.' },
+        { key: 'hero_bg_image', l: 'صورة خلفية السلايدر', t: 'img', def: '',
+          accept: '.jpg,.jpeg,.png,.webp,image/*',
+          hint: 'تظهر خلف شرائح السلايدر. اتركها فارغة فتبقى الخلفية اللونية من «المظهر». ' +
+                'يُفضَّل صورة عريضة 1920×900 على الأقل.' },
+        { key: 'hero_overlay', l: 'تعتيم صورة الخلفية', t: 'int', def: 45,
+          min: 0, max: 90, unit: 'بالمئة',
+          hint: 'طبقةٌ داكنة فوق الصورة كي يبقى النصّ الأبيض مقروءًا. الأعلى أعتم. ' +
+                'الصور الفاتحة تحتاج 55 وما فوق.' },
+        { key: 'hero_emblem_op', l: 'ظهور شعار الخلفية في السلايدر', t: 'int', def: 10,
+          min: 0, max: 60, unit: 'بالمئة',
+          hint: 'الشعار الكبير الباهت في زاوية السلايدر. صفر يُخفيه.' },
         { key: 'site_logo', l: 'شعار الموقع', t: 'img', def: '',
           accept: '.png,.svg,.webp,.jpg,.jpeg,image/*',
           hint: 'اختر صورة فتُرفع ويُستبدل الشعار في الترويسة والتذييل وخلفية الترويسة. ' +
@@ -1438,6 +1484,7 @@ window.IAQ_SCREENS = (function () {
     if (busy) return;
     /* الرفع أوّلًا: لا يُسجَّل رابطٌ لصورة لم تصل */
     var upRow = null, upFile = null;
+    /* حقلا صورة في الشاشة: يُرفع واحدٌ في كل نداء ثم يُعاد النداء للآخر */
     sc.rows.forEach(function (r) {
       if (r.t !== 'img' || upFile) return;
       var fi = $('#sc-s-' + r.key + '-f');

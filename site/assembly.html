@@ -1143,6 +1143,41 @@ var IAQ_PATH = (function () {
     return n + 1;
   }
 
+  /* -------------------------- خلفية الترويسة --------------------------- */
+  /* صورةٌ خلف الترويسة مع طبقة تعتيم كي يبقى النصّ مقروءًا — وهذا شرطٌ لا
+     تحسين: صورةٌ فاتحة تحت نصٍّ أبيض تجعله غير مقروء. */
+  function applyHero(img, overlay, emblemOp) {
+    var hero = document.querySelector('section.hero');
+    if (!hero) return 0;
+    var n = 0;
+    var u = String(img || '').trim();
+    if (/^\s*(javascript|vbscript|file)\s*:/i.test(u)) u = '';
+    if (/^\s*data\s*:/i.test(u) && !/^\s*data\s*:\s*image\//i.test(u)) u = '';
+    if (u) {
+      var a = Number(overlay);
+      if (!isFinite(a) || a < 0 || a > 90) a = 45;
+      var c = 'rgba(0,0,0,' + (a / 100) + ')';
+      hero.style.backgroundImage = 'linear-gradient(' + c + ',' + c + "),url('" +
+        u.replace(/'/g, '%27') + "')";
+      hero.style.backgroundSize = 'cover';
+      hero.style.backgroundPosition = 'center';
+      hero.style.backgroundRepeat = 'no-repeat';
+      n++;
+    } else if (hero.style.backgroundImage) {
+      hero.style.backgroundImage = '';
+      hero.style.backgroundSize = '';
+      hero.style.backgroundPosition = '';
+      hero.style.backgroundRepeat = '';
+      n++;
+    }
+    var eo = Number(emblemOp);
+    if (isFinite(eo) && eo >= 0 && eo <= 60) {
+      root.style.setProperty('--hero-emblem-op', String(eo / 100));
+      n++;
+    }
+    return n;
+  }
+
   /* --------------------------- أقسام الرئيسة --------------------------- */
   /* مفتاح القسم في اللوحة هو مُعرِّفه في الصفحة نفسها (البنّاء يستخرجه من
      id="..." في مصدر الرئيسة)، فالحلّ هُويّةٌ لا خريطة: قسمٌ يُضاف مستقبلًا
@@ -1240,11 +1275,13 @@ var IAQ_PATH = (function () {
   function applyAll() {
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
-    var done = { theme: t, secVars: 0, logo: 0, sections: 0, code: 0 };
+    var done = { theme: t, secVars: 0, logo: 0, hero: 0, sections: 0, code: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
       done.logo = applyLogo(IAQ.setting('site_logo'));
+      done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
+                            IAQ.setting('hero_emblem_op'));
       done.sections = applySections(IAQ.setting('sections'));
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */
@@ -1292,6 +1329,7 @@ var IAQ_PATH = (function () {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+  function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
   /* الحرف الأول للأفاتار — نفس قاعدة البنّاء: تُتجاهل «ال» التعريف */
   function initialOf(name) {
     var w = String(name || '').trim().split(/\s+/)[0] || '';
@@ -1869,6 +1907,109 @@ var IAQ_PATH = (function () {
     });
   }
 
+  /* --------------------------- شرائح السلايدر --------------------------- */
+  /* أيقونات زرّ الشريحة الأول — بنفس أسلوب رسم الموقع (خطّ 2، أطراف مستديرة).
+     السهم هو المبنيّ أصلًا، ويُستعار من الصفحة كي لا يتفرّق الشكل. */
+  var CTA_ICONS = {
+    ext:   '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>',
+    doc:   '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h4"/>',
+    users: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-1.6A4.4 4.4 0 0 1 8 14h2a4.4 4.4 0 0 1 4.5 4.4V20"/><path d="M16.5 7.5a3 3 0 0 1 0 5"/><path d="M18 20v-1.5a3.6 3.6 0 0 0-2-3.2"/>',
+    star:  '<path d="M12 3.6l2.5 5.1 5.6.8-4.05 4 .95 5.6L12 16.5l-5 2.6.95-5.6L3.9 9.5l5.6-.8z"/>',
+    play:  '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/>'
+  };
+  function ctaIcon(kind, arrowHTML) {
+    if (kind === 'none') return '';
+    if (kind === 'arrow' || !kind) return arrowHTML || '';
+    var p = CTA_ICONS[kind];
+    if (!p) return arrowHTML || '';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+           'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  }
+
+  function fillSlide(node, row, tpl) {
+    var eb = node.querySelector('.hero-eyebrow');
+    if (eb) {
+      if (norm(row.eyebrow)) { eb.textContent = row.eyebrow; eb.hidden = false; }
+      else eb.hidden = true;
+    }
+    var h = node.querySelector('h1');
+    if (h) {
+      /* العنوان نصّ عادي، والجزء المميّز عنصرٌ بلون الهوية — نُعيد بناء
+         الاثنين بلا innerHTML من بيانات المستخدم (نصّ فقط، فلا وسوم تُحقَن). */
+      h.textContent = '';
+      var base = String(row.title == null ? '' : row.title).trim();
+      var acc = String(row.accent == null ? '' : row.accent).trim();
+      if (base) h.appendChild(document.createTextNode(acc ? base + ' ' : base));
+      if (acc) {
+        var sp = document.createElement('span');
+        sp.className = 'accent';
+        sp.textContent = acc;
+        h.appendChild(sp);
+      }
+    }
+    var p = node.querySelector('.hero-text');
+    if (p) {
+      if (norm(row.text)) { p.textContent = row.text; p.hidden = false; }
+      else p.hidden = true;
+    }
+    var cta = node.querySelector('.hero-cta');
+    if (cta) {
+      var a1 = cta.querySelector('.btn-primary'), a2 = cta.querySelector('.btn-ghost');
+      if (a1) {
+        if (norm(row.cta1_label) && norm(row.cta1_url)) {
+          a1.hidden = false;
+          a1.setAttribute('href', row.cta1_url);
+          a1.textContent = row.cta1_label + ' ';
+          var ic = ctaIcon(row.cta1_icon, tpl.arrowHTML);
+          if (ic) {
+            var box = document.createElement('span');
+            box.innerHTML = ic;
+            while (box.firstChild) a1.appendChild(box.firstChild);
+          }
+        } else a1.hidden = true;
+      }
+      if (a2) {
+        if (norm(row.cta2_label) && norm(row.cta2_url)) {
+          a2.hidden = false;
+          a2.setAttribute('href', row.cta2_url);
+          a2.textContent = row.cta2_label;
+        } else a2.hidden = true;
+      }
+    }
+    node.classList.remove('is-active');
+    return node;
+  }
+
+  function heroSlides() {
+    var wrap = document.getElementById('heroSlider');
+    if (!wrap) return;
+    return get('hero_slides?select=eyebrow,title,accent,text,cta1_label,cta1_url,cta1_icon,'
+      + 'cta2_label,cta2_url&status=eq.published&order=sort.asc,id.asc').then(function (rows) {
+        if (!rows) return;                        // فشل قراءة → يبقى المبنيّ
+        var olds = [].slice.call(wrap.querySelectorAll('.hero-slide'));
+        if (!olds.length) return;
+        if (!rows.length) return;                 /* لا نُفرّغ الترويسة أبدًا:
+             صفحةٌ رئيسة بلا عنوان أسوأ من عنوانٍ قديم، ولو كان الإفراغ مقصودًا. */
+        var tpl = { arrowHTML: null };
+        olds.forEach(function (s) {
+          if (tpl.arrowHTML) return;
+          var sv = s.querySelector('.btn-primary svg');
+          if (sv) tpl.arrowHTML = sv.outerHTML;
+        });
+        var anchor = olds[olds.length - 1].nextSibling, parent = olds[0].parentNode;
+        var frag = document.createDocumentFragment();
+        rows.forEach(function (row) {
+          frag.appendChild(fillSlide(olds[0].cloneNode(true), row, tpl));
+        });
+        olds.forEach(function (s) { s.parentNode.removeChild(s); });
+        parent.insertBefore(frag, anchor);
+        if (window.IAQ_REINDEX && window.IAQ_REINDEX.hero) {
+          try { window.IAQ_REINDEX.hero(); } catch (e) { }
+        }
+        document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'hero', count: rows.length } }));
+      });
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var JOBS = { assembly: [function () { return people('assembly'); }],
                board:    [function () { return people('board'); }],
@@ -1876,14 +2017,26 @@ var IAQ_PATH = (function () {
                news:     [news],
                governance:   [documents],
                satisfaction: [documents],
-               index:    [partners, function () { return newsStrip(4); }] };
+               index:    [heroSlides, partners, function () { return newsStrip(4); }] };
 
+  /* البناء الثابت يبقى دائمًا، لكن الخطأ لا يُكتَم: يُسجَّل كي يُرى في وحدة
+     التحكّم بدل أن يُظنّ أن القاعدة فارغة. */
+  function warn(job, e) {
+    try {
+      console.warn('[iaq] تعذّر تحديث قائمة من قاعدة البيانات — بقي البناء الثابت.',
+                   (e && e.message) || e);
+    } catch (x) { }
+  }
   function run() {
     var jobs = JOBS[slug];
     if (!jobs) return;
     /* كل وظيفة مستقلّة: سقوط إحداها لا يمنع الأخرى، والبناء الثابت يبقى */
     jobs.forEach(function (job) {
-      try { job(); } catch (e) { }
+      var p;
+      try { p = job(); } catch (e) { warn(job, e); return; }
+      /* الاستثناء داخل .then لا يبلغه try المتزامن، فكان يسقط بلا أثر:
+         بقيت القائمة المبنيّة ولا رسالةَ خطأ في السجلّ. */
+      if (p && typeof p.catch === 'function') p.catch(function (e) { warn(job, e); });
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
@@ -2367,15 +2520,67 @@ var IAQ_PATH = (function () {
   document.addEventListener('click',function(e){if(!e.target.closest('.nav-item.has-dropdown'))closeDD(null);});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDD(null);}});
 
-  // hero slider (guarded)
-  var slides=$$('.hero-slide'), dotsWrap=$('#heroDots');
-  if(slides.length&&dotsWrap){var cur=0,timer=null;
-    slides.forEach(function(_,i){var b=document.createElement('button');b.setAttribute('role','tab');b.setAttribute('aria-label','الشريحة '+(i+1));if(i===0)b.classList.add('active');b.addEventListener('click',function(){go(i);reset();});dotsWrap.appendChild(b);});
-    var dots=$$('button',dotsWrap);
-    function go(n){slides[cur].classList.remove('is-active');dots[cur].classList.remove('active');cur=(n+slides.length)%slides.length;slides[cur].classList.add('is-active');dots[cur].classList.add('active');}
-    function nx(){go(cur+1);}function pv(){go(cur-1);}function reset(){if(timer)clearInterval(timer);if(!reduce)timer=setInterval(nx,6500);}
-    var nb=$('#heroNext'),pb=$('#heroPrev');if(nb)nb.addEventListener('click',function(){nx();reset();});if(pb)pb.addEventListener('click',function(){pv();reset();});
-    var h=$('.hero');if(h){h.addEventListener('mouseenter',function(){if(timer)clearInterval(timer);});h.addEventListener('mouseleave',reset);}reset();}
+  /* hero slider — يُعاد جمعه عند إعادة بناء الشرائح من قاعدة البيانات.
+     النقاط تُبنى من عدد الشرائح، والمستمعات مفوَّضة على الحاوية، فلا تبقى
+     إشاراتٌ لعناصر مقتلعة من الصفحة. */
+  (function(){
+    var wrap=$('#heroSlider'), dotsWrap=$('#heroDots');
+    if(!wrap||!dotsWrap) return;
+    var slides=[], dots=[], cur=0, timer=null;
+
+    function collect(){
+      slides=$$('.hero-slide', wrap);
+      if(!slides.length) return;
+      if(cur>=slides.length) cur=0;
+      dotsWrap.innerHTML='';
+      slides.forEach(function(_,i){
+        var b=document.createElement('button');
+        b.type='button';
+        b.setAttribute('role','tab');
+        b.setAttribute('aria-label','الشريحة '+(i+1));
+        b.setAttribute('data-i',i);
+        if(i===cur)b.classList.add('active');
+        dotsWrap.appendChild(b);
+      });
+      dots=$$('button',dotsWrap);
+      slides.forEach(function(s,i){ s.classList.toggle('is-active', i===cur); });
+      /* شريحة واحدة: لا معنى لأزرار التنقّل */
+      var one=slides.length<2;
+      [$('#heroNext'),$('#heroPrev')].forEach(function(b){ if(b)b.hidden=one; });
+      dotsWrap.hidden=one;
+    }
+    function go(n){
+      if(!slides.length) return;
+      slides[cur].classList.remove('is-active');
+      if(dots[cur])dots[cur].classList.remove('active');
+      cur=(n+slides.length)%slides.length;
+      slides[cur].classList.add('is-active');
+      if(dots[cur])dots[cur].classList.add('active');
+    }
+    function reset(){
+      if(timer)clearInterval(timer);
+      if(!reduce&&slides.length>1)timer=setInterval(function(){go(cur+1);},6500);
+    }
+    dotsWrap.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('button[data-i]');
+      if(!b)return;
+      go(parseInt(b.getAttribute('data-i'),10)||0); reset();
+    });
+    var nb=$('#heroNext'),pb=$('#heroPrev');
+    if(nb)nb.addEventListener('click',function(){go(cur+1);reset();});
+    if(pb)pb.addEventListener('click',function(){go(cur-1);reset();});
+    var h=$('.hero');
+    if(h){
+      h.addEventListener('mouseenter',function(){if(timer)clearInterval(timer);});
+      h.addEventListener('mouseleave',reset);
+    }
+    document.addEventListener('visibilitychange',function(){
+      document.hidden?(timer&&clearInterval(timer)):reset();
+    });
+    window.IAQ_REINDEX = window.IAQ_REINDEX || {};
+    window.IAQ_REINDEX.hero = function(){ collect(); reset(); };
+    collect(); reset();
+  })();
 
   // news strip (guarded)
   var strip=$('#newsStrip');

@@ -764,6 +764,10 @@ SCREEN_ICON_PATHS = {
     # عرض وحركة: مؤشّرات ضبط
     "sliders": '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/>'
                '<circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+    # سلايدر: شاشة عريضة وسهمان
+    "hero": '<rect x="3" y="5" width="18" height="12" rx="2"/>'
+            '<path d="M7.5 11.8l2-2 2 2"/><path d="M9 20h6"/>'
+            '<path d="M16.6 9.4l-1.6 1.6 1.6 1.6"/>',
 }
 SCREEN_ICONS = "".join(
     ' %s:\'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"'
@@ -781,6 +785,7 @@ SCREEN_NAV = [
     ("docs",        "الوثائق والملفات", "docs"),
     ("subslist",    "الطلبات والنماذج", "inbox2"),
     ("surveylist",  "استجابات الرضا",   "poll"),
+    ("heroslides",  "السلايدر الرئيسي", "hero"),
     ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
 
