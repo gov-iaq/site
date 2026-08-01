@@ -151,6 +151,7 @@
   <p class="nw-live" id="nwLive" role="status" aria-live="polite"></p>
   <div class="nw-list" id="nwList">{{NEWS_CARDS}}</div>
   <div class="nw-empty" id="nwEmpty" hidden>لا توجد أخبار في هذا التصنيف.</div>
+<template id="nwSymTpl">{{NEWS_SYM}}</template>
 </div>
 <figure class="nw-lb" id="nwLb" role="dialog" aria-modal="true" aria-label="تكبير صورة الخبر">
   <button type="button" class="nw-lb-close" id="nwLbClose" aria-label="إغلاق">
@@ -161,14 +162,28 @@
 <script>
 (function(){
   var sec=document.getElementById('newsSec'); if(!sec) return;
-  var cards=[].slice.call(sec.querySelectorAll('.nw-card')),
-      btns=[].slice.call(sec.querySelectorAll('.nw-fil')),
-      live=document.getElementById('nwLive'),
+  var live=document.getElementById('nwLive'),
       empty=document.getElementById('nwEmpty'),
       reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-      cur='all', first=true;
+      cur='all', cards=[], btns=[];
   sec.classList.add('js-on');
 
+  /* تُقرأ البطاقات والمرشّحات في كل مرة لا مرّةً واحدة: قائمةُ الأخبار قد
+     تُعاد بناؤها من قاعدة البيانات بعد التحميل، فالإشارات المحفوظة تصير
+     لعناصر مقتلعة من الصفحة ولا يُطبَّق عليها شيء فتبقى شفّافة. */
+  function collect(){
+    cards=[].slice.call(sec.querySelectorAll('.nw-card'));
+    btns=[].slice.call(sec.querySelectorAll('.nw-fil'));
+    var found=false;
+    btns.forEach(function(b){ if(b.getAttribute('data-tag')===cur) found=true; });
+    if(cur!=='all' && !found) cur='all';   /* الوسم المختار قد يزول بعد التحديث */
+    press();
+  }
+  function press(){
+    btns.forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-tag')===cur?'true':'false');
+    });
+  }
   function apply(){
     var n=0;
     cards.forEach(function(c){
@@ -176,8 +191,8 @@
       c.hidden=!show;
       if(show){ if(!reduce) c.style.setProperty('--nw-d',(n%8)*70+'ms'); n++; }
     });
-    empty.hidden=n>0;
-    live.textContent = n ? ('عرض '+n+' من أصل '+cards.length+' خبرًا') : '';
+    if(empty) empty.hidden=n>0;
+    if(live) live.textContent = n ? ('عرض '+n+' من أصل '+cards.length+' خبرًا') : '';
     if(!reduce){
       cards.forEach(function(c){ if(!c.hidden) c.classList.remove('is-in'); });
       void sec.offsetWidth;
@@ -185,43 +200,58 @@
     } else {
       cards.forEach(function(c){ c.classList.add('is-in'); });
     }
-    first=false;
   }
-  btns.forEach(function(b){
-    b.addEventListener('click',function(){
-      if(b.getAttribute('aria-pressed')==='true') return;
-      btns.forEach(function(x){ x.setAttribute('aria-pressed', x===b?'true':'false'); });
-      cur=b.getAttribute('data-tag'); apply();
-    });
+
+  /* تكبير صورة الخبر */
+  var lb=document.getElementById('nwLb'), lbImg=document.getElementById('nwLbImg'),
+      lbCap=document.getElementById('nwLbCap'), lbX=document.getElementById('nwLbClose'), last=null;
+  function open(src,cap,trigger){
+    if(!src||!lb) return;
+    lbImg.src=src; lbImg.alt=cap||''; lbCap.textContent=cap||'';
+    lb.classList.add('open'); last=trigger||null;
+    document.body.style.overflow='hidden'; lbX.focus();
+  }
+  function close(){
+    if(!lb) return;
+    lb.classList.remove('open'); lbImg.src=''; document.body.style.overflow='';
+    if(last){ last.focus(); last=null; }
+  }
+
+  /* تفويض على القسم: يعمل على البطاقات المبنيّة وعلى ما يأتي من القاعدة سواءً */
+  sec.addEventListener('click', function(e){
+    var f=e.target.closest && e.target.closest('.nw-fil');
+    if(f){
+      if(f.getAttribute('aria-pressed')==='true') return;
+      cur=f.getAttribute('data-tag'); press(); apply(); return;
+    }
+    var m=e.target.closest && e.target.closest('.nw-media.is-photo');
+    if(m) open(m.getAttribute('data-zoom'), m.getAttribute('data-caption'), m);
   });
+  /* مكان الصورة role="button" tabindex="0" فيلزمه تفعيل بلوحة المفاتيح */
+  sec.addEventListener('keydown', function(e){
+    if(e.key!=='Enter' && e.key!==' ' && e.key!=='Spacebar') return;
+    var m=e.target.closest && e.target.closest('.nw-media.is-photo');
+    if(m){ e.preventDefault(); open(m.getAttribute('data-zoom'), m.getAttribute('data-caption'), m); }
+  });
+  if(lbX) lbX.addEventListener('click', close);
+  if(lb) lb.addEventListener('click', function(e){ if(e.target===lb) close(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && lb && lb.classList.contains('open')) close();
+  });
+
+  /* خطّاف إعادة الفهرسة بعد إعادة بناء القائمة من القاعدة: يُطبَّق فورًا
+     لا عبر المُراقب — فالمُراقب انفصل بعد أوّل ظهور، ولو انتظرناه لبقيت
+     البطاقات الجديدة شفّافة إلى الأبد. */
+  window.IAQ_REINDEX = window.IAQ_REINDEX || {};
+  window.IAQ_REINDEX.news = function(){ collect(); apply(); };
+
+  collect();
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(en){
       en.forEach(function(x){ if(x.isIntersecting){ apply(); io.disconnect(); } });
     },{threshold:.05,rootMargin:'0px 0px -5% 0px'});
     io.observe(sec);
   } else { apply(); }
-
-  /* تكبير صورة الخبر */
-  var lb=document.getElementById('nwLb'), lbImg=document.getElementById('nwLbImg'),
-      lbCap=document.getElementById('nwLbCap'), lbX=document.getElementById('nwLbClose'), last=null;
-  function open(src,cap,trigger){
-    if(!src) return;
-    lbImg.src=src; lbImg.alt=cap||''; lbCap.textContent=cap||'';
-    lb.classList.add('open'); last=trigger||null;
-    document.body.style.overflow='hidden'; lbX.focus();
-  }
-  function close(){
-    lb.classList.remove('open'); lbImg.src=''; document.body.style.overflow='';
-    if(last){ last.focus(); last=null; }
-  }
-  sec.querySelectorAll('.nw-media.is-photo').forEach(function(b){
-    b.addEventListener('click',function(){ open(b.getAttribute('data-zoom'), b.getAttribute('data-caption'), b); });
-  });
-  lbX.addEventListener('click', close);
-  lb.addEventListener('click', function(e){ if(e.target===lb) close(); });
-  document.addEventListener('keydown', function(e){
-    if(e.key==='Escape' && lb.classList.contains('open')) close();
-  });
 })();
 </script>
 </section>

@@ -25,6 +25,15 @@ window.IAQ_SCREENS = (function () {
   var CAT = { founder: 'عضو مؤسس', working: 'عضو عامل' };
   var RANK = { chair: 'رئيس المجلس', vice: 'نائب الرئيس', member: 'عضو', lead: 'مدير تنفيذي' };
   var ST = { published: 'ظاهر', hidden: 'مخفي', draft: 'مسودّة' };
+  var MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+                'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  /* «2026-06-22» ← «22 يونيو 2026» بنفس صياغة البنّاء، بلا Date كي لا تتدخّل
+     المنطقة الزمنية فيُنقص يومًا. */
+  function arDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return String(iso || '');
+    return Number(m[3]) + ' ' + (MONTHS[Number(m[2]) - 1] || m[2]) + ' ' + m[1];
+  }
 
   /* ------------------------------ سجلّ الشاشات ------------------------------ */
   var SCREENS = {
@@ -96,6 +105,35 @@ window.IAQ_SCREENS = (function () {
       xlsx: { file: 'قالب-فريق-العمل.xlsx',
               cols: [{ k: 'name', l: 'الاسم', w: 34 }, { k: 'role', l: 'المسمّى الوظيفي', w: 26 }],
               sample: [['محمد عبدالله السالم', 'مدير تنفيذي'], ['نورة صالح العتيبي', 'محاسب']] }
+    },
+    newslist: {
+      nav: 'الأخبار', h1: 'الأخبار والمركز الإعلامي',
+      sub: 'أخبار الجمعية — تحرير كامل للنصّ والبيانات ورابط التسجيل، وإضافة خبر جديد.',
+      /* جدول الأخبار لا عمود ترتيب فيه: الترتيب بالتاريخ، الأحدث أوّلًا. */
+      table: 'news', filter: '', fixed: {}, nosort: 1, order: 'date.desc,id.desc',
+      nameKey: 'title', searchKeys: ['title', 'lead', 'tag'],
+      reach: 'التعديل والحذف والإضافة تسري على صفحة «المركز الإعلامي» وشريط الأخبار في الصفحة الرئيسة عند أوّل تحميل، بلا إعادة بناء.',
+      fields: [
+        { k: 'date', l: 'تاريخ الخبر', t: 'date', half: 1 },
+        { k: 'tag', l: 'الوسم', t: 'tag', half: 1, hint: 'اختر وسمًا موجودًا أو اكتب وسمًا جديدًا' },
+        { k: 'title', l: 'عنوان الخبر', t: 'text', req: 1 },
+        { k: 'lead', l: 'المقدّمة', t: 'area', hint: 'سطر أو سطران يظهران بخطٍّ أبرز تحت العنوان' },
+        { k: 'body', l: 'نصّ الخبر', t: 'lines', hint: 'كل سطر فقرة مستقلّة — اترك سطرًا فارغًا بين الفقرات أو لا، كما تشاء' },
+        { k: 'facts', l: 'بيانات الخبر', t: 'pairs',
+          hint: 'كل سطر: العنوان ثم نقطتان ثم القيمة — مثل «المدرب: د. أحمد الرفاعي». تظهر جدولًا في البطاقة.' },
+        { k: 'cta_label', l: 'نصّ زرّ التسجيل', t: 'text', half: 1, hint: 'مثل: سجّل الآن' },
+        { k: 'cta_url', l: 'رابط زرّ التسجيل', t: 'text', half: 1, hint: 'يبدأ بـ https — والزرّ لا يظهر بلا نصٍّ ورابط معًا' },
+        { k: 'image', l: 'اسم ملف الصورة', t: 'text', hint: 'داخل img/news — فارغًا تظهر أيقونة رمزية' },
+        { k: 'status', l: 'الحالة', t: 'select', o: { published: 'منشور على الموقع', draft: 'مسودّة (لا تظهر)' }, def: 'published' }
+      ],
+      list: [{ k: 'image', l: 'الصورة', f: 'thumb', dir: 'news' },
+             { k: 'date', l: 'التاريخ', f: 'date' },
+             { k: 'tag', l: 'الوسم', f: 'chip' },
+             { k: 'title', l: 'العنوان', f: 'clip' },
+             { k: 'body', l: 'الفقرات', f: 'count' },
+             { k: 'status', l: 'الحالة', f: 'status' }],
+      stats: [{ l: 'إجمالي الأخبار' }, { l: 'منشور', c: 'status', v: 'published' },
+              { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
     partnerlist: {
       nav: 'الشركاء', h1: 'شعارات الشركاء',
@@ -177,10 +215,11 @@ window.IAQ_SCREENS = (function () {
     err = null;
     var cols = ['id'];
     fieldsOf(sc).forEach(function (f) { if (cols.indexOf(f.k) < 0) cols.push(f.k); });
-    if (cols.indexOf('sort') < 0) cols.push('sort');
+    /* جداولٌ بلا عمود ترتيب (الأخبار) — طلبه أو الترتيب به يُفشل الطلب كلّه */
+    if (!sc.nosort && cols.indexOf('sort') < 0) cols.push('sort');
     if (sc.table === 'people' && cols.indexOf('title') < 0) cols.push('title');
     var qs = 'select=' + cols.join(',') + (sc.filter ? '&' + sc.filter : '') +
-             '&order=sort.asc,id.asc&limit=500';
+             '&order=' + (sc.order || 'sort.asc,id.asc') + '&limit=500';
     return api(sc.table + '?' + qs)
       .then(function (r) { if (my === epoch) rows = r || []; })
       .catch(function (e) { if (my === epoch) { rows = []; err = e.message; } });
@@ -253,15 +292,35 @@ window.IAQ_SCREENS = (function () {
       if (!norm(v)) return '<span class="muted">—</span>';
       return '<a href="' + esc(v) + '" target="_blank" rel="noopener" class="mono small">رابط</a>';
     }
+    if (col.f === 'date') {
+      return norm(v) ? '<span style="white-space:nowrap">' + esc(arDate(v)) + '</span>'
+                     : '<span class="muted">—</span>';
+    }
+    if (col.f === 'count') {
+      var n = (v instanceof Array) ? v.length : 0;
+      return n ? '<span class="chip">' + n + '</span>' : '<span class="muted">—</span>';
+    }
+    if (col.f === 'clip') {
+      var s = norm(v);
+      if (!s) return '<span class="muted">—</span>';
+      return '<b title="' + esc(s) + '">' + esc(s.length > 46 ? s.slice(0, 46) + '…' : s) + '</b>';
+    }
     return norm(v) ? esc(v) : '<span class="muted">—</span>';
+  }
+  /* الاسم المعروض في تأكيد الحذف: العنوان في الأخبار، والاسم في غيرها */
+  function labelOf(sc, r) {
+    if (sc.nameKey) return norm(r[sc.nameKey]);
+    return norm(((r.title || '') + ' ' + (r.name || '')).trim());
   }
 
   function paint() {
     var sc = S0(), st = $('#sc-stats'), ls = $('#sc-list'), ep = $('#sc-err');
     if (!ls) return;
+    var keys = sc.searchKeys || ['name', 'title', 'role'];
     var list = rows.filter(function (r) {
       if (!q) return true;
-      return (norm(r.name) + ' ' + norm(r.title) + ' ' + norm(r.role)).toLowerCase().indexOf(q.toLowerCase()) > -1;
+      var hay = keys.map(function (k) { return norm(r[k]); }).join(' ').toLowerCase();
+      return hay.indexOf(q.toLowerCase()) > -1;
     });
 
     if (st) st.innerHTML = '<div class="stat-grid" style="grid-template-columns:repeat(' +
@@ -325,6 +384,33 @@ window.IAQ_SCREENS = (function () {
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
 
+  /* --- تحويل بين قيمة القاعدة ونصّ الحقل، للنوعين المركّبين --- */
+  function linesToText(v) {
+    if (v instanceof Array) return v.join('\n\n');
+    return String(v == null ? '' : v);
+  }
+  function textToLines(s) {
+    return String(s || '').split('\n').map(norm).filter(function (x) { return x !== ''; });
+  }
+  function pairsToText(v) {
+    if (!(v instanceof Array)) return '';
+    return v.map(function (p) {
+      if (p instanceof Array) return norm(p[0]) + ': ' + norm(p[1]);
+      return norm(p && p.label) + ': ' + norm(p && p.value);
+    }).join('\n');
+  }
+  function textToPairs(s) {
+    var out = [];
+    String(s || '').split('\n').forEach(function (ln) {
+      if (!norm(ln)) return;
+      /* أوّل نقطتين فقط: القيمة نفسها قد تحوي نقطتين مثل «4:30 - 10:00 مساءً» */
+      var i = ln.indexOf(':');
+      if (i < 0) { out.push({ label: norm(ln), value: '' }); return; }
+      out.push({ label: norm(ln.slice(0, i)), value: norm(ln.slice(i + 1)) });
+    });
+    return out;
+  }
+
   function control(f, val) {
     var id = 'sc-f-' + f.k;
     var h = '<div class="fld"><label for="' + id + '">' + esc(f.l) +
@@ -335,6 +421,20 @@ window.IAQ_SCREENS = (function () {
         h += '<option value="' + esc(k) + '"' + (String(val) === k ? ' selected' : '') + '>' + esc(f.o[k]) + '</option>';
       }
       h += '</select>';
+    } else if (f.t === 'date') {
+      var d = /^(\d{4}-\d{2}-\d{2})/.exec(String(val || ''));
+      h += '<input type="date" id="' + id + '" value="' + esc(d ? d[1] : '') + '">';
+    } else if (f.t === 'tag') {
+      /* قائمة الوسوم الموجودة، والكتابة الحرّة مسموحة */
+      var tags = [], k2;
+      rows.forEach(function (r) { if (norm(r[f.k]) && tags.indexOf(norm(r[f.k])) < 0) tags.push(norm(r[f.k])); });
+      h += '<input type="text" id="' + id + '" list="' + id + '-dl" value="' + esc(val == null ? '' : val) + '">' +
+        '<datalist id="' + id + '-dl">' +
+        tags.map(function (t) { return '<option value="' + esc(t) + '"></option>'; }).join('') + '</datalist>';
+    } else if (f.t === 'area' || f.t === 'lines' || f.t === 'pairs') {
+      var txt = f.t === 'lines' ? linesToText(val) : (f.t === 'pairs' ? pairsToText(val) : String(val == null ? '' : val));
+      h += '<textarea id="' + id + '" rows="' + (f.t === 'area' ? 3 : 7) +
+        '" style="width:100%;font:inherit;line-height:1.9;resize:vertical">' + esc(txt) + '</textarea>';
     } else {
       h += '<input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '">';
     }
@@ -375,6 +475,17 @@ window.IAQ_SCREENS = (function () {
       var el = $('#sc-f-' + f.k);
       if (!el) return;
       var v = el.value;
+      if (f.t === 'lines') { rec[f.k] = textToLines(v); return; }
+      if (f.t === 'pairs') { rec[f.k] = textToPairs(v); return; }
+      if (f.t === 'area') { rec[f.k] = String(v || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim(); return; }
+      if (f.t === 'date') {
+        var dv = norm(v);
+        /* تاريخ فارغ في عمود not null: لا يُرسل المفتاح، فتتولّاه القاعدة */
+        if (dv === '') return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dv)) { bad = f.l + ': تاريخ غير صحيح'; return; }
+        rec[f.k] = dv;
+        return;
+      }
       if (f.t === 'int') {
         var s2 = norm(v);
         /* فارغ = لا تُرسل المفتاح إطلاقًا. العمود not null في القاعدة، فإرسال
@@ -398,9 +509,11 @@ window.IAQ_SCREENS = (function () {
     if (id) {
       p = api(sc.table + '?id=eq.' + Number(id) + '&select=id', { method: 'PATCH', body: JSON.stringify(rec) });
     } else {
-      var mx = 0;
-      rows.forEach(function (r) { if (r.sort > mx) mx = r.sort; });
-      if (rec.sort == null) rec.sort = mx + 10;
+      if (!sc.nosort) {
+        var mx = 0;
+        rows.forEach(function (r) { if (r.sort > mx) mx = r.sort; });
+        if (rec.sort == null) rec.sort = mx + 10;
+      }
       p = api(sc.table + '?select=id', { method: 'POST', body: JSON.stringify([rec]) });
     }
     p.then(function (out) {
@@ -418,9 +531,10 @@ window.IAQ_SCREENS = (function () {
     rows.forEach(function (x) { if (String(x.id) === String(id)) r = x; });
     if (!r) return;
     modal('تأكيد الحذف',
-      '<p>حذف <b>' + esc(((r.title || '') + ' ' + (r.name || '')).trim()) + '</b> نهائيًّا من قاعدة البيانات؟</p>' +
+      '<p>حذف <b>' + esc(labelOf(sc, r)) + '</b> نهائيًّا من قاعدة البيانات؟</p>' +
       '<p class="muted small">سيُرفع من الموقع عند أوّل تحميل للصفحة. وإن أردت إبقاءه في السجلّ ' +
-      'وإخفاءه فقط فاستخدم «تعديل» واختر «مخفي».</p>',
+      'وإخفاءه فقط فاستخدم «تعديل» واختر ' +
+      (sc.table === 'news' ? '«مسودّة»' : '«مخفي»') + '.</p>',
       '<button class="btn ghost" data-sc="close">إلغاء</button>' +
       '<button class="btn danger" data-sc="delyes" data-id="' + r.id + '">حذف نهائي</button>');
   }

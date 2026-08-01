@@ -501,6 +501,7 @@ def render_news():
 
     return (section
             .replace("{{NEWS_CARDS}}", "".join(cards))
+            .replace("{{NEWS_SYM}}", SYM)
             .replace("{{NEWS_FILTERS}}", "".join(filters))).encode("utf-8")
 
 def render_news_strip(limit=4):
@@ -739,6 +740,7 @@ SCREEN_NAV = [
     ("board",       "مجلس الإدارة",     "board"),
     ("team",        "فريق العمل",       "team"),
     ("partnerlist", "الشركاء",          "partners"),
+    ("newslist",    "الأخبار",          "news"),
 ]
 
 def build_panel(out_dir, cmap, amap):
@@ -809,6 +811,13 @@ def build_panel(out_dir, cmap, amap):
     a = "var I={"
     assert page.count(a) == 1, "icon map"
     page = page.replace(a, "var I={" + NLS + SCREEN_ICONS, 1)
+
+    # شاشة الأخبار في التصميم تكتب في مخزن الإعدادات لا في جدول الأخبار،
+    # فلا يصل تعديلها الموقع. نرفعها من القائمة وتحلّ شاشتنا مكانها بالاسم
+    # نفسه، فلا يرى المدير «أخبار» مكرّرتين إحداهما لا تفعل شيئًا.
+    a = '{k:"news",label:"الأخبار",icon:"news"},'
+    assert page.count(a) == 1, "design news nav"
+    page = page.replace(a, "", 1)
 
     a = '{group:"المحتوى"},'
     assert page.count(a) == 1, "nav group content"
