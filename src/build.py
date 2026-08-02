@@ -305,8 +305,6 @@ def _file_rows(items):
           '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
           '<path d="M14 3v5h5"/><path d="M8.5 13.5h1a1 1 0 0 1 0 2h-1v-2Zm0 2v1.5"/>'
           '<path d="M12.5 13.5h1.2M12.5 13.5v3M12.5 15h1"/></svg></div>')
-    CLK = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'
-           '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>')
     DL = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
           'stroke-linecap="round" stroke-linejoin="round">'
           '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>')
@@ -316,15 +314,14 @@ def _file_rows(items):
            '<circle cx="12" cy="12" r="3"/></svg>')
     rows = []
     for it in items:
-        # مكان التاريخ يُبنى دائمًا — مخفيًّا إن خلا — كي تجده القراءة الحيّة
-        # فتملأه بأيقونة الساعة نفسها، بلا تكرار الترميز في مكانين.
-        meta = []
-        dv = it.get("date") or ""
-        meta.append('<span%s>%s%s</span>' % ("" if dv else " hidden", CLK, esc(dv)))
-        size = "PDF · %s" % esc(it.get("size", ""))
+        # كل حقلٍ في span مستقلّ: يُحلّ اتّجاهه وحده فلا ينفصل الرقم عن كلمته،
+        # ويقع ترتيبه بترتيب المرونة لا بخوارزمية الاتّجاه. والتاريخ لا يُعرض.
+        meta = ['<span>PDF</span>']
+        sz = esc(it.get("size", "")).strip()
+        if sz:
+            meta.append('<span>%s</span>' % sz)
         if it.get("pages"):
-            size += " · %d صفحة" % it["pages"]
-        meta.append("<span>%s</span>" % size)
+            meta.append('<span>%s</span>' % pages_label(it["pages"]))
         dl_attr = ' download="%s"' % esc(it["dl_name"]) if it.get("dl_name") else " download"
         rows.append(
             '<div class="file-row reveal" data-title="%s">%s'
@@ -338,6 +335,18 @@ def _file_rows(items):
             % (esc(it["title"]), IC, esc(it["title"]), "".join(meta),
                esc(it["file"]), EYE, esc(it["file"]), dl_attr, DL))
     return "".join(rows)
+
+def pages_label(n):
+    """تمييز العدد مع «صفحة»: العربية تُغيّره بحسب العدد لا تُثبّته."""
+    n = int(n)
+    if n == 1:
+        return "صفحة واحدة"
+    if n == 2:
+        return "صفحتان"
+    if 3 <= n <= 10:
+        return "%d صفحات" % n
+    return "%d صفحة" % n
+
 
 def render_licenses_gallery():
     """معرض التراخيص: صورة الشهادة في إطار + بياناتها + معاينة وتحميل."""

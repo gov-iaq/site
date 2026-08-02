@@ -510,6 +510,15 @@
     if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/') return s;
     return s;                      /* مسار داخل الموقع كما هو: files/... */
   }
+  /* تمييز العدد مع «صفحة» — العربية تُغيّره بحسب العدد لا تُثبّته */
+  function pagesLabel(n) {
+    n = Number(n) || 0;
+    if (n === 1) return 'صفحة واحدة';
+    if (n === 2) return 'صفحتان';
+    if (n >= 3 && n <= 10) return n + ' صفحات';
+    return n + ' صفحة';
+  }
+
   function fillDoc(node, row) {
     var href = docHref(row.storage_path), title = String(row.title || '');
     node.setAttribute('data-title', title);       /* البحث الفوري يقرأ هذا */
@@ -517,32 +526,24 @@
     var tt = node.querySelector('.ftitle');
     if (tt) tt.textContent = title;
 
+    /* البيانات: نوعٌ وحجمٌ وعدد صفحات، كلٌّ في span مستقلّ — فلا تخلط
+       خوارزميةُ الاتّجاه الرقمَ بكلمته. والتاريخ لا يُعرض (الحقل باقٍ في
+       القاعدة وفي اللوحة، لكنّه لا يظهر للزائر). */
     var meta = node.querySelector('.fmeta');
     if (meta) {
+      var parts = ['PDF'];
+      var sz = String(row.size_label == null ? '' : row.size_label).trim();
+      if (sz) parts.push(sz);
+      if (row.pages) parts.push(pagesLabel(row.pages));
       var spans = [].slice.call(meta.querySelectorAll('span'));
-      /* الصفّ المبنيّ: أوّل span التاريخ (وفيه أيقونة ساعة) والثاني الحجم.
-         نُبقي الأيقونة ونستبدل النصّ وحده، ونحذف التاريخ إن لم يوجد. */
-      var dateSpan = null, sizeSpan = null;
-      spans.forEach(function (s) {
-        if (s.querySelector('svg')) { if (!dateSpan) dateSpan = s; }
-        else if (!sizeSpan) sizeSpan = s;
-      });
-      var dv = String(row.doc_date == null ? '' : row.doc_date).trim();
-      if (dateSpan) {
-        /* يُخفى ولا يُحذف: أيقونته لازمة إن عاد التاريخ في تعديل لاحق */
-        if (dv) { txtNodeSet(dateSpan, dv); dateSpan.hidden = false; }
-        else dateSpan.hidden = true;
+      while (spans.length > parts.length) meta.removeChild(spans.pop());
+      while (spans.length < parts.length) {
+        var ns = document.createElement('span');
+        meta.appendChild(ns);
+        spans.push(ns);
       }
-      var size = 'PDF';
-      if (String(row.size_label || '').trim()) size += ' · ' + String(row.size_label).trim();
-      if (row.pages) size += ' · ' + row.pages + ' صفحة';
-      if (!sizeSpan) {
-        sizeSpan = document.createElement('span');
-        meta.appendChild(sizeSpan);
-      }
-      sizeSpan.textContent = size;
+      parts.forEach(function (p, k) { spans[k].textContent = p; spans[k].hidden = false; });
     }
-
     var view = node.querySelector('.file-view'), dl = node.querySelector('.file-dl');
     if (view) view.setAttribute('href', href);
     if (dl) {
