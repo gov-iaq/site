@@ -851,6 +851,60 @@ SCREEN_NAV = [
     ("sitecfg",     "العرض والحركة",    "sliders"),
 ]
 
+# ─────────────── تنظيم قائمة اللوحة ───────────────
+#  المجموعات مسمّاة بما يبحث عنه المستخدم لا بما يقسّمه المبرمج: «أين أُعدّل
+#  خبرًا؟» → المحتوى. «أين أضيف عضوًا؟» → الأشخاص. «أين أرى الطلبات؟» →
+#  الوارد. «أين أُغيّر الخطّ؟» → الهوية.
+#
+#  وأُسقطت من قائمة التصميم أربع شاشات: logo و settings (لا تصلان الموقع —
+#  فاللوحة تنشر theme و sections و code وحدها)، و menu و pages (مكرّرتان
+#  مع شاشتَينا العاملتين). ودوالُّها تبقى في الملف بلا مسارٍ إليها.
+PANEL_NAV = [
+    ("i", "dashboard",  "لوحة التحكم",          "dash"),
+
+    ("g", "المحتوى"),
+    ("i", "heroslides", "السلايدر الرئيسي",     "hero"),
+    ("i", "newslist",   "الأخبار",              "news"),
+    ("i", "content",    "النصوص والمحتوى",      "text"),
+    ("i", "docs",       "الوثائق والملفات",     "docs"),
+    ("i", "media",      "مكتبة الوسائط",        "media"),
+
+    ("g", "الأشخاص والجهات"),
+    ("i", "assembly",   "الجمعية العمومية",     "assembly"),
+    ("i", "board",      "مجلس الإدارة",         "board"),
+    ("i", "team",       "فريق العمل",           "team"),
+    ("i", "partnerlist", "الشركاء",             "partners"),
+
+    ("g", "الوارد من الزوّار"),
+    ("i", "subslist",   "الطلبات والنماذج",     "inbox2"),
+    ("i", "surveylist", "استجابات الرضا",       "poll"),
+
+    ("g", "بنية الموقع"),
+    ("i", "menuitems",  "القوائم الرئيسية",     "menu2"),
+    ("i", "sections",   "أقسام الرئيسية",       "sections"),
+    ("i", "pagelist",   "صفحات الموقع",         "pages2"),
+
+    ("g", "الهوية والمظهر"),
+    ("i", "theme",      "الألوان والحواف",      "theme"),
+    ("i", "sitecfg",    "الشعار والخطّ والحركة", "sliders"),
+    ("i", "contactcfg", "التواصل والروابط",     "phone2"),
+
+    ("g", "النظام"),
+    ("i", "adminlist",  "المستخدمون والأدوار",  "keys"),
+    ("i", "code",       "الأكواد المخصّصة",     "code"),
+]
+
+
+def panel_nav_js():
+    out = []
+    for row in PANEL_NAV:
+        if row[0] == "g":
+            out.append('{group:"%s"}' % row[1])
+        else:
+            out.append('{k:"%s",label:"%s",icon:"%s"}' % (row[1], row[2], row[3]))
+    return "var NAV=[" + ",".join(out) + "];"
+
+
 def build_panel(out_dir, cmap, amap):
     """يبني صفحة اللوحة من تصميم المدير كما هو، مع استبدال طبقة التخزين وحدها.
 
@@ -877,6 +931,10 @@ def build_panel(out_dir, cmap, amap):
 
     gate = (
         '<meta name="robots" content="noindex, nofollow, noarchive" />' + NLS +
+        # أيقونة التبويب: ملفّ التصميم بلا أيقونة فيظهر التبويب برمزٍ
+        # افتراضي لا يُعرَف منه أنه لوحة الجمعية.
+        '<link rel="icon" type="image/png" href="favicon.png" />' + NLS +
+        '<link rel="apple-touch-icon" href="favicon.png" />' + NLS +
         '<script>' + NLS +
         '(function(){var LOGIN=' + json.dumps(login) + ';var s=null;' + NLS +
         'try{s=JSON.parse(sessionStorage.getItem("iaq_session")||"null");}catch(e){}' + NLS +
@@ -923,27 +981,12 @@ def build_panel(out_dir, cmap, amap):
     # شاشة الأخبار في التصميم تكتب في مخزن الإعدادات لا في جدول الأخبار،
     # فلا يصل تعديلها الموقع. نرفعها من القائمة وتحلّ شاشتنا مكانها بالاسم
     # نفسه، فلا يرى المدير «أخبار» مكرّرتين إحداهما لا تفعل شيئًا.
-    a = '{k:"news",label:"الأخبار",icon:"news"},'
-    assert page.count(a) == 1, "design news nav"
-    page = page.replace(a, "", 1)
-
-    # وكذلك «الطلبات والنماذج»: شاشة التصميم تُغيّر الحالة في مخزن
-    # الإعدادات لا في جدول submissions، فلا يُحفظ التغيير أصلًا.
-    a = '{k:"subs",label:"الطلبات والنماذج",icon:"inbox"},'
-    assert page.count(a) == 1, "design subs nav"
-    page = page.replace(a, "", 1)
-
-    # و«المستخدمون والأدوار»: شاشة التصميم تُحرّر قائمةً في مخزن
-    # الإعدادات لا جدول admins، فلا تُنشئ حسابًا ولا تحذفه.
-    a = '{k:"users",label:"المستخدمون والأدوار",icon:"users"},'
-    assert page.count(a) == 1, "design users nav"
-    page = page.replace(a, "", 1)
-
-    a = '{group:"المحتوى"},'
-    assert page.count(a) == 1, "nav group content"
-    nav_add = "".join('{k:"%s",label:"%s",icon:"%s"},' % (k, lbl, ic)
-                      for k, lbl, ic in SCREEN_NAV)
-    page = page.replace(a, a + nav_add, 1)
+    # مصفوفة القائمة تُستبدل كاملةً: تنظيمٌ واحد في مكانٍ واحد، ولا حاجة
+    # إلى رفع مُدخلاتٍ مكرّرة واحدًا واحدًا.
+    ns = page.find("var NAV=[")
+    ne = page.find("];", ns)
+    assert ns > 0 and ne > ns, "nav array"
+    page = page[:ns] + panel_nav_js() + page[ne + 2:]
 
     a = "var views={dashboard:vDashboard,"
     assert page.count(a) == 1, "views map"
@@ -953,7 +996,14 @@ def build_panel(out_dir, cmap, amap):
     # العدّ الحقيقي من الجداول. و vDashboard تبقى في الملف بلا مسارٍ إليها.
     page = page.replace(a, "var views={" + view_add +
                         'dashboard:function(){return window.IAQ_SCREENS.view("home");},', 1)
-    steps.append("screens(%d)" % len(SCREEN_NAV))
+    steps.append("nav(%d)" % sum(1 for r in PANEL_NAV if r[0] == "i"))
+
+    # عناوين شاشات التصميم تُوافَق مع أسمائها في القائمة
+    for _old, _new in (("<h1>المظهر والثيم</h1>", "<h1>الألوان والحواف</h1>"),
+                       ("<h1>الوسائط والصور</h1>", "<h1>مكتبة الوسائط</h1>"),
+                       ("<h1>أقسام الصفحة الرئيسية</h1>", "<h1>أقسام الرئيسية</h1>")):
+        assert page.count(_old) == 1, "title: " + _old
+        page = page.replace(_old, _new, 1)
 
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"
     assert page.count(a) == 1, "save fn"
