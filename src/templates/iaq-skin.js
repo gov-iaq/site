@@ -303,6 +303,16 @@
         n++;
       });
     }
+    /*  إن لم تبقَ أيقونةٌ واحدةٌ مرئية، يُخفى العنوان والحاوية معًا: وإلّا
+       بقي عنوان «تابعنا» معلّقًا بلا شيءٍ تحته. والعكس صحيح إن أُعيد رابط. */
+    var wrap = document.querySelector('.social');
+    if (wrap) {
+      var live = wrap.querySelector('a[data-soc]:not([hidden])');
+      var head = document.querySelector('[data-soc-head]');
+      if (wrap.hidden === !live) { /* الحالة مضبوطة سلفًا */ } else { n++; }
+      wrap.hidden = !live;
+      if (head) head.hidden = !live;
+    }
     /* الحقول النصّية: عنوانٌ وساعاتٌ وترخيص — تُوسَم في البناء بـdata-iaq-f */
     for (var fk in FIELDS) {
       if (!FIELDS.hasOwnProperty(fk)) continue;

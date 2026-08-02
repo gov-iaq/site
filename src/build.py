@@ -672,16 +672,21 @@ def render_socials():
         return b""
     with io.open(CONTACT_F, encoding="utf-8") as f:
         s = json.load(f).get("socials", {}) or {}
-    out = []
+    out, live = [], 0
     for key, label, path in SOCIALS:
         url = (s.get(key) or "").strip()
+        live += bool(url)
         out.append(
             '<a href="%s" aria-label="%s" data-soc="%s" target="_blank" rel="noopener"%s>'
             '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">'
             '%s</svg></a>'
             % (esc(url) if url else "contact.html", esc(label), key,
                "" if url else " hidden", path))
-    return "".join(out).encode("utf-8")
+    #  العنوان والحاوية من مسؤولية الدالّة نفسها: فإن خلت كل الروابط تُخفى
+    #  الكتلة بأكملها، ولا يبقى عنوان «تابعنا» معلَّقًا بلا شيءٍ تحته.
+    off = "" if live else " hidden"
+    return ('<h4 data-soc-head%s>تابعنا</h4><div class="social"%s>%s</div>'
+            % (off, off, "".join(out))).encode("utf-8")
 
 
 def contact_map():
