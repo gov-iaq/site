@@ -589,7 +589,12 @@ def runtime_script(slug):
             json.dumps(slug, ensure_ascii=False).encode("utf-8") + b";\n")
     lists = os.path.join(TEMPLATES, "iaq-lists.js")
     skin = os.path.join(TEMPLATES, "iaq-skin.js")
+    track = os.path.join(TEMPLATES, "iaq-track.js")
     extra = rb(lists) if os.path.exists(lists) else b""
+    # المنارة بعد طبقة القوائم: مستمعها مفوَّض فيعمل على المبنيّ وعلى
+    # ما يُعاد بناؤه من القاعدة سواءً.
+    if os.path.exists(track):
+        extra = extra + b"\n" + rb(track)
     # المظهر قبل القوائم: يضبط متغيّرات CSS فورًا فلا يقع وميض لونيّ
     if os.path.exists(skin):
         extra = rb(skin) + b"\n" + extra
@@ -818,6 +823,14 @@ SCREEN_ICON_PATHS = {
     "pages2": '<rect x="7" y="3" width="12" height="15" rx="2"/>'
               '<path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/>'
               '<path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/>',
+    # إحصاءات: أعمدة بيانيّة
+    "chart": '<path d="M4 20V4"/><path d="M4 20h16"/>'
+             '<rect x="7" y="12" width="3" height="5" rx="1"/>'
+             '<rect x="12" y="8" width="3" height="9" rx="1"/>'
+             '<rect x="17" y="5" width="3" height="12" rx="1"/>',
+    # سجلّ عمل: ورقة بعلامة صحّ
+    "log": '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
+           '<path d="M14 3v5h5"/><path d="M8.5 13l1.4 1.4 2.6-2.6"/><path d="M8.5 17.2h6"/>',
     # مستخدمون وأدوار: شخصٌ ومفتاح
     "keys": '<circle cx="9" cy="8" r="3.2"/>'
             '<path d="M3.5 20v-1.8A4.6 4.6 0 0 1 8 13.6h2"/>'
@@ -861,6 +874,8 @@ SCREEN_NAV = [
 #  مع شاشتَينا العاملتين). ودوالُّها تبقى في الملف بلا مسارٍ إليها.
 PANEL_NAV = [
     ("i", "dashboard",  "لوحة التحكم",          "dash"),
+    ("i", "visits",     "إحصاءات الزوّار",       "chart"),
+    ("i", "worklog",    "سجلّ العمل",            "log"),
 
     ("g", "المحتوى"),
     ("i", "heroslides", "السلايدر الرئيسي",     "hero"),
@@ -990,11 +1005,15 @@ def build_panel(out_dir, cmap, amap):
 
     a = "var views={dashboard:vDashboard,"
     assert page.count(a) == 1, "views map"
+    # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
+    extra_views = ("".join(
+        '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
+        for k in ("visits", "worklog")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
     # العدّ الحقيقي من الجداول. و vDashboard تبقى في الملف بلا مسارٍ إليها.
-    page = page.replace(a, "var views={" + view_add +
+    page = page.replace(a, "var views={" + extra_views + view_add +
                         'dashboard:function(){return window.IAQ_SCREENS.view("home");},', 1)
     steps.append("nav(%d)" % sum(1 for r in PANEL_NAV if r[0] == "i"))
 

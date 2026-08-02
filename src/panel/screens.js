@@ -95,6 +95,16 @@ window.IAQ_SCREENS = (function () {
       sub: 'أرقامٌ حقيقية من قاعدة البيانات — تُقرأ عند فتح الشاشة.',
       kind: 'dash'
     },
+    visits: {
+      nav: 'إحصاءات الزوّار', h1: 'إحصاءات الزوّار',
+      sub: 'الزيارات وتعامل الزائر مع الصفحات والملفّات والأزرار.',
+      kind: 'visits'
+    },
+    worklog: {
+      nav: 'سجلّ العمل', h1: 'سجلّ العمل ومؤشّرات الردّ',
+      sub: 'من فعل ماذا ومتى، وسرعة الردّ على ما يصل من الزوّار.',
+      kind: 'worklog'
+    },
     assembly: {
       nav: 'الجمعية العمومية', h1: 'أعضاء الجمعية العمومية',
       sub: 'بيانات الأعضاء الحاليين — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.',
@@ -669,6 +679,8 @@ window.IAQ_SCREENS = (function () {
     if (sc.kind === 'settings') return settingsView(sc, myKey);
     if (sc.kind === 'pages') return pagesView(sc);
     if (sc.kind === 'dash') return dashView(sc, myKey);
+    if (sc.kind === 'visits') return visitsView(sc, myKey);
+    if (sc.kind === 'worklog') return worklogView(sc, myKey);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
@@ -695,6 +707,185 @@ window.IAQ_SCREENS = (function () {
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' +
       '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
+  }
+
+  /* ====================== قراءة المناظر المُجمَّعة ======================
+     PostgREST لا يجمع، فالتجميع في مناظر مبوّبة باليوم. نقرأ مدى الأيام
+     ونطبق الجمع على عشرات الصفوف في المتصفّح — رخيصٌ ودقيق. */
+  var RANGE = 30;                      /* المدى الافتراضي بالأيام */
+  function dayStr(back) {
+    var d = new Date(Date.now() - back * 86400000);
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function readView(name, days, extra) {
+    var q = name + '?select=*&day=gte.' + dayStr(days - 1) + '&limit=20000' + (extra || '');
+    return api(q).catch(function (e) { err = e.message; return []; });
+  }
+  /* يجمع صفوف المنظر على مفتاحٍ واحد */
+  function sumBy(rows, keyFn, filter) {
+    var m = {}, order = [];
+    (rows || []).forEach(function (r) {
+      if (filter && !filter(r)) return;
+      var k = keyFn(r);
+      if (k == null || k === '') k = '(مباشرة)';
+      if (!(k in m)) { m[k] = 0; order.push(k); }
+      m[k] += Number(r.n) || 0;
+    });
+    return order.map(function (k) { return { l: k, n: m[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  }
+  function total(rows, filter) {
+    var s = 0;
+    (rows || []).forEach(function (r) { if (!filter || filter(r)) s += Number(r.n) || 0; });
+    return s;
+  }
+  /* سلسلة يوميّة كاملة — الأيام الخالية أصفار كي لا يكذب الرسم */
+  function series(rows, days, filter) {
+    var m = {};
+    (rows || []).forEach(function (r) {
+      if (filter && !filter(r)) return;
+      m[r.day] = (m[r.day] || 0) + (Number(r.n) || 0);
+    });
+    var out = [];
+    for (var i = days - 1; i >= 0; i--) {
+      var d = dayStr(i);
+      out.push({ x: d, t: d.slice(5).replace('-', '/'), y: m[d] || 0 });
+    }
+    return out;
+  }
+  function rangeBar(active) {
+    return '<div class="btnbar" style="justify-content:flex-start;margin-block-end:14px">' +
+      [7, 30, 90].map(function (d) {
+        return '<button class="btn ' + (d === active ? '' : 'ghost') + '" data-sc="range" data-d="' + d + '">' +
+          (d === 7 ? 'أسبوع' : (d === 30 ? '٣٠ يومًا' : '٩٠ يومًا')) + '</button>';
+      }).join('') + '</div>';
+  }
+  function card(title, body, note) {
+    return '<div class="iaq-card" style="margin-block-end:14px">' +
+      '<h3 style="margin:0 0 12px;font-family:var(--disp);font-size:1.04rem">' + esc(title) + '</h3>' +
+      body + (note ? '<p class="muted small" style="margin-block-start:10px">' + esc(note) + '</p>' : '') + '</div>';
+  }
+  function grid(n) { return '<div class="stat-grid" style="grid-template-columns:repeat(' + n + ',1fr)">'; }
+
+  /* ============================ رسوم SVG ============================
+     تُرسم بأيدينا لا بمكتبة: اللوحة ملفٌّ واحد بلا تبعية خارجية (وهذا يمنع
+     أيضًا إرسال أي بيانات إلى طرفٍ ثالث). والقياسات نسبية فتتّسع للحاوية. */
+  function svgEsc(s) { return esc(s); }
+  function niceMax(v) {
+    if (v <= 5) return 5;
+    var p = Math.pow(10, String(Math.floor(v)).length - 1);
+    return Math.ceil(v / p) * p;
+  }
+
+  /* خطّ زمنيّ بمنطقة مظلّلة. pts = [{x:'2026-08-01', y:12}, …] */
+  function chartLine(pts, opt) {
+    opt = opt || {};
+    var W = 720, H = opt.h || 190, PL = 42, PR = 8, PT = 12, PB = 26;
+    if (!pts.length) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات في هذا المدى.</div>';
+    var max = niceMax(Math.max.apply(null, pts.map(function (p) { return p.y; })) || 1);
+    var iw = W - PL - PR, ih = H - PT - PB;
+    var n = pts.length;
+    function X(i) { return PL + (n === 1 ? iw / 2 : (iw * i) / (n - 1)); }
+    function Y(v) { return PT + ih - (ih * v) / max; }
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p.y).toFixed(1); }).join(' ');
+    var area = line + ' L' + X(n - 1).toFixed(1) + ' ' + (PT + ih) + ' L' + X(0).toFixed(1) + ' ' + (PT + ih) + ' Z';
+    var grid = '', ticks = 4;
+    for (var g = 0; g <= ticks; g++) {
+      var v = (max / ticks) * g, y = Y(v);
+      grid += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + y.toFixed(1) +
+        '" stroke="var(--line)" stroke-width="1"' + (g ? ' stroke-dasharray="3 4"' : '') + '/>' +
+        '<text x="' + (PL - 6) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)">' +
+        Math.round(v) + '</text>';
+    }
+    var lab = '', step = Math.max(1, Math.ceil(n / 7));
+    for (var i = 0; i < n; i += step) {
+      lab += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' +
+        svgEsc(pts[i].t || pts[i].x) + '</text>';
+    }
+    var dots = pts.map(function (p, i) {
+      return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.y).toFixed(1) + '" r="' + (n > 45 ? 1.6 : 3) +
+        '" fill="var(--teal)"><title>' + svgEsc((p.t || p.x) + ' — ' + p.y) + '</title></circle>';
+    }).join('');
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" ' +
+      'aria-label="' + svgEsc(opt.label || 'اتجاه زمنيّ') + '">' + grid +
+      '<path d="' + area + '" fill="var(--teal)" opacity=".10"/>' +
+      '<path d="' + line + '" fill="none" stroke="var(--teal)" stroke-width="2.2" stroke-linejoin="round"/>' +
+      dots + lab + '</svg>';
+  }
+
+  /* أعمدة أفقية — أفقيّة لأن التسميات العربية طويلة والعمودية تقطعها */
+  function chartBars(items, opt) {
+    opt = opt || {};
+    if (!items.length) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات.</div>';
+    var top = items.slice(0, opt.top || 10);
+    var max = Math.max.apply(null, top.map(function (i) { return i.n; })) || 1;
+    return '<div style="display:grid;gap:8px">' + top.map(function (it) {
+      var pct = Math.max(2, Math.round((it.n / max) * 100));
+      return '<div style="display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:10px;align-items:center">' +
+        '<div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(it.l) + '">' +
+          esc(it.l) + '</div>' +
+        '<div style="background:var(--surface-2,#f5f8f8);border-radius:999px;height:12px;overflow:hidden">' +
+          '<div style="width:' + pct + '%;height:100%;background:' + (opt.gold ? 'var(--gold)' : 'var(--teal)') +
+          ';border-radius:999px"></div></div>' +
+        '<b class="small mono">' + it.n + '</b></div>';
+    }).join('') + '</div>';
+  }
+
+  /* حلقة للتركيب */
+  function chartDonut(items, opt) {
+    opt = opt || {};
+    var tot = items.reduce(function (s, i) { return s + i.n; }, 0);
+    if (!tot) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات.</div>';
+    var COL = ['var(--teal)', 'var(--gold)', 'var(--teal-600)', 'var(--gold-600)', 'var(--muted)'];
+    var R = 54, C = 2 * Math.PI * R, off = 0, segs = '';
+    items.forEach(function (it, i) {
+      var frac = it.n / tot, len = C * frac;
+      segs += '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + COL[i % COL.length] +
+        '" stroke-width="20" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) +
+        '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)">' +
+        '<title>' + svgEsc(it.l + ' — ' + it.n + ' (' + Math.round(frac * 100) + '%)') + '</title></circle>';
+      off += len;
+    });
+    var legend = items.map(function (it, i) {
+      return '<div style="display:flex;align-items:center;gap:7px" class="small">' +
+        '<span style="width:11px;height:11px;border-radius:3px;background:' + COL[i % COL.length] + '"></span>' +
+        esc(it.l) + ' <b class="mono">' + it.n + '</b></div>';
+    }).join('');
+    return '<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">' +
+      '<svg viewBox="0 0 140 140" style="width:132px;height:132px;flex:0 0 auto" role="img" aria-label="' +
+      svgEsc(opt.label || 'تركيب') + '">' + segs +
+      '<text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">' + tot + '</text>' +
+      '<text x="70" y="84" text-anchor="middle" font-size="10" fill="var(--muted)">' + svgEsc(opt.unit || 'الإجمالي') + '</text>' +
+      '</svg><div style="display:grid;gap:6px">' + legend + '</div></div>';
+  }
+
+  /* خريطة حرارة: أيام الأسبوع × الساعات — لمعرفة وقت ذروة الزوّار */
+  var DOW = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  function chartHeat(cells) {
+    var max = 0, m = {};
+    cells.forEach(function (c) {
+      m[c.dow + '_' + c.hour] = c.n;
+      if (c.n > max) max = c.n;
+    });
+    if (!max) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات بعد.</div>';
+    var out = '<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:2px;direction:rtl">' +
+      '<thead><tr><th></th>';
+    for (var h = 0; h < 24; h += 2) {
+      out += '<th colspan="2" style="font-size:9px;font-weight:500;color:var(--muted)">' + h + '</th>';
+    }
+    out += '</tr></thead><tbody>';
+    for (var d = 0; d < 7; d++) {
+      out += '<tr><td class="small" style="white-space:nowrap;padding-inline-end:6px;color:var(--muted)">' + DOW[d] + '</td>';
+      for (var hh = 0; hh < 24; hh++) {
+        var v = m[d + '_' + hh] || 0;
+        var a = v ? (0.14 + 0.86 * (v / max)) : 0;
+        out += '<td title="' + DOW[d] + ' ' + hh + ':00 — ' + v + '" style="width:13px;height:15px;border-radius:3px;' +
+          (v ? 'background:color-mix(in srgb,var(--teal) ' + Math.round(a * 100) + '%,transparent)'
+             : 'background:var(--surface-2,#f2f5f4)') + '"></td>';
+      }
+      out += '</tr>';
+    }
+    return out + '</tbody></table></div>';
   }
 
   /* ========================= لوحة التحكم الحقيقية =========================
@@ -760,15 +951,9 @@ window.IAQ_SCREENS = (function () {
       ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' + groups +
+      '<div id="dv-visits"></div>' +
       '<div class="iaq-card"><h3 style="margin:0 0 10px;font-family:var(--disp);font-size:1.05rem">' +
-        'آخر الطلبات الواردة</h3><div id="dv-latest" class="muted">جارٍ القراءة…</div></div>' +
-      '<div class="notice" style="margin-block-start:14px">' +
-        '<b>حركة الزوّار غير معروضة — وهذا مقصود.</b><br>' +
-        'الأرقام أعلاه حقيقية من قاعدة البيانات. أمّا عدد الزوّار فلا يعرفه الموقع: ' +
-        'يحتاج أداة تحليلات تُركَّب أوّلًا. وأقربها لك <b>Cloudflare Web Analytics</b> ' +
-        'من لوحة Cloudflare نفسها (مجّانية وبلا كوكيز) — ' +
-        'وأرقامها تُقرأ من لوحتها لا من هنا.' +
-      '</div>';
+        'آخر الطلبات الواردة</h3><div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
   }
 
   function paintDash(myKey) {
@@ -785,6 +970,52 @@ window.IAQ_SCREENS = (function () {
         }));
       });
     });
+    /* خلاصة الزوّار والردّ — تفصيلها في شاشتَي «إحصاءات الزوّار» و«سجلّ العمل» */
+    Promise.all([
+      readView('v_views_daily', 30),
+      api('v_subs_response?select=status,created_at,hours_to_first&order=created_at.desc&limit=1000')
+        .catch(function () { return []; })
+    ]).then(function (rr) {
+      if (!alive(myKey)) return;
+      var daily = rr[0] || [], subs = rr[1] || [];
+      var el = $('#dv-visits');
+      if (!el) return;
+      var pv = total(daily, function (x) { return x.kind === 'page'; });
+      if (!pv && !daily.length) {
+        el.innerHTML = '<div class="notice" style="margin-block-end:14px">' +
+          '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
+          'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>';
+        return;
+      }
+      var ans = [], open = 0, late = 0, now = Date.now();
+      subs.forEach(function (s) {
+        if (s.hours_to_first != null) ans.push(Number(s.hours_to_first));
+        if (s.status === 'new') {
+          open++;
+          if (now - new Date(s.created_at).getTime() > 3 * 86400000) late++;
+        }
+      });
+      var avg = ans.length ? (ans.reduce(function (a, b) { return a + b; }, 0) / ans.length) : null;
+      function hrs2(v) {
+        if (v == null) return '—';
+        if (v < 1) return Math.round(v * 60) + ' د';
+        if (v < 48) return (Math.round(v * 10) / 10) + ' س';
+        return Math.round(v / 24) + ' ي';
+      }
+      el.innerHTML = card('الزوّار والردّ — آخر ٣٠ يومًا',
+        grid(6) +
+          box2(pv, 'زيارة صفحة') +
+          box2(total(daily, function (x) { return x.kind === 'file_dl'; }), 'تنزيل ملفّ') +
+          box2(total(daily, function (x) { return x.kind === 'contact'; }), 'نقر تواصل') +
+          box2(total(daily, function (x) { return x.kind === 'form'; }), 'إرسال نموذج') +
+          box2(hrs2(avg), 'متوسّط زمن الردّ') +
+          box2(late, 'طلب متأخّر') + '</div>' +
+        '<div style="margin-block-start:14px">' +
+          chartLine(series(daily, 30, function (x) { return x.kind === 'page'; }),
+                    { label: 'زيارات الصفحات', h: 160 }) + '</div>',
+        'التفصيل في «إحصاءات الزوّار» و«سجلّ العمل».');
+    });
+
     api('submissions?select=id,kind,status,created_at,payload&order=created_at.desc&limit=5')
       .then(function (rows) {
         if (!alive(myKey)) return;
@@ -804,6 +1035,205 @@ window.IAQ_SCREENS = (function () {
         var box = $('#dv-latest');
         if (box) box.textContent = 'تعذّرت القراءة: ' + e.message;
       });
+  }
+
+  /* ======================== إحصاءات الزوّار ======================== */
+  var PAGE_AR = null;
+  function pageName(slug) {
+    if (!PAGE_AR) {
+      PAGE_AR = {};
+      ((window.IAQ_REAL && window.IAQ_REAL.pages) || []).forEach(function (p) {
+        if (p && p.slug) PAGE_AR[p.slug] = p.title || p.slug;
+      });
+      PAGE_AR.index = 'الصفحة الرئيسة';
+    }
+    return PAGE_AR[slug] || slug;
+  }
+  var KIND_AR = { page: 'زيارة صفحة', file_dl: 'تنزيل ملفّ', file_view: 'معاينة ملفّ',
+                  cta: 'نقر زرّ', form: 'إرسال نموذج', contact: 'تواصل' };
+
+  function visitsView(sc, myKey) {
+    setTimeout(function () { paintVisits(myKey); }, 0);
+    return head(sc) + '<div id="sc-err"></div><div id="sc-body">' +
+      '<div class="iaq-card"><div class="muted">جارٍ قراءة الإحصاءات…</div></div></div>';
+  }
+  function head(sc) {
+    return '<div class="view-head"><h1>' + esc(sc.h1) +
+      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '<p>' + esc(sc.sub) + '</p></div>';
+  }
+
+  function paintVisits(myKey) {
+    var d = RANGE;
+    Promise.all([
+      readView('v_views_daily', d),
+      readView('v_views_by_path', d),
+      readView('v_views_by_label', d),
+      readView('v_views_by_ref', d),
+      readView('v_views_by_device', d),
+      api('v_views_hourly?select=*&limit=200').catch(function () { return []; })
+    ]).then(function (r) {
+      if (!alive(myKey)) return;
+      var daily = r[0], byPath = r[1], byLabel = r[2], byRef = r[3], byDev = r[4], hourly = r[5];
+      var box = $('#sc-body');
+      if (!box) return;
+      var ep = $('#sc-err');
+      if (ep) ep.innerHTML = err
+        ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
+          '<b>تعذّرت قراءة بعض الإحصاءات</b><br>' + esc(err) +
+          '<br><span class="small">إن كان الجدول غير موجود فشغّل <b>supabase/schema-v8.sql</b>.</span></div>' : '';
+
+      var pv = total(daily, function (x) { return x.kind === 'page'; });
+      var dl = total(daily, function (x) { return x.kind === 'file_dl'; });
+      var fv = total(daily, function (x) { return x.kind === 'file_view'; });
+      var ct = total(daily, function (x) { return x.kind === 'contact'; });
+      var fm = total(daily, function (x) { return x.kind === 'form'; });
+      var cta = total(daily, function (x) { return x.kind === 'cta'; });
+
+      var html = rangeBar(d) +
+        card('الخلاصة',
+          grid(6) + box2(pv, 'زيارة صفحة') + box2(dl, 'تنزيل ملفّ') + box2(fv, 'معاينة ملفّ') +
+          box2(cta, 'نقر زرّ') + box2(ct, 'نقر تواصل') + box2(fm, 'إرسال نموذج') + '</div>',
+          'المدى: آخر ' + d + ' يومًا بتوقيت الرياض. ولا نحسب زوّارًا فريدين — لا معرّف زائر ولا كوكيز.') +
+
+        card('اتجاه زيارات الصفحات',
+          chartLine(series(daily, d, function (x) { return x.kind === 'page'; }), { label: 'زيارات الصفحات' })) +
+
+        card('اتجاه التعامل مع الملفّات',
+          chartLine(series(daily, d, function (x) { return x.kind === 'file_dl' || x.kind === 'file_view'; }),
+                    { label: 'تنزيل ومعاينة' }),
+          'تنزيلٌ ومعاينةٌ معًا.') +
+
+        '<div class="grid2" style="align-items:start">' +
+          card('أكثر الصفحات زيارةً',
+            chartBars(sumBy(byPath, function (x) { return pageName(x.path); },
+                            function (x) { return x.kind === 'page'; }), { top: 10 })) +
+          card('أكثر الملفّات تنزيلًا',
+            chartBars(sumBy(byLabel, function (x) { return x.label; },
+                            function (x) { return x.kind === 'file_dl'; }), { top: 10, gold: 1 })) +
+        '</div>' +
+
+        '<div class="grid2" style="align-items:start">' +
+          card('مصادر الزيارات',
+            chartBars(sumBy(byRef, function (x) { return x.ref_host; }), { top: 8 }),
+            '«(مباشرة)» تعني دخولًا بلا مصدر: كتابة العنوان، أو من تطبيقٍ لا يُرسل المصدر.') +
+          card('الأجهزة',
+            chartDonut(sumBy(byDev, function (x) {
+              return { mobile: 'جوال', tablet: 'لوحيّ', desktop: 'حاسب' }[x.device] || 'غير معروف';
+            }), { unit: 'زيارة' })) +
+        '</div>' +
+
+        card('أكثر الأزرار نقرًا',
+          chartBars(sumBy(byLabel, function (x) { return x.label; },
+                          function (x) { return x.kind === 'cta' || x.kind === 'contact'; }), { top: 10 }),
+          'يشمل أزرار السلايدر وأزرار الأخبار والتواصل (هاتف وبريد ومنصّات) والتبرّع.') +
+
+        card('ذروة الزيارة — الأسبوع × الساعة', chartHeat(hourly || []),
+          'كل الفترة لا المدى المختار. الأغمق أكثر زيارةً. مفيدٌ لاختيار وقت النشر.');
+
+      box.innerHTML = html;
+    });
+  }
+  function box2(n, label) {
+    return '<div class="stat-box"><div class="sb-val">' + esc(String(n)) + '</div>' +
+           '<div class="sb-label">' + esc(label) + '</div></div>';
+  }
+
+  /* ======================== سجلّ العمل ومؤشّرات الردّ ======================== */
+  var ACT_AR = { insert: 'إضافة', update: 'تعديل', delete: 'حذف', status: 'تغيير حالة' };
+  var ENT_AR = { news: 'الأخبار', documents: 'الوثائق', people: 'الأشخاص', partners: 'الشركاء',
+                 hero_slides: 'شرائح السلايدر', menu_items: 'القائمة', submissions: 'الطلبات',
+                 settings: 'الإعدادات', content_overrides: 'نصوص الموقع', media: 'الوسائط',
+                 admins: 'الحسابات' };
+
+  function worklogView(sc, myKey) {
+    setTimeout(function () { paintWorklog(myKey); }, 0);
+    return head(sc) + '<div id="sc-err"></div><div id="sc-body">' +
+      '<div class="iaq-card"><div class="muted">جارٍ قراءة السجلّ…</div></div></div>';
+  }
+
+  function paintWorklog(myKey) {
+    var d = RANGE;
+    Promise.all([
+      readView('v_audit_daily', d),
+      api('audit_log?select=created_at,actor_email,action,entity,entity_id,detail' +
+          '&order=created_at.desc&limit=60').catch(function () { return []; }),
+      api('v_subs_response?select=*&order=created_at.desc&limit=1000').catch(function () { return []; })
+    ]).then(function (r) {
+      if (!alive(myKey)) return;
+      var ad = r[0], recent = r[1], subs = r[2];
+      var box = $('#sc-body');
+      if (!box) return;
+      var ep = $('#sc-err');
+      if (ep) ep.innerHTML = err
+        ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
+          '<b>تعذّرت قراءة بعض البيانات</b><br>' + esc(err) +
+          '<br><span class="small">إن كانت المناظر غير موجودة فشغّل <b>supabase/schema-v8.sql</b>.</span></div>' : '';
+
+      /* مؤشّرات الردّ */
+      var answered = [], open = 0, late = 0, closed = 0;
+      var now = Date.now();
+      (subs || []).forEach(function (s) {
+        if (s.hours_to_first != null) answered.push(Number(s.hours_to_first));
+        if (s.status === 'new') {
+          open++;
+          if (now - new Date(s.created_at).getTime() > 3 * 86400000) late++;
+        }
+        if (s.status === 'closed') closed++;
+      });
+      var avg = answered.length
+        ? (answered.reduce(function (a, b) { return a + b; }, 0) / answered.length) : null;
+      answered.sort(function (a, b) { return a - b; });
+      var med = answered.length ? answered[Math.floor(answered.length / 2)] : null;
+      function hrs(v) {
+        if (v == null) return '—';
+        if (v < 1) return Math.round(v * 60) + ' د';
+        if (v < 48) return (Math.round(v * 10) / 10) + ' س';
+        return Math.round(v / 24) + ' ي';
+      }
+
+      var html = rangeBar(d) +
+        card('مؤشّرات الردّ على الوارد',
+          grid(5) +
+            box2(hrs(avg), 'متوسّط زمن أوّل ردّ') +
+            box2(hrs(med), 'الوسيط') +
+            box2(open, 'لم يُفتح بعد') +
+            box2(late, 'متأخّر فوق ٣ أيام') +
+            box2(closed, 'مُغلق') + '</div>',
+          'زمن الردّ = من وصول الطلب إلى أوّل تغيير لحالته. ويُحسب من سجلّ العمل، ' +
+          'فالطلبات التي عُدّلت قبل تشغيل سجلّ العمل لا زمنَ لها.') +
+
+        card('نشاط الفريق يوميًّا', chartLine(series(ad, d), { label: 'عمليات' })) +
+
+        '<div class="grid2" style="align-items:start">' +
+          card('من أنجز ماذا', chartBars(sumBy(ad, function (x) { return x.actor_email; }), { top: 8 })) +
+          card('أكثر الأقسام تعديلًا',
+            chartBars(sumBy(ad, function (x) { return ENT_AR[x.entity] || x.entity; }), { top: 8, gold: 1 })) +
+        '</div>' +
+
+        card('نوع العمل',
+          chartDonut(sumBy(ad, function (x) { return ACT_AR[x.action] || x.action; }), { unit: 'عملية' })) +
+
+        card('آخر ٦٠ عملية',
+          (recent && recent.length
+            ? '<div style="max-height:420px;overflow:auto"><table class="tbl"><thead><tr>' +
+              '<th>الوقت</th><th>من</th><th>العمل</th><th>القسم</th><th>التفصيل</th>' +
+              '</tr></thead><tbody>' + recent.map(function (a) {
+                var det = '';
+                if (a.detail && a.detail.from) det = esc(a.detail.from) + ' ← ' + esc(a.detail.to);
+                else if (a.detail && a.detail.label) det = esc(a.detail.label);
+                else if (a.entity_id) det = '<span class="mono small muted">#' + esc(a.entity_id) + '</span>';
+                return '<tr><td class="small" style="white-space:nowrap">' + esc(dtLabel(a.created_at)) + '</td>' +
+                  '<td class="small">' + esc(a.actor_email || '—') + '</td>' +
+                  '<td>' + chipOf(a.action, ACT_AR) + '</td>' +
+                  '<td class="small">' + esc(ENT_AR[a.entity] || a.entity || '—') + '</td>' +
+                  '<td class="small">' + det + '</td></tr>';
+              }).join('') + '</tbody></table></div>'
+            : '<div class="muted" style="padding:22px;text-align:center">لا عمليات مسجّلة بعد — ' +
+              'السجلّ يبدأ من تشغيل schema-v8.</div>'));
+
+      box.innerHTML = html;
+    });
   }
 
   /* ---------------------- شاشة جرد الصفحات (للاطّلاع) ---------------------- */
@@ -1857,6 +2287,15 @@ window.IAQ_SCREENS = (function () {
     if (a === 'close') { e.preventDefault(); close(); return; }
     if (a === 'tpl') { e.preventDefault(); downloadTemplate(); return; }
     if (a === 'export') { e.preventDefault(); exportSheet(); return; }
+    if (a === 'range') {
+      e.preventDefault();
+      RANGE = parseInt(b.getAttribute('data-d'), 10) || 30;
+      var sc1 = S0();
+      if (sc1.kind === 'visits') paintVisits(cur);
+      else if (sc1.kind === 'worklog') paintWorklog(cur);
+      else if (sc1.kind === 'dash') paintDash(cur);
+      return;
+    }
     if (a === 'add') { e.preventDefault(); openForm(null); return; }
     if (a === 'import') { e.preventDefault(); openImport(); return; }
     if (a === 'importgo') { e.preventDefault(); importGo(); return; }
