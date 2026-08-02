@@ -949,7 +949,10 @@ def build_panel(out_dir, cmap, amap):
     assert page.count(a) == 1, "views map"
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
-    page = page.replace(a, "var views={" + view_add + "dashboard:vDashboard,", 1)
+    # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
+    # العدّ الحقيقي من الجداول. و vDashboard تبقى في الملف بلا مسارٍ إليها.
+    page = page.replace(a, "var views={" + view_add +
+                        'dashboard:function(){return window.IAQ_SCREENS.view("home");},', 1)
     steps.append("screens(%d)" % len(SCREEN_NAV))
 
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"

@@ -90,6 +90,11 @@ window.IAQ_SCREENS = (function () {
 
   /* ------------------------------ سجلّ الشاشات ------------------------------ */
   var SCREENS = {
+    home: {
+      nav: 'لوحة التحكم', h1: 'لوحة التحكم',
+      sub: 'أرقامٌ حقيقية من قاعدة البيانات — تُقرأ عند فتح الشاشة.',
+      kind: 'dash'
+    },
     assembly: {
       nav: 'الجمعية العمومية', h1: 'أعضاء الجمعية العمومية',
       sub: 'بيانات الأعضاء الحاليين — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.',
@@ -663,6 +668,7 @@ window.IAQ_SCREENS = (function () {
     var myKey = cur, sc = S0();
     if (sc.kind === 'settings') return settingsView(sc, myKey);
     if (sc.kind === 'pages') return pagesView(sc);
+    if (sc.kind === 'dash') return dashView(sc, myKey);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
@@ -689,6 +695,115 @@ window.IAQ_SCREENS = (function () {
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' +
       '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
+  }
+
+  /* ========================= لوحة التحكم الحقيقية =========================
+     العدّ يُطلب برأس Prefer: count=exact و Range: 0-0 — فيعود العدد في ترويسة
+     Content-Range بلا جلب صفٍّ واحد. أرخص من قراءة الجداول كلها بكثير. */
+  function countOf(path) {
+    return fetch(CFG.url + '/rest/v1/' + path + (path.indexOf('?') > -1 ? '&' : '?') + 'select=id', {
+      method: 'GET',
+      headers: {
+        apikey: CFG.key,
+        Authorization: 'Bearer ' + (S ? S.access_token : ''),
+        Prefer: 'count=exact',
+        Range: '0-0'
+      }
+    }).then(function (r) {
+      var cr = r.headers.get('content-range') || '';
+      var n = parseInt(String(cr).split('/')[1], 10);
+      return isFinite(n) ? n : (r.ok ? 0 : -1);
+    }).catch(function () { return -1; });
+  }
+  function isoDaysAgo(d) {
+    var t0 = Date.now() - d * 86400000;
+    return new Date(t0).toISOString().slice(0, 10);
+  }
+
+  var DASH = [
+    { g: 'المحتوى المنشور', items: [
+      { l: 'أعضاء الجمعية العمومية', q: 'people?grp=eq.assembly&status=eq.published' },
+      { l: 'أعضاء مجلس الإدارة', q: 'people?grp=eq.board&status=eq.published' },
+      { l: 'فريق العمل', q: 'people?grp=eq.team&status=eq.published' },
+      { l: 'الشركاء', q: 'partners?status=eq.published' },
+      { l: 'الأخبار', q: 'news?status=eq.published' },
+      { l: 'الوثائق', q: 'documents?status=eq.published' },
+      { l: 'شرائح السلايدر', q: 'hero_slides?status=eq.published' },
+      { l: 'عناصر القائمة الظاهرة', q: 'menu_items?visible=is.true' }
+    ] },
+    { g: 'الوارد من الزوّار', items: [
+      { l: 'إجمالي الطلبات', q: 'submissions' },
+      { l: 'طلبات جديدة', q: 'submissions?status=eq.new', hot: 1 },
+      { l: 'طلبات هذا الأسبوع', q: 'submissions?created_at=gte.' + isoDaysAgo(7) },
+      { l: 'استجابات قياس الرضا', q: 'survey_responses' }
+    ] },
+    { g: 'ما لا يظهر للزائر', items: [
+      { l: 'أخبار مسودّة', q: 'news?status=eq.draft' },
+      { l: 'وثائق مسودّة', q: 'documents?status=eq.draft' },
+      { l: 'أشخاص مخفيّون', q: 'people?status=eq.hidden' },
+      { l: 'حسابات اللوحة', q: 'admins' }
+    ] }
+  ];
+
+  function dashView(sc, myKey) {
+    setTimeout(function () { paintDash(myKey); }, 0);
+    var groups = DASH.map(function (g, gi) {
+      return '<div class="iaq-card" style="margin-block-end:14px">' +
+        '<h3 style="margin:0 0 12px;font-family:var(--disp);font-size:1.05rem">' + esc(g.g) + '</h3>' +
+        '<div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">' +
+        g.items.map(function (it, i) {
+          return '<div class="stat-box"><div class="sb-val" id="dv-' + gi + '-' + i + '">…</div>' +
+            '<div class="sb-label">' + esc(it.l) + '</div></div>';
+        }).join('') + '</div></div>';
+    }).join('');
+    return '<div class="view-head"><h1>' + esc(sc.h1) +
+      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '<p>' + esc(sc.sub) + '</p></div>' +
+      '<div id="sc-err"></div>' + groups +
+      '<div class="iaq-card"><h3 style="margin:0 0 10px;font-family:var(--disp);font-size:1.05rem">' +
+        'آخر الطلبات الواردة</h3><div id="dv-latest" class="muted">جارٍ القراءة…</div></div>' +
+      '<div class="notice" style="margin-block-start:14px">' +
+        '<b>حركة الزوّار غير معروضة — وهذا مقصود.</b><br>' +
+        'الأرقام أعلاه حقيقية من قاعدة البيانات. أمّا عدد الزوّار فلا يعرفه الموقع: ' +
+        'يحتاج أداة تحليلات تُركَّب أوّلًا. وأقربها لك <b>Cloudflare Web Analytics</b> ' +
+        'من لوحة Cloudflare نفسها (مجّانية وبلا كوكيز) — ' +
+        'وأرقامها تُقرأ من لوحتها لا من هنا.' +
+      '</div>';
+  }
+
+  function paintDash(myKey) {
+    var jobs = [];
+    DASH.forEach(function (g, gi) {
+      g.items.forEach(function (it, i) {
+        jobs.push(countOf(it.q).then(function (n) {
+          if (!alive(myKey)) return;
+          var el = $('#dv-' + gi + '-' + i);
+          if (!el) return;
+          if (n < 0) { el.textContent = '—'; el.title = 'تعذّرت القراءة'; return; }
+          el.textContent = String(n);
+          if (it.hot && n > 0) el.style.color = '#8c3d1c';
+        }));
+      });
+    });
+    api('submissions?select=id,kind,status,created_at,payload&order=created_at.desc&limit=5')
+      .then(function (rows) {
+        if (!alive(myKey)) return;
+        var box = $('#dv-latest');
+        if (!box) return;
+        if (!rows || !rows.length) { box.textContent = 'لا طلبات بعد.'; return; }
+        box.innerHTML = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+          '<th>وصل في</th><th>النموذج</th><th>المُرسِل</th><th>الحالة</th></tr></thead><tbody>' +
+          rows.map(function (r) {
+            return '<tr><td class="small" style="white-space:nowrap">' + esc(dtLabel(r.created_at)) + '</td>' +
+              '<td>' + chipOf(r.kind, KIND) + '</td>' +
+              '<td>' + cell({ k: 'payload', f: 'who' }, r) + '</td>' +
+              '<td>' + chipOf(r.status, SUBST) + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      })
+      .catch(function (e) {
+        var box = $('#dv-latest');
+        if (box) box.textContent = 'تعذّرت القراءة: ' + e.message;
+      });
   }
 
   /* ---------------------- شاشة جرد الصفحات (للاطّلاع) ---------------------- */
