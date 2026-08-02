@@ -283,12 +283,12 @@
       };
     });
 
-    /* شرائح الغلاف */
-    [].slice.call(d.querySelectorAll('.hero-slide')).forEach(function (sl) {
-      map.hero.push({ eyebrow: target(sl.querySelector('.hero-eyebrow')),
-                      title: target(sl.querySelector('h1')),
-                      text: target(sl.querySelector('.hero-text')) });
-    });
+    /* الشرائح لا تُمسح: مالكها شاشة «السلايدر الرئيسي» وحدها.
+       سببان قاطعان: (١) طبقة التجاوز تُعاد على 1.2ث و3.2ث بعد التحميل — أي
+       بعد أن تُعيد القاعدة بناء الشرائح — فتدهس ما جاء منها؛ (٢) المحرّر
+       يُرجع النصّ المجرّد، فحفظُ العنوان يمحو <span class="accent"> الملوّنة.
+       والقاعدة العامّة: عقدةٌ تُعيد القوائمُ بناءها لا تكون هدفًا للتجاوز.
+       وببقاء map.hero فارغةً تصير حلقاتُ القراءة والكتابة أدناه عاطلةً بذاتها. */
 
     return map;
   }
