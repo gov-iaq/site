@@ -458,8 +458,9 @@ window.IAQ_SCREENS = (function () {
       nav: 'الوثائق والملفات', h1: 'الوثائق والملفات',
       sub: 'لوائح ومحاضر وقوائم مالية وتقارير — تحرير البيانات ورفع ملف PDF جديد.',
       table: 'documents', filter: '', fixed: {}, nosort: 1, selectAll: 1, audit: 'auto',
+      groupSort: 'category',
       clientOrder: [['category', 1, DOCCAT], ['sort', 1], ['id', 1]],
-      nameKey: 'title', searchKeys: ['title', 'doc_date', 'storage_path'],
+      nameKey: 'title', searchKeys: ['title', 'storage_path'],
       reach: 'التعديل والحذف والإضافة تسري على تبويبات الملفات في صفحة «الحوكمة والإفصاح» وصفحة «قياس الرضا» عند أوّل تحميل، بلا إعادة بناء. ومعرض التراخيص مبنيّ ثابتًا (يحتاج صور الشهادات وجدول بياناتها) فلا تصله هذه الشاشة.',
       fields: [
         { k: 'category', l: 'التصنيف', t: 'select', o: DOCCAT, def: 'policies',
@@ -468,19 +469,17 @@ window.IAQ_SCREENS = (function () {
         { k: 'file', l: 'ملف PDF جديد (اختياري)', t: 'file',
           hint: 'اختر ملفًا فيُرفع إلى تخزين الموقع ويحلّ محلّ الرابط أدناه. واتركه فارغًا فيبقى الرابط كما هو.' },
         { k: 'storage_path', l: 'رابط الملف', t: 'text', req: 1, viaFile: 1,
-          hint: 'مسار داخل الموقع مثل files/policies/bylaws.pdf أو رابط كامل يبدأ بـ https' },
-        { k: 'dl_name', l: 'اسم ملف التحميل', t: 'text',
-          hint: 'الاسم العربي الذي يُحفظ به عند التحميل — مثل «اللائحة الأساسية.pdf»' },
-        { k: 'doc_date', l: 'تاريخ الوثيقة', t: 'text', half: 1,
-          hint: 'نصّ حرّ: 2024 أو 16/05/1445هـ (30/11/2023م)' },
-        { k: 'size_label', l: 'حجم الملف', t: 'text', half: 1, hint: 'مثل 712 KB' },
-        { k: 'pages', l: 'عدد الصفحات', t: 'int', half: 1 },
-        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, needs: 'sort', hint: 'الأصغر أوّلًا' },
+          hint: 'يُنشأ تلقائيًّا من العنوان والتصنيف عند رفع ملف. ويُحرَّر يدويًّا لملفٍّ داخل الموقع مثل files/policies/bylaws.pdf' },
+        { k: 'size_label', l: 'حجم الملف', t: 'text', half: 1,
+          hint: 'يُقرأ من الملف تلقائيًّا' },
+        { k: 'pages', l: 'عدد الصفحات', t: 'int', half: 1,
+          hint: 'يُحسب من الملف تلقائيًّا' },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, needs: 'sort',
+          hint: 'اتركه فارغًا فيصير آخر ملفٍّ في تصنيفه' },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهر على الموقع', draft: 'مسودّة (لا تظهر)' }, def: 'published' }
       ],
       list: [{ k: 'category', l: 'التصنيف', f: 'chip', o: DOCCAT },
              { k: 'title', l: 'العنوان', f: 'clip' },
-             { k: 'doc_date', l: 'التاريخ', f: 'text' },
              { k: 'size_label', l: 'الحجم', f: 'text' },
              { k: 'pages', l: 'صفحات', f: 'text' },
              { k: 'storage_path', l: 'الملف', f: 'file' },
@@ -1613,6 +1612,11 @@ window.IAQ_SCREENS = (function () {
       (footHtml ? '<div class="btnbar" style="padding:0 22px 20px">' + footHtml + '</div>' : '') + '</div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    /* اختيار ملفّ: يُقرأ حجمه وعدد صفحاته فورًا فلا يكتبهما المدير بيد */
+    ov.addEventListener('change', function (e) {
+      var t0 = e.target;
+      if (t0 && t0.type === 'file' && t0.files && t0.files[0]) autoFileMeta(t0.files[0]);
+    });
     /* اختيار «رابط خارجي» يُظهر حقل النصّ، وغيره يُخفيه */
     ov.addEventListener('change', function (e) {
       var s = e.target;
@@ -1811,7 +1815,7 @@ window.IAQ_SCREENS = (function () {
     /* إن اختار المدير ملفًّا فيُرفع أوّلًا: نجاح الرفع شرطٌ لكتابة الرابط،
        فلا يُسجَّل في القاعدة مسارٌ لملفٍ لم يصل. */
     if (upField) delete rec[upField.k];   /* ليس عمودًا في القاعدة */
-    var pre = upFile ? uploadFile(upFile, rec.category).then(function (url) {
+    var pre = upFile ? uploadFile(upFile, rec.category, rec.title).then(function (url) {
       rec.storage_path = url;
       var sp = $('#sc-f-storage_path');
       if (sp) sp.value = url;
@@ -1823,9 +1827,15 @@ window.IAQ_SCREENS = (function () {
                { method: 'PATCH', body: JSON.stringify(rec) });
     } else {
       if (!sc.nosort || hasCol('sort')) {
+        /* آخر ملفٍّ في تصنيفه: نقيس أكبر ترتيبٍ داخل المجموعة نفسها لا في
+           الجدول كلّه — وإلّا قفز ملفٌّ جديدٌ في تصنيفٍ صغير إلى آخر الجميع. */
+        var grp = sc.groupSort && rec[sc.groupSort] != null ? String(rec[sc.groupSort]) : null;
         var mx = 0;
-        rows.forEach(function (r) { if (r.sort > mx) mx = r.sort; });
-        if (rec.sort == null && (!sc.nosort || hasCol('sort'))) rec.sort = mx + 10;
+        rows.forEach(function (r) {
+          if (grp !== null && String(r[sc.groupSort]) !== grp) return;
+          if (r.sort > mx) mx = r.sort;
+        });
+        if (rec.sort == null) rec.sort = mx + 10;
       }
       q2 = api(sc.table + '?select=id', { method: 'POST', body: JSON.stringify([rec]) });
     }
@@ -1879,14 +1889,85 @@ window.IAQ_SCREENS = (function () {
     /* الاسم العربي يُرمَّز في الرابط؛ نُبقيه لأنه أوضح للمدير في القاعدة */
     return (base || 'file') + '.' + (ext || 'pdf');
   }
-  function uploadFile(file, category) {
+  /* حجمٌ مقروءٌ كما يكتبه الإنسان — يُقرأ من الملفّ فلا يُكتب بيد */
+  function sizeLabel(bytes) {
+    var b = Number(bytes) || 0;
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return Math.round(b / 1024) + ' KB';
+    var m = b / (1024 * 1024);
+    return (m < 10 ? m.toFixed(1) : String(Math.round(m))) + ' MB';
+  }
+
+  /* عدد صفحات PDF بلا مكتبة خارجية. طريقتان تُكمل إحداهما الأخرى:
+     /Count في شجرة الصفحات دقيقٌ حين يوجد، ويغيب حين تكون الشجرة داخل مجرى
+     ملاحظة: [^>] لا [\s\S] — المطابقة يجب أن تبقى داخل قاموس الكائن،
+     وإلّا أخذت /Count من كائنٍ آخر (جرّبته: أعطى ٧ بدل ١٧).
+     كائناتٍ مضغوط — وهناك يُنقذنا عدّ /Type /Page بعد فكّ المجاري.
+     جُرّبت على أربعٍ وعشرين وثيقةً حقيقيةً من وثائق الموقع: أصابت كلَّها،
+     بينما أخطأت كلُّ طريقةٍ منهما وحدها في بعضها. */
+  function pdfPages(buf) {
+    var u8 = new Uint8Array(buf);
+    var txt = '';
+    /* نقرأ البايتات كلاتينيّ-١ لا كـUTF-8: بنية PDF بايتاتٌ لا نصّ، والترميز
+       الخاطئ يُفسد المطابقة. */
+    for (var i = 0; i < u8.length; i += 65536) {
+      txt += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + 65536, u8.length)));
+    }
+    var best = 0, m, re = /\/Type\s*\/Pages\b[^>]{0,400}?\/Count\s+(\d+)/g;
+    while ((m = re.exec(txt))) { var n = parseInt(m[1], 10); if (n > best) best = n; }
+    if (best) return Promise.resolve(best);
+
+    /* لا شجرةَ ظاهرة: نعدّ /Type /Page في الخام ثمّ في المجاري المفكوكة */
+    function countIn(s) { return (s.match(/\/Type\s*\/Page[^s]/g) || []).length; }
+    var total = countIn(txt);
+    if (typeof DecompressionStream !== 'function') return Promise.resolve(total);
+
+    var streams = [], sre = /stream\r?\n/g, sm;
+    while ((sm = sre.exec(txt))) {
+      var start = sm.index + sm[0].length;
+      var end = txt.indexOf('endstream', start);
+      if (end < 0) break;
+      if (end - start > 8 && end - start < 4 * 1024 * 1024) streams.push([start, end]);
+      if (streams.length > 400) break;          /* سقفٌ: لا نُعلّق اللوحة */
+    }
+    return streams.reduce(function (chain, se) {
+      return chain.then(function () {
+        return new Response(new Blob([u8.subarray(se[0], se[1])])
+          .stream().pipeThrough(new DecompressionStream('deflate')))
+          .text()
+          .then(function (s) { total += countIn(s); })
+          .catch(function () { });                /* مجرًى غير مضغوطٍ بـflate */
+      });
+    }, Promise.resolve()).then(function () { return total; });
+  }
+
+  /* يقرأ الملفّ مرّةً واحدة ويملأ الحجم وعدد الصفحات في النموذج */
+  function autoFileMeta(file) {
+    var sz = $('#sc-f-size_label');
+    if (sz) sz.value = sizeLabel(file.size);
+    var pg = $('#sc-f-pages');
+    if (!pg || !/\.pdf$/i.test(file.name || '')) return;
+    pg.value = '';
+    file.arrayBuffer().then(pdfPages).then(function (n) {
+      if (n > 0 && pg) pg.value = String(n);
+    }).catch(function () { });                    /* الفشل يُبقيه فارغًا لا خاطئًا */
+  }
+
+  function uploadFile(file, category, title) {
     if (file.size > 25 * 1024 * 1024) {
       return Promise.reject(new Error('حجم الملف يتجاوز 25 ميجابايت — اضغطه أو ارفعه بوسيلة أخرى.'));
     }
     /* بصمة وقت الرفع: تمنع تصادم الأسماء، وتضمن رابطًا جديدًا عند استبدال
        وثيقة فلا تُخدَم نسخةٌ قديمة من ذاكرة الوسيط. */
     var stamp = Date.now().toString(36);
-    var path = 'docs/' + (category || 'other') + '/' + stamp + '-' + safeName(file.name);
+    /* الاسم من عنوان الوثيقة لا من اسم الملفّ على جهاز المدير: خاصيّة download
+       يتجاهلها المتصفّح عبر الأصول (الملفّات على نطاق سوپابيز والموقع على نطاقه)،
+       فما يُحفظ به الملفّ هو آخر جزءٍ من الرابط. فليكن العنوان. */
+    var base = safeName(String(title || '').trim() || file.name);
+    if (!/\.[a-z0-9]{2,4}$/i.test(base)) base += '.pdf';
+    /* البصمة مجلّدٌ لا بادئةَ اسم: فآخر جزءٍ من الرابط — وهو ما يحفظ به
+       المتصفّح — يبقى عنوان الوثيقة نقيًّا. */
+    var path = 'docs/' + (category || 'other') + '/' + stamp + '/' + base;
     var el = $('#sc-formerr');
     if (el) { el.style.color = ''; el.textContent = 'جارٍ رفع الملف…'; }
     return fetch(CFG.url + '/storage/v1/object/' + encodeURI('iaq-files/' + path) + '?upsert=true', {
