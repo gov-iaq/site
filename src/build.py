@@ -640,6 +640,45 @@ def safe_field(name, val):
         raise SystemExit("خطأ في contact.json — الحقل «%s» يحتوي محارف تحكّم." % name)
     return s.encode("utf-8")
 
+# ─────────────────── الروابط الاجتماعية ───────────────────
+#  تُبنى المنصّات كلها والفارغة تُخفى بوسم hidden، فإضافة منصّة تصير تشغيلَ
+#  زرٍّ في اللوحة لا إعادة بناء. وأيقوناتها مصمتة (fill) كأيقونات الموقع.
+SOCIALS = [
+    ("x", "إكس",
+     '<path d="M18.9 2H22l-6.8 7.8L23 22h-6.5l-4.6-6.2L6.6 22H3.5l7.1-8.1L2 2h6.6l4.3 5.8L18.9 2Zm-1.1 18h1.7L7.2 3.7H5.4L17.8 20Z"/>'),
+    ("linkedin", "لينكدإن",
+     '<path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.04c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13Zm1.78 13.02H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/>'),
+    ("youtube", "يوتيوب",
+     '<path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/>'),
+    ("whatsapp", "واتساب",
+     '<path d="M20.9 3.5A11.9 11.9 0 0 0 2.1 17.9L.5 24l6.3-1.6a12 12 0 0 0 5.7 1.4h.005c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 0 0-3.5-8.4ZM12.5 21.8h-.004a9.9 9.9 0 0 1-5-1.4l-.36-.2-3.7.97 1-3.6-.24-.37a9.9 9.9 0 1 1 8.3 4.6Zm5.4-7.4c-.3-.15-1.8-.87-2-.97-.28-.1-.48-.15-.68.15s-.78.97-.96 1.17c-.18.2-.36.22-.66.07a8.1 8.1 0 0 1-2.4-1.5 9 9 0 0 1-1.65-2.1c-.17-.3-.02-.46.13-.61.13-.13.3-.35.44-.53.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.64-.93-2.24-.24-.59-.5-.5-.68-.51h-.58c-.2 0-.53.08-.8.38-.28.3-1.06 1.03-1.06 2.5s1.08 2.9 1.23 3.1c.15.2 2.1 3.2 5.1 4.5.7.3 1.26.48 1.7.62.72.23 1.37.2 1.88.12.58-.09 1.79-.73 2.04-1.44.25-.7.25-1.31.17-1.44-.07-.13-.27-.2-.57-.35Z"/>'),
+    ("instagram", "إنستغرام",
+     '<path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.42.56.22.96.48 1.38.9.42.42.68.82.9 1.38.17.42.37 1.06.42 2.23.06 1.25.07 1.64.07 4.85s0 3.6-.07 4.85c-.05 1.17-.25 1.8-.42 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.17-1.06.37-2.23.42-1.25.06-1.64.07-4.85.07s-3.6 0-4.85-.07c-1.17-.05-1.8-.25-2.23-.42-.56-.22-.96-.48-1.38-.9a3.8 3.8 0 0 1-.9-1.38c-.17-.42-.37-1.06-.42-2.23C2.2 15.6 2.2 15.2 2.2 12s0-3.6.07-4.85c.05-1.17.25-1.8.42-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.17 1.06-.37 2.23-.42C8.4 2.2 8.8 2.2 12 2.2Zm0 2.4c-3.15 0-3.5.01-4.73.07-.9.04-1.34.2-1.63.31-.35.14-.6.3-.87.57-.27.27-.43.52-.57.87-.11.29-.27.73-.31 1.63C3.83 9.28 3.82 9.63 3.82 12s.01 2.72.07 3.95c.04.9.2 1.34.31 1.63.14.35.3.6.57.87.27.27.52.43.87.57.29.11.73.27 1.63.31 1.23.06 1.58.07 4.73.07s3.5-.01 4.73-.07c.9-.04 1.34-.2 1.63-.31.35-.14.6-.3.87-.57.27-.27.43-.52.57-.87.11-.29.27-.73.31-1.63.06-1.23.07-1.58.07-3.95s-.01-2.72-.07-3.95c-.04-.9-.2-1.34-.31-1.63a2.3 2.3 0 0 0-.57-.87 2.3 2.3 0 0 0-.87-.57c-.29-.11-.73-.27-1.63-.31-1.23-.06-1.58-.07-4.73-.07Zm0 3.4a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 8.24a3.24 3.24 0 1 0 0-6.48 3.24 3.24 0 0 0 0 6.48Zm6.37-8.44a1.17 1.17 0 1 1-2.34 0 1.17 1.17 0 0 1 2.34 0Z"/>'),
+    ("tiktok", "تيك توك",
+     '<path d="M16.6 2h-3.1v13.1a2.6 2.6 0 1 1-1.9-2.5V9.4a5.7 5.7 0 1 0 5 5.7V8.5a6.6 6.6 0 0 0 4 1.3V6.7a3.7 3.7 0 0 1-2.9-1.4A3.8 3.8 0 0 1 16.6 2Z"/>'),
+    ("facebook", "فيسبوك",
+     '<path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.76-1.6 1.54V12h2.7l-.43 2.9h-2.27v7A10 10 0 0 0 22 12Z"/>'),
+]
+
+
+def render_socials():
+    """كتلة الروابط الاجتماعية كاملة — والفارغ يُبنى مخفيًّا لا يُحذف."""
+    if not os.path.exists(CONTACT_F):
+        return b""
+    with io.open(CONTACT_F, encoding="utf-8") as f:
+        s = json.load(f).get("socials", {}) or {}
+    out = []
+    for key, label, path in SOCIALS:
+        url = (s.get(key) or "").strip()
+        out.append(
+            '<a href="%s" aria-label="%s" data-soc="%s" target="_blank" rel="noopener"%s>'
+            '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">'
+            '%s</svg></a>'
+            % (esc(url) if url else "contact.html", esc(label), key,
+               "" if url else " hidden", path))
+    return "".join(out).encode("utf-8")
+
+
 def contact_map():
     """خريطة استبدال بيانات التواصل — تُطبَّق على القالب المشترك وكل الصفحات."""
     if not os.path.exists(CONTACT_F):
@@ -696,6 +735,8 @@ def panel_real():
             "address": c.get("address_line", ""), "phone": c.get("phone_display", ""),
             "email": c.get("email", ""), "reg": c.get("license_no", ""),
             "phoneTel": c.get("phone_tel", ""),
+            "addrShort": c.get("address_short", ""), "city": c.get("city", ""),
+            "hours": c.get("hours", ""),
             "social": {"x": s.get("x", ""), "instagram": s.get("instagram", ""),
                        "linkedin": s.get("linkedin", ""), "youtube": s.get("youtube", ""),
                        "whatsapp": s.get("whatsapp", "")},
@@ -947,6 +988,54 @@ def build_panel(out_dir, cmap, amap):
     print("لوحة التحكّم: %s (%d من %d بايت) — %s" % (name, len(data), n0, "، ".join(steps)))
     return name
 
+# ─────────────────── الفهرسة: بيتا أم إطلاق رسمي ───────────────────
+#  علمٌ واحد في pages.json يحكم الثلاثة: robots.txt وخريطة الموقع ووسم
+#  الفهرسة في الصفحات. وبلا وسمٍ في الصفحة نفسها قد يُفهرَس ما منعه robots
+#  إن وصل إليه زاحفٌ من رابطٍ خارجي — فالمنع في الموضعين.
+PANEL_PATHS = ("iaq-cp-9f4b21.html", "iaq-cp-9f4b21-panel.html")
+
+
+def is_production():
+    with io.open(DATA, encoding="utf-8") as f:
+        return bool(json.load(f).get("production"))
+
+
+def robots_txt(prod, base):
+    lines = []
+    if prod:
+        lines += ["# الإطلاق الرسمي — الفهرسة مسموحة.",
+                  "User-agent: *", "Allow: /", ""]
+    else:
+        lines += ["# التشغيل التجريبي (بيتا) — الفهرسة ممنوعة.",
+                  "# للإطلاق: اجعل production = true في src/data/pages.json ثم أعد البناء.",
+                  "User-agent: *", "Disallow: /", ""]
+    lines += ["# لوحة التحكّم — لا تُفهرَس في الحالين"]
+    for p in PANEL_PATHS:
+        lines.append("Disallow: /%s" % p)
+    if prod:
+        lines += ["", "Sitemap: %s/sitemap.xml" % base.rstrip("/")]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def sitemap_xml(prod, base, pages):
+    """خريطة الموقع مولَّدة من قائمة الصفحات نفسها فلا تتخلّف عنها."""
+    if not prod:
+        return None                     # لا خريطة في البيتا
+    b = base.rstrip("/")
+    rows = ['  <url><loc>%s/</loc><changefreq>monthly</changefreq>'
+            '<priority>1.0</priority></url>' % b]
+    for pg in pages:
+        slug = pg.get("slug", "")
+        if not slug or slug == "index":
+            continue
+        pri = "0.7" if slug in ("about", "programs", "news", "governance", "contact") else "0.5"
+        rows.append('  <url><loc>%s/%s.html</loc><changefreq>monthly</changefreq>'
+                    '<priority>%s</priority></url>' % (b, esc(slug), pri))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            + "\n".join(rows) + "\n</urlset>\n").encode("utf-8")
+
+
 def build(out_dir):
     head_tpl = rb(os.path.join(TEMPLATES, "head.html"))
     header_tpl = rb(os.path.join(TEMPLATES, "header.html"))
@@ -974,6 +1063,10 @@ def build(out_dir):
     cmap.update(files_map())
     # رموز عامة تصل الصفحات المولّدة والثابتة معًا
     cmap[b"{{ORN}}"] = ORN_HTML.encode("utf-8")
+    cmap[b"{{SOCIALS}}"] = render_socials()
+    prod = is_production()
+    cmap[b"{{NOINDEX}}"] = (b"" if prod else
+        b'<meta name="robots" content="noindex, nofollow" />\n')
     # قواعد @font-face للخطوط المستضافة محليًّا (تُولَّد بسكربت الخطوط)
     ff = os.path.join(TEMPLATES, "fonts.css")
     cmap[b"{{FONT_FACES}}"] = rb(ff) if os.path.exists(ff) else b""
@@ -1039,6 +1132,20 @@ def build(out_dir):
     # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة أو موجودة في static
     # 2-ب) لوحة التحكّم تُجمَّع من src/panel بعد نسخ الأصول
     pname = build_panel(out_dir, cmap, amap)
+
+    # robots.txt وخريطة الموقع: تُولَّدان من علم الإنتاج بعد نسخ الملفات
+    # الثابتة، فتغلبان أي نسخةٍ يدويّة. والخريطة تُحذف في البيتا.
+    base = data.get("site_url", "")
+    with open(os.path.join(out_dir, "robots.txt"), "wb") as f:
+        f.write(robots_txt(prod, base))
+    sm = sitemap_xml(prod, base, data["pages"])
+    sm_path = os.path.join(out_dir, "sitemap.xml")
+    if sm:
+        with open(sm_path, "wb") as f:
+            f.write(sm)
+    elif os.path.exists(sm_path):
+        os.remove(sm_path)
+    print("الفهرسة: %s" % ("مسموحة + خريطة موقع" if prod else "ممنوعة (بيتا)"))
 
     # 3) تنظيف: حذف صفحات HTML قديمة في الجذر لم تعد مولّدة
     expected = set(pg["slug"] + ".html" for pg in data["pages"])

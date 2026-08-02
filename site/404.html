@@ -1138,8 +1138,14 @@ var IAQ_PATH = (function () {
      تُحدَّث الروابط لا النصوص وحدها: هاتفٌ نصُّه صحيح ورابطه قديم يتّصل بالرقم
      الخطأ. والروابط الاجتماعية تُطابَق بوسم aria-label الذي بناه البنّاء،
      والفارغة تُخفى بدل أن تُفضي إلى صفحة خطأ. */
-  var SOC = { social_x: 'إكس', social_youtube: 'يوتيوب', social_linkedin: 'لينكدإن',
-              social_whatsapp: 'واتساب', social_instagram: 'إنستغرام' };
+  /* المطابقة بـdata-soc لا بالتسمية العربية: لا تتعلّق بلغة الواجهة */
+  var SOC = { social_x: 'x', social_youtube: 'youtube', social_linkedin: 'linkedin',
+              social_whatsapp: 'whatsapp', social_instagram: 'instagram',
+              social_tiktok: 'tiktok', social_facebook: 'facebook' };
+  /* الحقول النصّية الموسومة في البناء */
+  var FIELDS = { contact_city: 'city', contact_addr_short: 'addr_short',
+                 contact_addr_line: 'addr_line', contact_hours: 'hours',
+                 contact_license: 'license' };
   function okLink(u) {
     var s2 = String(u == null ? '' : u).trim();
     if (!s2) return '';
@@ -1170,13 +1176,22 @@ var IAQ_PATH = (function () {
       var v = IAQ.settings()[key];
       if (v === undefined) continue;               /* لم يُضبط: يبقى المبنيّ */
       var url = okLink(v);
-      var sel = '[aria-label="' + SOC[key] + '"]';
+      var sel = 'a[data-soc="' + SOC[key] + '"]';
       [].slice.call(document.querySelectorAll(sel)).forEach(function (a) {
-        if (a.tagName !== 'A') return;
         if (url) { a.setAttribute('href', url); a.hidden = false; }
         else a.hidden = true;                      /* فارغ = يُخفى لا يُفضي لخطأ */
         n++;
       });
+    }
+    /* الحقول النصّية: عنوانٌ وساعاتٌ وترخيص — تُوسَم في البناء بـdata-iaq-f */
+    for (var fk in FIELDS) {
+      if (!FIELDS.hasOwnProperty(fk)) continue;
+      var fv = IAQ.settings()[fk];
+      if (fv === undefined || fv === null) continue;
+      var txt = String(fv).trim();
+      if (!txt) continue;                          /* فارغ = يبقى المبنيّ */
+      [].slice.call(document.querySelectorAll('[data-iaq-f="' + FIELDS[fk] + '"]'))
+        .forEach(function (el) { el.textContent = txt; n++; });
     }
     var don = okLink(IAQ.setting('donate_url'));
     if (don) {

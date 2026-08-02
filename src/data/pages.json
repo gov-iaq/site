@@ -1,5 +1,7 @@
 {
   "site_url": "https://iaq.org.sa",
+  "_production": "false = بيتا (منع فهرسة شامل) · true = إطلاق رسمي (سماح + خريطة موقع). بدّلها ثم أعد البناء.",
+  "production": false,
   "nav_slots": 8,
   "pages": [
     {

@@ -1,10 +1,8 @@
-# مرحلة التشغيل التجريبي (بيتا): منع الفهرسة في محرّكات البحث.
-# ⚠️ عند الإطلاق الرسمي على النطاق iaq.org.sa استبدل السطرين الأخيرين بالتالي، ثم أعد البناء والنشر:
-#    User-agent: *
-#    Allow: /
-#    Sitemap: https://iaq.org.sa/sitemap.xml
+# التشغيل التجريبي (بيتا) — الفهرسة ممنوعة.
+# للإطلاق: اجعل production = true في src/data/pages.json ثم أعد البناء.
 User-agent: *
 Disallow: /
-# لوحة التحكّم — لا تُفهرَس
+
+# لوحة التحكّم — لا تُفهرَس في الحالين
 Disallow: /iaq-cp-9f4b21.html
 Disallow: /iaq-cp-9f4b21-panel.html

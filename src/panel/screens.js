@@ -288,7 +288,8 @@ window.IAQ_SCREENS = (function () {
       sub: 'الهاتف والبريد وروابط المنصّات — تسري على كل صفحات الموقع.',
       kind: 'settings',
       reach: 'يسري على الترويسة والتذييل وصفحة «تواصل معنا» في كل الصفحات عند أوّل تحميل. ' +
-             'أمّا العنوان وساعات العمل فنصوصٌ تُحرَّر من «النصوص والمحتوى».',
+             'والمنصّة التي يُترك رابطها فارغًا تُخفى أيقونتها، وتظهر بمجرّد وضع رابطها ' +
+             '— فلا تحتاج إضافة منصّة إعادة بناء.',
       rows: [
         { key: 'contact_phone_display', l: 'الجوال كما يظهر', t: 'text', dyn: 'settings.phone',
           hint: 'مثل 0505144421 — هذا ما يقرأه الزائر' },
@@ -301,8 +302,17 @@ window.IAQ_SCREENS = (function () {
         { key: 'social_linkedin', l: 'لينكدإن', t: 'text', dyn: 'social.linkedin' },
         { key: 'social_whatsapp', l: 'واتساب', t: 'text', dyn: 'social.whatsapp' },
         { key: 'social_instagram', l: 'إنستغرام', t: 'text', dyn: 'social.instagram' },
+        { key: 'social_tiktok', l: 'تيك توك', t: 'text', dyn: 'social.tiktok' },
+        { key: 'social_facebook', l: 'فيسبوك', t: 'text', dyn: 'social.facebook' },
         { key: 'donate_url', l: 'رابط التبرّع', t: 'text', dyn: 'donate',
-          hint: 'متجر جمع التبرّعات — يُستعمل في أزرار «تبرّع»' }
+          hint: 'متجر جمع التبرّعات — يُستعمل في أزرار «تبرّع»' },
+        { key: 'contact_city', l: 'المدينة', t: 'text', dyn: 'settings.city' },
+        { key: 'contact_addr_short', l: 'العنوان المختصر', t: 'text', dyn: 'settings.addrShort',
+          hint: 'يظهر في التذييل — مثل «مدينة بريدة، المملكة العربية السعودية»' },
+        { key: 'contact_addr_line', l: 'العنوان التفصيلي', t: 'text', dyn: 'settings.address',
+          hint: 'الحيّ والشارع' },
+        { key: 'contact_hours', l: 'ساعات العمل', t: 'text', dyn: 'settings.hours' },
+        { key: 'contact_license', l: 'رقم الترخيص', t: 'text', dyn: 'settings.reg' }
       ]
     },
     sitecfg: {
