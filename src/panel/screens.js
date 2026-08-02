@@ -529,8 +529,13 @@ window.IAQ_SCREENS = (function () {
   }
   function $(s) { return document.querySelector(s); }
   function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+  /* الرمز من وحدة الجلسة لا من نسخةٍ قديمة: بعد أي تجديدٍ يصل الجديد
+     إلى كل الطلبات بلا إعادة تحميل. */
+  function tok() {
+    return (window.IAQ_AUTH && window.IAQ_AUTH.token()) || (S ? S.access_token : '');
+  }
   function hdr(json) {
-    var h = { apikey: CFG.key, Authorization: 'Bearer ' + (S ? S.access_token : '') };
+    var h = { apikey: CFG.key, Authorization: 'Bearer ' + tok() };
     if (json) h['Content-Type'] = 'application/json';
     return h;
   }
@@ -540,7 +545,19 @@ window.IAQ_SCREENS = (function () {
     if (extraHeaders) {
       for (var hk in extraHeaders) if (extraHeaders.hasOwnProperty(hk)) opt.headers[hk] = extraHeaders[hk];
     }
-    return fetch(CFG.url + '/rest/v1/' + path, opt).then(function (r) {
+    function go() {
+      opt.headers = hdr(!!opt.body);
+      if (extraHeaders) {
+        for (var k2 in extraHeaders) if (extraHeaders.hasOwnProperty(k2)) opt.headers[k2] = extraHeaders[k2];
+      }
+      return fetch(CFG.url + '/rest/v1/' + path, opt);
+    }
+    /* 401 = انتهت صلاحية الرمز: نُجدّد ونُعيد مرّةً واحدة. المحاولة الواحدة
+       مقصودة — لو فشل التجديد فالخطأ يظهر للمدير ولا ندخل حلقة. */
+    return go().then(function (r) {
+      if (r.status !== 401 || !window.IAQ_AUTH) return r;
+      return window.IAQ_AUTH.refresh().then(go).catch(function () { return r; });
+    }).then(function (r) {
       if (r.ok) return r.status === 204 ? null : r.json();
       return r.text().then(function (b) {
         var d = '';
@@ -683,7 +700,7 @@ window.IAQ_SCREENS = (function () {
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
-      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div class="iaq-card" style="margin-block-end:14px">' + toolbar(sc) +
         '<div id="sc-diag" class="muted small">جارٍ التحميل…</div></div>' +
@@ -702,7 +719,7 @@ window.IAQ_SCREENS = (function () {
       loadSettings(sc).then(function () { if (alive(myKey)) paintSettings(sc); });
     }, 0);
     return '<div class="view-head"><h1>' + esc(sc.h1) +
-      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' +
       '<div class="iaq-card"><div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>';
@@ -895,7 +912,7 @@ window.IAQ_SCREENS = (function () {
       method: 'GET',
       headers: {
         apikey: CFG.key,
-        Authorization: 'Bearer ' + (S ? S.access_token : ''),
+        Authorization: 'Bearer ' + tok(),
         Prefer: 'count=exact',
         Range: '0-0'
       }
@@ -947,7 +964,7 @@ window.IAQ_SCREENS = (function () {
         }).join('') + '</div></div>';
     }).join('');
     return '<div class="view-head"><h1>' + esc(sc.h1) +
-      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div id="sc-err"></div>' + groups +
       '<div id="dv-visits"></div>' +
@@ -1056,9 +1073,10 @@ window.IAQ_SCREENS = (function () {
     return head(sc) + '<div id="sc-err"></div><div id="sc-body">' +
       '<div class="iaq-card"><div class="muted">جارٍ قراءة الإحصاءات…</div></div></div>';
   }
+  /* رقم الإصدار في الشريط الأعلى مرّةً واحدة (شارة tbVer) لا جوار عنوان
+     كل شاشة — تكرارُه ضجيجٌ لا معلومة. */
   function head(sc) {
-    return '<div class="view-head"><h1>' + esc(sc.h1) +
-      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+    return '<div class="view-head"><h1>' + esc(sc.h1) + '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>';
   }
 
@@ -1247,7 +1265,7 @@ window.IAQ_SCREENS = (function () {
         '<td><a href="' + esc(f) + '" target="_blank" rel="noopener" class="mono small">معاينة</a></td></tr>';
     }).join('');
     return '<div class="view-head"><h1>' + esc(sc.h1) +
-      ' <span class="chip" style="vertical-align:middle;font-size:11px">إصدار ' + esc(BUILD) + '</span></h1>' +
+      '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
       '<div class="iaq-card">' +
         '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:16px">' +
@@ -1974,7 +1992,7 @@ window.IAQ_SCREENS = (function () {
       method: 'POST',
       headers: {
         apikey: CFG.key,
-        Authorization: 'Bearer ' + (S ? S.access_token : ''),
+        Authorization: 'Bearer ' + tok(),
         'x-upsert': 'true',
         'Content-Type': file.type || 'application/pdf'
       },

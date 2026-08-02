@@ -635,6 +635,8 @@ def admin_map():
         b"{{LOGIN_URL}}":    login.encode("utf-8"),
         b"{{PATH_ALGO}}":    path_algo(),
         b"{{RUNTIME_404}}":  runtime_script("404"),
+        #  وحدة الجلسة نفسها في صفحة الدخول وفي اللوحة: مصدرٌ واحد
+        b"{{AUTH_JS}}":      rb(os.path.join(TEMPLATES, "iaq-auth.js")),
     }
 
 BAD_CHARS = '<>"'
@@ -964,16 +966,38 @@ def build_panel(out_dir, cmap, amap):
         '<link rel="icon" type="image/png" href="favicon.png" />' + NLS +
         '<link rel="apple-touch-icon" href="favicon.png" />' + NLS +
         '<script>' + NLS +
-        '(function(){var LOGIN=' + json.dumps(login) + ';var s=null;' + NLS +
-        'try{s=JSON.parse(sessionStorage.getItem("iaq_session")||"null");}catch(e){}' + NLS +
-        'if(!s||!s.access_token||!(s.expires_at*1000>Date.now()+5000)){' + NLS +
-        'try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);return;}' + NLS +
-        'window.IAQ_SESSION=s;window.IAQ_SUPABASE=' + supa + ';window.IAQ_LOGIN=LOGIN;' + NLS +
-        'window.IAQ_LOGOUT=function(){try{fetch(IAQ_SUPABASE.url+"/auth/v1/logout",{method:"POST",' + NLS +
-        'headers:{apikey:IAQ_SUPABASE.key,Authorization:"Bearer "+s.access_token}});}catch(e){}' + NLS +
-        'try{sessionStorage.removeItem("iaq_session");}catch(e){}location.replace(LOGIN);};})();' + NLS +
+        'window.IAQ_SUPABASE=' + supa + ';' + NLS +
+        '</script>' + NLS +
+        #  وحدة الجلسة أوّلًا: البوّابة تحتاج قارئها ومُجدّدها
+        '<script>' + NLS + rb(os.path.join(TEMPLATES, "iaq-auth.js")).decode("utf-8") + NLS +
+        '</script>' + NLS +
+        '<script>' + NLS +
+        '(function(){var LOGIN=' + json.dumps(login) + ';window.IAQ_LOGIN=LOGIN;' + NLS +
+        'var A=window.IAQ_AUTH,s=A?A.read():null;' + NLS +
+        'window.IAQ_LOGOUT=function(){if(A)A.logout();location.replace(LOGIN);};' + NLS +
+        'if(A&&A.valid(s)){window.IAQ_SESSION=s;return;}' + NLS +
+        #  انتهت الصلاحية ومعها رمز تجديد: نُجدّد صامتين ونُعيد التحميل
+        #  مرّةً واحدة. الحارس يمنع حلقةً لا تنتهي إن فشل التجديد دائمًا.
+        'var G="iaq_refresh_try";' + NLS +
+        'if(s&&s.refresh_token&&A&&!sessionStorage.getItem(G)){' + NLS +
+        'try{sessionStorage.setItem(G,"1");}catch(e){}' + NLS +
+        'document.documentElement.style.visibility="hidden";' + NLS +
+        'A.refresh().then(function(){location.reload();})' + NLS +
+        '.catch(function(){A.clear();location.replace(LOGIN);});return;}' + NLS +
+        'try{sessionStorage.removeItem(G);}catch(e){}' + NLS +
+        'if(A)A.clear();location.replace(LOGIN);})();' + NLS +
         'window.IAQ_REAL=' + json.dumps(panel_real(), ensure_ascii=False) + ';' + NLS +
         'window.IAQ_BUILD=' + json.dumps(build_stamp()) + ';' + NLS +
+        'try{sessionStorage.removeItem("iaq_refresh_try");}catch(e){}' + NLS +
+        #  شارة الإصدار تُملأ بعد بناء الصفحة، ونمطها مميّزٌ لا كنمط
+        #  «نسخة أولية» الذي كان يوحي بأنّ اللوحة غير جاهزة.
+        'document.addEventListener("DOMContentLoaded",function(){' + NLS +
+        'var v=document.getElementById("tbVer");if(!v)return;' + NLS +
+        'v.textContent="إصدار "+String(window.IAQ_BUILD||"").replace(/ .*$/,"");' + NLS +
+        'v.title="رقم إصدار اللوحة "+(window.IAQ_BUILD||"");' + NLS +
+        'v.style.cssText="font-variant-numeric:tabular-nums;letter-spacing:.3px;"' + NLS +
+        '+"background:linear-gradient(135deg,rgba(13,92,82,.13),rgba(192,144,72,.16));"' + NLS +
+        '+"color:#0d5c52;border:1px solid rgba(13,92,82,.22);font-weight:700";});' + NLS +
         '</script>' + NLS)
 
     steps = []

@@ -56,14 +56,21 @@
   }
 
   /* ------------------------------ طلبات الخدمة ------------------------------ */
+  /* الرمز من وحدة الجلسة لا من نسخةٍ قديمة — انظر screens.js */
+  function tok() {
+    return (window.IAQ_AUTH && window.IAQ_AUTH.token()) || (S ? S.access_token : '');
+  }
   function headers(extra, json) {
-    var h = { apikey: CFG.key, Authorization: 'Bearer ' + (S ? S.access_token : '') };
+    var h = { apikey: CFG.key, Authorization: 'Bearer ' + tok() };
     if (json) h['Content-Type'] = 'application/json';
     if (extra) for (var k in extra) if (extra.hasOwnProperty(k)) h[k] = extra[k];
     return h;
   }
   function must(r) {
     if (r.ok) return r;
+    /* 401 هنا يعني رمزًا منتهيًا: نُجدّد ثم نُترك للمُنادي أن يُعيد. ونكتفي
+       بتسجيل المحاولة، فبنية هذا الملفّ تُنشئ الطلب قبل أن يصل must. */
+    if (r.status === 401 && window.IAQ_AUTH) window.IAQ_AUTH.refresh().catch(function () { });
     return r.text().then(function (b) {
       var d = '';
       try { var j = JSON.parse(b); d = j.message || j.hint || j.error_description || ''; } catch (e) { d = String(b).slice(0, 140); }

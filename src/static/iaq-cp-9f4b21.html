@@ -117,6 +117,25 @@ body::before{
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.btn,.field input{transition:none}.btn:hover{transform:none}.spin{animation:none}}
 </style>
+<style>
+/* زرّ استعراض كلمة المرور داخل الحقل — لا فوقه، فلا يُغطّي النصّ */
+.pwrap{position:relative}
+.pwrap input{padding-inline-start:44px}
+.peye{position:absolute;inset-inline-start:6px;inset-block-start:50%;transform:translateY(-50%);
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;padding:0;cursor:pointer;color:#6b7f7c;border-radius:8px}
+.peye:hover{color:#0d5c52;background:rgba(13,92,82,.07)}
+.peye:focus-visible{outline:2px solid #c09048;outline-offset:2px}
+.peye svg{width:19px;height:19px}
+/* سطرٌ واحد: «ابقني داخلًا» يمينًا و«نسيت كلمة المرور» يسارًا */
+.lrow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-block:-4px 18px;flex-wrap:wrap}
+.rem{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#3f5551;user-select:none}
+.rem input{width:17px;height:17px;accent-color:#0d5c52;cursor:pointer;margin:0}
+.flink{background:none;border:0;padding:0;font:inherit;font-size:14px;color:#0d5c52;
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.flink:hover{color:#c09048}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -141,8 +160,30 @@ body::before{
       </div>
       <div class="field">
         <label for="pass">كلمة المرور</label>
-        <input type="password" id="pass" name="pass" autocomplete="current-password"
-               placeholder="••••••••" required />
+        <div class="pwrap">
+          <input type="password" id="pass" name="pass" autocomplete="current-password"
+                 placeholder="••••••••" required />
+          <button type="button" class="peye" id="peye" aria-label="استعراض كلمة المرور"
+                  aria-pressed="false" title="استعراض كلمة المرور">
+            <svg id="peyeOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg id="peyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+              <path d="M2.5 12S6 5.5 12 5.5c2 0 3.7.7 5.1 1.6M21.5 12s-1.4 2.6-4 4.4c-1.6 1.1-3.5 1.6-5.5 1.6-.9 0-1.7-.1-2.5-.3"/>
+              <path d="M4 20 20 4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="lrow">
+        <label class="rem" for="remember">
+          <input type="checkbox" id="remember" checked />
+          <span>ابقني داخلًا على هذا الجهاز</span>
+        </label>
+        <button type="button" class="flink" id="forgot">نسيت كلمة المرور؟</button>
       </div>
       <button type="submit" class="btn" id="btn">
         <span id="btnTxt">تسجيل الدخول</span>
@@ -155,10 +196,13 @@ body::before{
   </div>
 </div>
 
+<script>window.IAQ_SUPABASE = {{SUPABASE_CFG}};</script>
+<script>{{AUTH_JS}}</script>
 <script>
 (function(){
   var CFG = {{SUPABASE_CFG}};
   var PANEL = "{{PANEL_URL}}";
+  var A = window.IAQ_AUTH;
   var form=document.getElementById('loginForm'),
       btn=document.getElementById('btn'), btnTxt=document.getElementById('btnTxt'),
       btnIc=document.getElementById('btnIc'), msg=document.getElementById('msg'),
@@ -181,13 +225,55 @@ body::before{
     if(!on && s) s.remove();
   }
 
-  /* جلسة سارية؟ انتقل للوحة مباشرة */
-  try{
-    var saved=JSON.parse(sessionStorage.getItem('iaq_session')||'null');
-    if(saved && saved.access_token && saved.expires_at*1000 > Date.now()+5000){
-      location.replace(PANEL); return;
-    }
-  }catch(e){}
+  /* جلسة سارية؟ انتقل للوحة. وإن انتهت ومعها رمز تجديد فجدّدها صامتًا —
+     فلا يُطالَب المدير بكلمة المرور كلّما مضت ساعة. */
+  var saved = A ? A.read() : null;
+  if (A && A.valid(saved)) { location.replace(PANEL); return; }
+  if (A && saved && saved.refresh_token) {
+    A.refresh().then(function(){ location.replace(PANEL); }).catch(function(){ A.clear(); });
+  }
+
+  /* استعراض كلمة المرور: تبديل النوع وأيقونتين — لا نصٌّ يتغيّر */
+  var peye=document.getElementById('peye');
+  if(peye){
+    peye.addEventListener('click', function(){
+      var on = passEl.type === 'password';
+      passEl.type = on ? 'text' : 'password';
+      peye.setAttribute('aria-pressed', String(on));
+      peye.setAttribute('aria-label', on ? 'إخفاء كلمة المرور' : 'استعراض كلمة المرور');
+      peye.title = peye.getAttribute('aria-label');
+      var a=document.getElementById('peyeOn'), b=document.getElementById('peyeOff');
+      if(a) a.hidden = on;
+      if(b) b.hidden = !on;
+      passEl.focus();
+    });
+  }
+
+  /* نسيت كلمة المرور: سوپابيز يُرسل رابط استعادة إلى البريد نفسه.
+     لا نكشف إن كان البريد مسجَّلًا أم لا — رسالةٌ واحدةٌ في الحالتين. */
+  var forgot=document.getElementById('forgot');
+  if(forgot){
+    forgot.addEventListener('click', function(){
+      var email=(emailEl.value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        show('err','اكتب بريدك الإلكتروني أوّلًا ثم اضغط «نسيت كلمة المرور؟».');
+        emailEl.focus(); return;
+      }
+      if(!CFG||!CFG.url||!CFG.key){ show('err','إعداد الاتصال غير مكتمل.'); return; }
+      forgot.disabled=true;
+      fetch(CFG.url+'/auth/v1/recover', {
+        method:'POST',
+        headers:{'apikey':CFG.key,'Content-Type':'application/json'},
+        body:JSON.stringify({email:email})
+      }).then(function(){
+        show('ok','إن كان هذا البريد مسجَّلًا فستصلك رسالةٌ فيها رابط تعيين كلمة مرور جديدة. تحقّق من صندوقك ومن «المهملات».');
+      }).catch(function(){
+        show('err','تعذّر إرسال الطلب. تحقّق من الإنترنت وأعد المحاولة.');
+      }).then(function(){
+        setTimeout(function(){ forgot.disabled=false; }, 30000);
+      });
+    });
+  }
 
   form.addEventListener('submit', function(e){
     e.preventDefault(); hide();
@@ -213,11 +299,18 @@ body::before{
         busy(false); return;
       }
       var d=res.data;
-      sessionStorage.setItem('iaq_session', JSON.stringify({
+      var rememberEl=document.getElementById('remember');
+      var keep = !rememberEl || rememberEl.checked;
+      var sess = {
         access_token:d.access_token, refresh_token:d.refresh_token,
         expires_at:d.expires_at || (Math.floor(Date.now()/1000)+(d.expires_in||3600)),
         email:(d.user&&d.user.email)||email
-      }));
+      };
+      /* keep=true يكتب في localStorage فتبقى الجلسة بعد إغلاق التبويب،
+         وإلّا في sessionStorage فتنتهي بإغلاقه. الاختيار للمدير. */
+      if (A) A.write(sess, keep);
+      else sessionStorage.setItem('iaq_session', JSON.stringify(sess));
+      try{ sessionStorage.removeItem('iaq_refresh_try'); }catch(e){}
       show('ok','تم التحقّق بنجاح، جارٍ فتح اللوحة...');
       setTimeout(function(){ location.replace(PANEL); }, 600);
     })
