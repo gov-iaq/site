@@ -819,6 +819,13 @@ def panel_real():
                          "title": m.group(3).strip(), "subtitle": (m.group(4) or "").strip()})
         if secs:
             real["sections"] = secs
+    #  دورةُ المجلس المبنيّة: تُعرض في حقول اللوحة افتراضًا فيرى المدير الدورةَ
+    #  السارية على الموقع الآن — ومنها يُحسب تنبيهُ الانتهاء في لوحة التحكّم.
+    if os.path.exists(BOARD):
+        with io.open(BOARD, encoding="utf-8") as f:
+            bt = json.load(f).get("term", {})
+        real["boardTerm"] = {k: bt.get(k, "") for k in
+                             ("label", "note", "start_h", "start_g", "end_h", "end_g")}
     return real
 
 def panel_name():

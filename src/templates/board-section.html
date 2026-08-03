@@ -155,10 +155,13 @@
 <div class="container">
   <h2 id="bd-title" class="bd-sr">أعضاء مجلس الإدارة</h2>
 
-  <div class="bd-term">
+  <!-- كلُّ جزءٍ موسومٌ باسمه كي تملكه شاشةُ «مجلس الإدارة» في لوحة التحكّم:
+       دورةُ المجلس تنتهي وتُجدَّد، وكانت مكتوبةً في ملفّ بيانات البناء وحده —
+       فتحديثُها يوجب إعادةَ بناءٍ ونشرًا، ولا سبيلَ إليه من اللوحة. -->
+  <div class="bd-term" data-iaq-term>
     <i class="dm" aria-hidden="true"></i>
-    <b>{{TERM_LABEL}}</b>
-    <span>{{TERM_NOTE}} من <time>{{START_H}}</time> الموافق <time>{{START_G}}</time> حتى <time>{{END_H}}</time> الموافق <time>{{END_G}}</time></span>
+    <b data-term="label">{{TERM_LABEL}}</b>
+    <span><span data-term="note">{{TERM_NOTE}}</span> من <time data-term="start_h">{{START_H}}</time> الموافق <time data-term="start_g">{{START_G}}</time> حتى <time data-term="end_h">{{END_H}}</time> الموافق <time data-term="end_g">{{END_G}}</time></span>
   </div>
 
   <div class="bd-lead">{{LEAD_CARDS}}</div>

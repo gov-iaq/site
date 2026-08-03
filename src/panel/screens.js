@@ -126,6 +126,24 @@ window.IAQ_SCREENS = (function () {
               sample: [['محمد عبدالله السالم', 'عضو مؤسس'], ['نورة صالح العتيبي', 'عضو عامل']] }
     },
     board: {
+      /* دورةُ المجلس تنتهي وتُجدَّد، وكانت في ملفّ بناءٍ لا تصله اللوحة —
+         فبقيت دورةٌ منتهيةٌ منشورةً على الموقع بلا حقلٍ يُصلحها. وموضعُها
+         هنا لا في شاشة إعداداتٍ بعيدة: من يُجدّد الأعضاء يُجدّد الدورة. */
+      settingsTitle: 'دورة المجلس المعتمدة',
+      settings: [
+        { key: 'board_term.label', dyn: 'boardTerm.label', l: 'اسم الدورة', t: 'text',
+          hint: 'مثل: دورة المجلس الثانية. اتركه فارغًا فيبقى المبنيّ في الموقع' },
+        { key: 'board_term.start_h', dyn: 'boardTerm.start_h', l: 'بداية الدورة — هجريّ', t: 'text', half: 1,
+          hint: 'مثل: 1447/8/7هـ' },
+        { key: 'board_term.start_g', dyn: 'boardTerm.start_g', l: 'بداية الدورة — ميلاديّ', t: 'text', half: 1,
+          hint: 'مثل: 2026/1/25م' },
+        { key: 'board_term.end_h', dyn: 'boardTerm.end_h', l: 'نهاية الدورة — هجريّ', t: 'text', half: 1,
+          hint: 'منها يُحسب تنبيهُ انتهاء الدورة في لوحة التحكّم' },
+        { key: 'board_term.end_g', dyn: 'boardTerm.end_g', l: 'نهاية الدورة — ميلاديّ', t: 'text', half: 1,
+          hint: 'بالنمط سنة/شهر/يومم — مثل 2030/1/24م' },
+        { key: 'board_term.note', dyn: 'boardTerm.note', l: 'العبارة التمهيدية', t: 'text',
+          hint: 'مثل: أعضاء مجلس الإدارة المعتمدون' }
+      ],
       nav: 'مجلس الإدارة', h1: 'أعضاء مجلس الإدارة',
       sub: 'رئيس المجلس ونائبه والأعضاء — تعديل وحذف وإضافة، فرديًّا أو دفعةً من ملف إكسل.',
       table: 'people', filter: 'grp=eq.board', fixed: { grp: 'board' }, photoDir: 'board', audit: 1,
@@ -712,7 +730,16 @@ window.IAQ_SCREENS = (function () {
     up: '<path d="M12 20V6M6 12l6-6 6 6"/><path d="M4 20h16"/>',
     down: '<path d="M12 4v14M6 12l6 6 6-6"/><path d="M4 20h16"/>',
     x: '<path d="M6 6l12 12M18 6L6 18"/>',
-    eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>' + '<circle cx="12" cy="12" r="3"/>'
+    eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>' + '<circle cx="12" cy="12" r="3"/>',
+    /* هذه الستّة كانت تُطلَب ولا توجد، فتُرسَم <svg> فارغةً: أيقونتا بطاقتَي
+       الوارد، وأيقونتا بطاقتَي السجلّ، وزرّا مكتبة الصور. السجلُّ هنا لا في
+       خريطة أيقونات ملفّ التصميم — تلك للقائمة الجانبية وهذه للشاشات. */
+    inbox2: '<path d="M3 13h4l2 3h6l2-3h4"/><path d="M4 13 6.5 5h11L20 13v6H4z"/>',
+    log: '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    img: '<path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4 4 3 3-2 4 3"/>',
+    arrow: '<path d="M14 6l-6 6 6 6"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    alert: '<path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4M12 17h.01"/>'
   };
   function ico(k) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
@@ -1059,14 +1086,99 @@ window.IAQ_SCREENS = (function () {
       'margin-block-end:14px">' + msgs.join('<br><br>') + '</div>';
   }
 
+  /* ================== «ماذا أفعل الآن؟» ==================
+     كانت اللوحة تفتح على اثنين وعشرين رقمًا لا يقول أيٌّ منها ما يُفعَل. وهذه
+     ثلاثةُ أسطرٍ أو أقلّ، كلُّ سطرٍ زرٌّ يهبط في الشاشة التي تُعالجه — ومبنيّةٌ
+     من القراءات القائمة نفسها، لا قراءةً جديدةً غير مفتاحِ دورة المجلس.
+
+     وإن لم يكن شيء فالسطرُ يقول ذلك صريحًا: قائمةٌ فارغةٌ تُقرأ عطلًا. */
+
+  /* الإفرادُ والتثنيةُ والجمعُ بالقاعدة العربية، لا «2 طلبًا» ولا «6 يومًا»:
+     f = [مفرد, مثنّى, جمعُ قلّة (٣–١٠), جمعُ كثرة (١١+)]. العددُ يُضاف في
+     الأخيرين وحدهما — فالمفردُ والمثنّى تحملهما الصيغةُ نفسها. */
+  function arNum(n, f) {
+    n = Math.abs(Math.round(n));
+    if (n === 1) return f[0];
+    if (n === 2) return f[1];
+    return n + ' ' + (n <= 10 ? f[2] : f[3]);
+  }
+  function daysLabel(n) {
+    return arNum(n, ['يومٍ واحد', 'يومين', 'أيام', 'يومًا']);
+  }
+  function spanLabel(days) {
+    days = Math.abs(Math.round(days));
+    if (days < 60) return daysLabel(days);
+    if (days < 365) return arNum(Math.round(days / 30), ['شهرٍ واحد', 'شهرين', 'أشهر', 'شهرًا']);
+    return arNum(Math.round(days / 365), ['سنةٍ واحدة', 'سنتين', 'سنوات', 'سنة']);
+  }
+  /* تاريخٌ ميلاديٌّ كما يكتبه المدير إلى Date. يتحمّل «2026/1/24م» و
+     «24/01/2026م»: الجزءُ ذو الأربع خاناتٍ هو السنة، ويُقرَّر الباقي بموضعه. */
+  function gDate(s) {
+    var p = String(s == null ? '' : s).replace(/[^\d/]/g, '').split('/').filter(Boolean);
+    if (p.length !== 3) return null;
+    var y, mo, d;
+    if (p[0].length === 4) { y = +p[0]; mo = +p[1]; d = +p[2]; }
+    else if (p[2].length === 4) { y = +p[2]; mo = +p[1]; d = +p[0]; }
+    else return null;
+    if (!(y > 1900 && y < 2200 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
+    var dt = new Date(y, mo - 1, d);
+    return isFinite(dt.getTime()) ? dt : null;
+  }
+  /* data-nav يعالجه مستمعُ ملفّ التصميم نفسه الذي يعالج القائمة الجانبية،
+     فلا نحتاج مسارَ انتقالٍ ثانيًا يفترق عنه. */
+  function nowRow(o) {
+    return '<button type="button" class="now-row' + (o.urgent ? ' is-urgent' : '') +
+      '" data-nav="' + esc(o.view) + '">' +
+      '<span class="now-ico">' + ico(o.icon || 'clock') + '</span>' +
+      '<span class="now-txt"><b>' + esc(o.txt) + '</b>' +
+      (o.sub ? '<span class="now-sub">' + esc(o.sub) + '</span>' : '') + '</span>' +
+      '<span class="now-go">' + ico('arrow') + '</span></button>';
+  }
+  /* term = دورةُ المجلس السارية: المحفوظُ فوق المبنيّ، حقلًا حقلًا */
+  function termNow(term) {
+    var end = gDate(term && term.end_g);
+    if (!end) return null;
+    var days = Math.round((end.getTime() - Date.now()) / 86400000);
+    if (days < 0) {
+      return { urgent: 1, icon: 'alert', view: 'board',
+               txt: 'دورةُ مجلس الإدارة انتهت قبل ' + spanLabel(-days),
+               sub: 'وهي منشورةٌ الآن على صفحة «مجلس الإدارة» — حدِّثها من هنا' };
+    }
+    if (days <= 60) {
+      return { icon: 'clock', view: 'board',
+               txt: 'دورةُ مجلس الإدارة تنتهي بعد ' + daysLabel(days),
+               sub: 'جهّز التجديد وحدِّث تاريخَ الدورة من هذه الشاشة' };
+    }
+    return null;
+  }
+  function nowRows(subs, subsErr, oldest, open, late, term) {
+    var out = [];
+    if (subsErr) {
+      out.push({ urgent: 1, icon: 'alert', view: 'subslist',
+                 txt: 'تعذّرت قراءة الطلبات الواردة',
+                 sub: subsErr });
+    } else if (open) {
+      out.push({ urgent: !!late, icon: 'inbox2', view: 'subslist',
+                 txt: arNum(open, ['طلبٌ واحدٌ لم يُفتح بعد', 'طلبان لم يُفتحا بعد',
+                                   'طلباتٍ لم تُفتح بعد', 'طلبًا لم تُفتح بعد']),
+                 sub: (open === 1 ? 'وصل قبل ' : 'أقدمها وصل قبل ') + ageLabel(oldest) +
+                      (late ? ' · ' + arNum(late, ['واحدٌ منها', 'اثنان منها',
+                                                   'منها', 'منها']) +
+                              ' فوق ثلاثة أيام' : '') });
+    }
+    var t = termNow(term);
+    if (t) out.push(t);
+    return out;
+  }
+
   /* عمرٌ بالمللي ثانية إلى عبارةٍ عربية. مشتركٌ بين تبويبَي اللوحة كي لا
      يفترق الرقمُ نفسه بينهما كما افترق سلفًا. */
   function ageLabel(ms) {
     if (ms == null) return '—';
     var h = ms / 3600000;
-    if (h < 1) return Math.round(h * 60) + ' دقيقة';
-    if (h < 48) return Math.round(h) + ' ساعة';
-    return Math.round(h / 24) + ' يومًا';
+    if (h < 1) return arNum(h * 60, ['دقيقةٍ واحدة', 'دقيقتين', 'دقائق', 'دقيقة']);
+    if (h < 48) return arNum(h, ['ساعةٍ واحدة', 'ساعتين', 'ساعات', 'ساعة']);
+    return daysLabel(h / 24);
   }
   /* سلسلة يوميّة كاملة — الأيام الخالية أصفار كي لا يكذب الرسم */
   function series(rows, days, filter) {
@@ -1526,7 +1638,11 @@ window.IAQ_SCREENS = (function () {
       tabBar() +
       '<div id="dv-range">' + rangeBar(RANGE) + '</div>' +
       '<div id="sc-err"></div>' +
-      '<div id="dash-body"><div id="dv-kpi" class="iaq-kpi-grid">' +
+      '<div id="dash-body">' +
+      '<div class="iaq-card" id="dv-now" style="margin-block-end:14px">' +
+        '<h3 class="card-h">ماذا أفعل الآن؟</h3>' +
+        '<div class="muted small">جارٍ الفحص…</div></div>' +
+      '<div id="dv-kpi" class="iaq-kpi-grid">' +
         new Array(7).join('<div class="iaq-kpi"><div class="kpi-val">…</div>' +
           '<div class="kpi-lbl">جارٍ القراءة</div></div>') +
       '</div>' +
@@ -1550,7 +1666,10 @@ window.IAQ_SCREENS = (function () {
       box.innerHTML = '<div class="iaq-card"><div class="muted">جارٍ قراءة السجلّ…</div></div>';
       return paintWorklog(myKey);
     }
-    box.innerHTML = '<div id="dv-kpi" class="iaq-kpi-grid"></div>' +
+    box.innerHTML = '<div class="iaq-card" id="dv-now" style="margin-block-end:14px">' +
+        '<h3 class="card-h">ماذا أفعل الآن؟</h3>' +
+        '<div class="muted small">جارٍ الفحص…</div></div>' +
+      '<div id="dv-kpi" class="iaq-kpi-grid"></div>' +
       '<div id="dv-charts"></div><div id="dv-inv"></div>' +
       '<div class="iaq-card"><h3 class="card-h">آخر الطلبات الواردة</h3>' +
       '<div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
@@ -1573,7 +1692,9 @@ window.IAQ_SCREENS = (function () {
       readView('v_views_by_path', D),
       readView('v_views_by_label', D),
       readView('v_views_by_device', D),
-      readHealth()
+      readHealth(),
+      /* دورةُ المجلس: قراءةٌ واحدةٌ صغيرة، والمبنيُّ أساسٌ تحتها */
+      api('settings?select=key,value&key=eq.board_term').catch(function () { return []; })
     ]).then(function (r) {
       if (!alive(myKey)) return;
       /* «منذ الإنشاء»: المدى من أقدم يومٍ في البيانات، فلا تُقصّ السلسلة */
@@ -1608,6 +1729,60 @@ window.IAQ_SCREENS = (function () {
       });
       var seen = (subs || []).length;
       var rate = seen ? Math.round(((seen - open) / seen) * 100) : null;
+
+      /* الدورةُ السارية: المحفوظُ في settings فوق المبنيِّ، حقلًا حقلًا —
+         فحقلٌ لم يُملأ في اللوحة يبقى على قيمته في الموقع. */
+      var term = {};
+      var bt0 = realVal('boardTerm');
+      if (bt0 && typeof bt0 === 'object') {
+        for (var bk in bt0) if (bt0.hasOwnProperty(bk)) term[bk] = bt0[bk];
+      }
+      var btRow = (r[7] || [])[0];
+      if (btRow && btRow.value && typeof btRow.value === 'object') {
+        for (var bk2 in btRow.value) {
+          if (btRow.value.hasOwnProperty(bk2) && String(btRow.value[bk2] || '').trim()) {
+            term[bk2] = btRow.value[bk2];
+          }
+        }
+      }
+
+      var nbox = $('#dv-now');
+      if (nbox) {
+        var rws = nowRows(subs, subsErr, oldest, open, late, term);
+        /* الحساباتُ المتبقّية تحتاج عدًّا: تُلحَق حين تصل، ولا تُؤخّر ما جاهز */
+        nbox.innerHTML = '<h3 class="card-h">ماذا أفعل الآن؟</h3>' +
+          '<div id="dv-now-rows">' + rws.map(nowRow).join('') + '</div>' +
+          '<div id="dv-now-more"></div>' +
+          '<div id="dv-now-none" class="muted small"' + (rws.length ? ' hidden' : '') + '>' +
+          'جارٍ الفحص…</div>';
+        Promise.all([
+          countOf('news?status=eq.draft'),
+          countOf('documents?status=eq.draft')
+        ]).then(function (c) {
+          if (!alive(myKey)) return;
+          var more = [];
+          if (c[0] > 0) {
+            more.push({ icon: 'log', view: 'newslist',
+                        txt: arNum(c[0], ['خبرٌ واحدٌ مسودّة', 'خبران مسودّة',
+                                          'أخبارٍ مسودّة', 'خبرًا مسودّة']),
+                        sub: 'مكتوبةٌ ولا يراها الزائر — انشرها أو احذفها' });
+          }
+          if (c[1] > 0) {
+            more.push({ icon: 'docs', view: 'docs',
+                        txt: arNum(c[1], ['وثيقةٌ واحدةٌ مسودّة', 'وثيقتان مسودّة',
+                                          'وثائقٍ مسودّة', 'وثيقةً مسودّة']),
+                        sub: 'مرفوعةٌ ولا تظهر في صفحة الوثائق' });
+          }
+          var mb = $('#dv-now-more'), nb2 = $('#dv-now-none');
+          if (mb) mb.innerHTML = more.map(nowRow).join('');
+          if (nb2) {
+            var any = rws.length + more.length;
+            nb2.hidden = !!any;
+            if (!any) nb2.textContent = 'لا شيءَ ينتظرك: كلُّ الوارد مفتوح، ولا مسودّةً معلّقة، ' +
+              'ولا التزامًا قريبًا. والأرقامُ أدناه للمتابعة لا للعمل.';
+          }
+        });
+      }
 
       function spark(kind, rows) {
         return chartLine(series(rows || daily, SPAN, kind ? function (x) { return x.kind === kind; } : null),

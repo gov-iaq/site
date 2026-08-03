@@ -579,6 +579,27 @@
     return n;
   }
 
+  /* ---------------------- دورةُ مجلس الإدارة ----------------------
+     كانت مكتوبةً في ملفّ بيانات البناء وحده، فانتهت دورةٌ وبقيت منشورةً على
+     الموقع لأنّ تحديثَها يوجب إعادةَ بناءٍ ونشرًا لا سبيلَ إليهما من اللوحة.
+     الآن مفتاحُ board_term يملكها: ستُّ قيمٍ، كلُّ فارغةٍ منها تُبقي المبنيّ. */
+  function applyBoardTerm() {
+    var box = document.querySelector('[data-iaq-term]');
+    if (!box) return 0;
+    var t = IAQ.setting('board_term');
+    if (!t || typeof t !== 'object') return 0;
+    var n = 0;
+    ['label', 'note', 'start_h', 'start_g', 'end_h', 'end_g'].forEach(function (k) {
+      var v = t[k];
+      if (v === undefined || v === null) return;
+      var s = String(v).trim();
+      if (!s) return;                                /* فارغ = يبقى المبنيّ */
+      var el = box.querySelector('[data-term="' + k + '"]');
+      if (el && el.textContent !== s) { el.textContent = s; n++; }
+    });
+    return n;
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var codeDone = false;
 
@@ -586,7 +607,7 @@
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
     var done = { theme: t, secVars: 0, font: 0, logo: 0, contact: 0, hero: 0,
-                 sections: 0, chrome: 0, code: 0 };
+                 sections: 0, chrome: 0, code: 0, boardTerm: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
@@ -598,6 +619,7 @@
       done.sections = applySections(IAQ.setting('sections'));
       done.chrome = applyChrome();
       done.pageText = applyPageText();
+      done.boardTerm = applyBoardTerm();
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */
       if (!codeDone) {

@@ -6,7 +6,7 @@
 <title>لوحة تحكم الموقع | حاضنة الجمعيات</title>
 <style>{{PANEL_FONTS}}</style>
 <style>
-:root{--t:#007878;--td:#063f36;--g:#c09048;--ink:#0f2a2a;--body:#47534f;--muted:#7a8683;--line:#e5eae9;--bg:#f3f6f7;--surface:#fff;--disp:'El Messiri',serif;--ui:'Tajawal',sans-serif;--teal:var(--t);--teal-600:var(--td);--gold:var(--g);--gold-600:#a3762f;--surface-2:#eef3f3}
+:root{--t:#007878;--td:#063f36;--g:#c09048;--ink:#0f2a2a;--body:#47534f;--muted:#5c6b67;--line:#e5eae9;--bg:#f3f6f7;--surface:#fff;--disp:'El Messiri',serif;--ui:'Tajawal',sans-serif;--teal:var(--t);--teal-600:var(--td);--gold:var(--g);--gold-600:#a3762f;--surface-2:#eef3f3}
 *{box-sizing:border-box;margin:0;padding:0}
 /* الوسم hidden يجب أن يُخفي دائمًا. قاعدةُ المتصفّح [hidden]{display:none}
    تتغلّب عليها أي قاعدةٍ للمؤلّف تُعطي العنصر display صريحًا — و.btn
@@ -68,6 +68,30 @@ a{text-decoration:none;color:inherit}
 .kpi-sub{font-size:12px;color:var(--muted);margin-block-start:6px}
 .kpi-spark{margin-block-start:auto;padding-block-start:10px;opacity:.85}
 .card-h{margin:0 0 12px;font-family:var(--disp);font-size:1.05rem;color:var(--ink)}
+/* --muted كان #7a8683: تضادُّه ٣.٧٧ على الأبيض و٣.٣٧ على السطح الثاني، وبه
+   سبعةٌ وستّون تلميحًا وتسميةُ كل رقم. صار #5c6b67 فيعبُر ٤.٥:١ على الأسطح
+   الثلاثة (٥.٥٩ و٥.١٥ و٤.٩٩) ويبقى أفتحَ من --body فيُقرأ ثانويًّا. */
+
+/* «ماذا أفعل الآن؟»: سطرٌ واحدٌ زرٌّ كامل — أكبرُ من أن يُخطئه الإصبع، وفي
+   ترتيب التنقّل، وله حالةُ تركيزٍ ظاهرة. */
+.now-row{display:flex;align-items:center;gap:12px;width:100%;text-align:start;
+ padding:13px 14px;margin-block-end:8px;background:var(--surface);cursor:pointer;
+ border:1px solid var(--line);border-radius:12px;font:inherit;color:var(--ink);
+ transition:background .16s,border-color .16s}
+.now-row:last-child{margin-block-end:0}
+.now-row:hover{background:#f4f9f8;border-color:#c9dedb}
+.now-row:focus-visible{outline:2px solid var(--t);outline-offset:2px}
+.now-row.is-urgent{border-inline-start:4px solid #b4471f;background:#fdf6f3}
+.now-row.is-urgent:hover{background:#fbeee8}
+.now-ico{flex:0 0 auto;display:grid;place-items:center;width:34px;height:34px;
+ border-radius:9px;background:#eef4f3;color:var(--t)}
+.now-row.is-urgent .now-ico{background:#f7e3da;color:#8c3d1c}
+.now-ico svg{width:19px;height:19px}
+.now-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.now-txt b{font-weight:700;font-size:.97rem;line-height:1.5}
+.now-sub{color:var(--muted);font-size:.82rem;line-height:1.6}
+.now-go{flex:0 0 auto;color:var(--muted)}
+.now-go svg{width:18px;height:18px}
 .topbar{position:sticky;top:0;z-index:50;height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:12px}
 .tb-left{display:flex;align-items:center;gap:12px}
 .tb-brand{display:flex;align-items:center;gap:10px}
