@@ -13,6 +13,29 @@
 body{font-family:var(--ui);background:var(--bg);color:var(--body);line-height:1.7;-webkit-font-smoothing:antialiased}
 a{text-decoration:none;color:inherit}
 :focus-visible{outline:2px solid var(--t);outline-offset:2px}
+/* بطاقاتُ لوحة التحكّم — بلغة بطاقات الموقع: نصفُ قطرٍ وحدٌّ وظلٌّ يعلو
+   عند التحويم. ولا يبدأ اسمٌ منها بـad- ولا يحوي banner: حاجبات الإعلانات
+   تُخفيها فتختفي اللوحة، وقد وقع ذلك فعلًا. */
+.iaq-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-block-end:14px}
+@media (max-width:1100px){.iaq-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.iaq-kpi-grid{grid-template-columns:1fr}}
+.iaq-kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px 14px;transition:border-color .25s,box-shadow .25s,transform .25s;
+  display:flex;flex-direction:column;min-height:118px}
+.iaq-kpi:hover{border-color:var(--t);box-shadow:0 10px 26px -14px rgba(6,63,54,.42);transform:translateY(-2px)}
+.iaq-kpi.is-gold{border-color:rgba(192,144,72,.5);background:linear-gradient(160deg,rgba(192,144,72,.07),transparent 60%)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-block-end:8px}
+.kpi-ico{width:34px;height:34px;border-radius:10px;background:var(--surface-2);color:var(--t);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.iaq-kpi.is-gold .kpi-ico{background:rgba(192,144,72,.14);color:#8a6224}
+.kpi-ico svg{width:18px;height:18px}
+.kpi-delta{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi-val{font-family:var(--disp);font-size:2rem;line-height:1.15;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.kpi-lbl{font-size:13.5px;color:var(--muted);margin-block-start:2px}
+.kpi-sub{font-size:12px;color:var(--muted);margin-block-start:6px}
+.kpi-spark{margin-block-start:auto;padding-block-start:10px;opacity:.85}
+.card-h{margin:0 0 12px;font-family:var(--disp);font-size:1.05rem;color:var(--ink)}
 .topbar{position:sticky;top:0;z-index:50;height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:12px}
 .tb-left{display:flex;align-items:center;gap:12px}
 .tb-brand{display:flex;align-items:center;gap:10px}

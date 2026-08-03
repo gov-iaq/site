@@ -1012,7 +1012,11 @@ window.IAQ_SCREENS = (function () {
   /* خطّ زمنيّ بمنطقة مظلّلة. pts = [{x:'2026-08-01', y:12}, …] */
   function chartLine(pts, opt) {
     opt = opt || {};
-    var W = 720, H = opt.h || 190, PL = 42, PR = 8, PT = 12, PB = 26;
+    /* bare: شريطٌ صغيرٌ داخل بطاقة رقم — بلا شبكةٍ ولا تسمياتٍ ولا نقاط،
+       فالمساحة 34px لا تتّسع لها والغرضُ اتجاهٌ لا قراءةُ قيم. */
+    var W = 720, H = opt.h || 190;
+    var PL = opt.bare ? 0 : 42, PR = opt.bare ? 0 : 8;
+    var PT = opt.bare ? 2 : 12, PB = opt.bare ? 2 : 26;
     if (!pts.length) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات في هذا المدى.</div>';
     var max = niceMax(Math.max.apply(null, pts.map(function (p) { return p.y; })) || 1);
     var iw = W - PL - PR, ih = H - PT - PB;
@@ -1022,7 +1026,7 @@ window.IAQ_SCREENS = (function () {
     var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p.y).toFixed(1); }).join(' ');
     var area = line + ' L' + X(n - 1).toFixed(1) + ' ' + (PT + ih) + ' L' + X(0).toFixed(1) + ' ' + (PT + ih) + ' Z';
     var grid = '', ticks = 4;
-    for (var g = 0; g <= ticks; g++) {
+    for (var g = 0; opt.bare ? false : g <= ticks; g++) {
       var v = (max / ticks) * g, y = Y(v);
       grid += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + y.toFixed(1) +
         '" stroke="var(--line)" stroke-width="1"' + (g ? ' stroke-dasharray="3 4"' : '') + '/>' +
@@ -1030,14 +1034,21 @@ window.IAQ_SCREENS = (function () {
         Math.round(v) + '</text>';
     }
     var lab = '', step = Math.max(1, Math.ceil(n / 7));
-    for (var i = 0; i < n; i += step) {
+    for (var i = 0; opt.bare ? false : i < n; i += step) {
       lab += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' +
         svgEsc(pts[i].t || pts[i].x) + '</text>';
     }
-    var dots = pts.map(function (p, i) {
+    var dots = opt.bare ? '' : pts.map(function (p, i) {
       return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.y).toFixed(1) + '" r="' + (n > 45 ? 1.6 : 3) +
         '" fill="var(--teal)"><title>' + svgEsc((p.t || p.x) + ' — ' + p.y) + '</title></circle>';
     }).join('');
+    if (opt.bare) {
+      return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
+        'style="width:100%;height:' + H + 'px;display:block" aria-hidden="true">' +
+        '<path d="' + area + '" fill="var(--teal)" opacity=".14"/>' +
+        '<path d="' + line + '" fill="none" stroke="var(--teal)" stroke-width="3" ' +
+        'stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+    }
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" ' +
       'aria-label="' + svgEsc(opt.label || 'اتجاه زمنيّ') + '">' + grid +
       '<path d="' + area + '" fill="var(--teal)" opacity=".10"/>' +
@@ -1168,57 +1179,89 @@ window.IAQ_SCREENS = (function () {
     ] }
   ];
 
+  /* ======================== لوحة التحكّم ========================
+     الترتيب مقصود: ما يستدعي عملًا أوّلًا (زوّار وطلبات وسرعة ردّ)، والجردُ
+     أسفلَه. وكلُّ الأرقام من ثلاث قراءاتٍ لا أكثر. */
+
+  /* بطاقةُ رقمٍ كبيرٍ بأيقونةٍ ومقارنةٍ وشريطٍ صغير */
+  function kpi(o) {
+    var d = o.delta;
+    var arrow = '', col = 'var(--muted)';
+    if (d != null && isFinite(d)) {
+      if (d > 0) { arrow = '▲ '; col = '#0c6c6c'; }
+      else if (d < 0) { arrow = '▼ '; col = '#8c3d1c'; }
+      else { arrow = '= '; }
+    }
+    return '<div class="iaq-kpi' + (o.gold ? ' is-gold' : '') + '">' +
+      '<div class="kpi-top">' +
+        '<span class="kpi-ico">' + (o.icon ? ico(o.icon) : '') + '</span>' +
+        (d != null && isFinite(d)
+          ? '<span class="kpi-delta" style="color:' + col + '">' + arrow +
+            Math.abs(Math.round(d)) + '%</span>'
+          : (o.note ? '<span class="kpi-delta muted">' + esc(o.note) + '</span>' : '')) +
+      '</div>' +
+      '<div class="kpi-val">' + esc(String(o.v)) + '</div>' +
+      '<div class="kpi-lbl">' + esc(o.l) + '</div>' +
+      (o.spark ? '<div class="kpi-spark">' + o.spark + '</div>' : '') +
+      (o.sub ? '<div class="kpi-sub">' + esc(o.sub) + '</div>' : '') +
+      '</div>';
+  }
+
+  /* نسبةُ التغيّر بين نصفَي المدى. null إن خلا النصف الأوّل — فقسمةٌ على صفرٍ
+     تُنتج «∞%» وهو أسوأ من لا شيء. */
+  function delta(rows, days, filter) {
+    var half = dayStr(days - 1), mid = dayStr(Math.floor(days / 2) - 1);
+    var a = 0, b = 0;
+    (rows || []).forEach(function (r) {
+      if (filter && !filter(r)) return;
+      var d = String(r.day || '');
+      if (d < half) return;
+      if (d < mid) a += Number(r.n) || 0; else b += Number(r.n) || 0;
+    });
+    if (!a) return null;
+    return ((b - a) / a) * 100;
+  }
+
   function dashView(sc, myKey) {
     setTimeout(function () { paintDash(myKey); }, 0);
-    var groups = DASH.map(function (g, gi) {
-      return '<div class="iaq-card" style="margin-block-end:14px">' +
-        '<h3 style="margin:0 0 12px;font-family:var(--disp);font-size:1.05rem">' + esc(g.g) + '</h3>' +
-        '<div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">' +
-        g.items.map(function (it, i) {
-          return '<div class="stat-box"><div class="sb-val" id="dv-' + gi + '-' + i + '">…</div>' +
-            '<div class="sb-label">' + esc(it.l) + '</div></div>';
-        }).join('') + '</div></div>';
-    }).join('');
-    return '<div class="view-head"><h1>' + esc(sc.h1) +
-      '</h1>' +
+    return '<div class="view-head"><h1>' + esc(sc.h1) + '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
-      '<div id="sc-err"></div>' + groups +
-      '<div id="dv-visits"></div>' +
-      '<div class="iaq-card"><h3 style="margin:0 0 10px;font-family:var(--disp);font-size:1.05rem">' +
-        'آخر الطلبات الواردة</h3><div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
+      '<div id="sc-err"></div>' +
+      '<div id="dv-kpi" class="iaq-kpi-grid">' +
+        new Array(7).join('<div class="iaq-kpi"><div class="kpi-val">…</div>' +
+          '<div class="kpi-lbl">جارٍ القراءة</div></div>') +
+      '</div>' +
+      '<div id="dv-charts"></div>' +
+      '<div id="dv-inv"></div>' +
+      '<div class="iaq-card"><h3 class="card-h">آخر الطلبات الواردة</h3>' +
+        '<div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
   }
 
   function paintDash(myKey) {
-    var jobs = [];
-    DASH.forEach(function (g, gi) {
-      g.items.forEach(function (it, i) {
-        jobs.push(countOf(it.q).then(function (n) {
-          if (!alive(myKey)) return;
-          var el = $('#dv-' + gi + '-' + i);
-          if (!el) return;
-          if (n < 0) { el.textContent = '—'; el.title = 'تعذّرت القراءة'; return; }
-          el.textContent = String(n);
-          if (it.hot && n > 0) el.style.color = '#8c3d1c';
-        }));
-      });
-    });
-    /* خلاصة الزوّار والردّ — تفصيلها في شاشتَي «إحصاءات الزوّار» و«سجلّ العمل» */
+    var D = 30;
+    /* ثلاث قراءاتٍ لا أكثر — والمقارنة من ضِعف المدى في القراءة نفسها */
     Promise.all([
-      readView('v_views_daily', 30),
+      readView('v_views_daily', D * 2),
       api('v_subs_response?select=status,created_at,hours_to_first&order=created_at.desc&limit=1000')
-        .catch(function () { return []; })
-    ]).then(function (rr) {
+        .catch(function () { return []; }),
+      readView('v_audit_daily', D * 2),
+      readView('v_views_by_path', D),
+      readView('v_views_by_label', D),
+      readView('v_views_by_device', D)
+    ]).then(function (r) {
       if (!alive(myKey)) return;
-      var daily = rr[0] || [], subs = rr[1] || [];
-      var el = $('#dv-visits');
-      if (!el) return;
-      var pv = total(daily, function (x) { return x.kind === 'page'; });
-      if (!pv && !daily.length) {
-        el.innerHTML = '<div class="notice" style="margin-block-end:14px">' +
-          '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
-          'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>';
-        return;
+      var daily = r[0] || [], subs = r[1] || [], audit = r[2] || [];
+      var byPath = r[3] || [], byLabel = r[4] || [], byDev = r[5] || [];
+
+      /* في المدى المعروض وحده (النصف الأحدث) */
+      function tot(kind) {
+        var from = dayStr(D - 1);
+        return total(daily, function (x) {
+          return String(x.day) >= from && (!kind || x.kind === kind);
+        });
       }
+      var noStats = !daily.length;
+
       var ans = [], open = 0, late = 0, now = Date.now();
       subs.forEach(function (s) {
         if (s.hours_to_first != null) ans.push(Number(s.hours_to_first));
@@ -1228,24 +1271,91 @@ window.IAQ_SCREENS = (function () {
         }
       });
       var avg = ans.length ? (ans.reduce(function (a, b) { return a + b; }, 0) / ans.length) : null;
-      function hrs2(v) {
+      ans.sort(function (a, b) { return a - b; });
+      var med = ans.length ? ans[Math.floor(ans.length / 2)] : null;
+      function hrs(v) {
         if (v == null) return '—';
         if (v < 1) return Math.round(v * 60) + ' د';
         if (v < 48) return (Math.round(v * 10) / 10) + ' س';
         return Math.round(v / 24) + ' ي';
       }
-      el.innerHTML = card('الزوّار والردّ — آخر ٣٠ يومًا',
-        grid(6) +
-          box2(pv, 'زيارة صفحة') +
-          box2(total(daily, function (x) { return x.kind === 'file_dl'; }), 'تنزيل ملفّ') +
-          box2(total(daily, function (x) { return x.kind === 'contact'; }), 'نقر تواصل') +
-          box2(total(daily, function (x) { return x.kind === 'form'; }), 'إرسال نموذج') +
-          box2(hrs2(avg), 'متوسّط زمن الردّ') +
-          box2(late, 'طلب متأخّر') + '</div>' +
-        '<div style="margin-block-start:14px">' +
-          chartLine(series(daily, 30, function (x) { return x.kind === 'page'; }),
-                    { label: 'زيارات الصفحات', h: 160 }) + '</div>',
-        'التفصيل في «إحصاءات الزوّار» و«سجلّ العمل».');
+      function spark(kind, rows) {
+        return chartLine(series(rows || daily, D, kind ? function (x) { return x.kind === kind; } : null),
+                         { bare: 1, h: 34 });
+      }
+      function dash(v) { return noStats ? '—' : String(v); }
+
+      var kbox = $('#dv-kpi');
+      if (kbox) {
+        kbox.innerHTML =
+          kpi({ v: dash(tot('page')), l: 'زيارة صفحة', icon: 'eye',
+                delta: delta(daily, D * 2, function (x) { return x.kind === 'page'; }),
+                spark: noStats ? '' : spark('page') }) +
+          kpi({ v: dash(tot('file_dl')), l: 'تنزيل ملفّ', icon: 'down',
+                delta: delta(daily, D * 2, function (x) { return x.kind === 'file_dl'; }),
+                spark: noStats ? '' : spark('file_dl') }) +
+          kpi({ v: dash(tot('form')), l: 'إرسال نموذج', icon: 'inbox2',
+                delta: delta(daily, D * 2, function (x) { return x.kind === 'form'; }) }) +
+          kpi({ v: String(open), l: 'طلب لم يُفتح بعد', icon: 'inbox2', gold: 1,
+                sub: late ? ('منها ' + late + ' متأخّرٌ فوق ٣ أيام') : 'لا متأخّر' }) +
+          kpi({ v: hrs(avg), l: 'متوسّط زمن أوّل ردّ', icon: 'log',
+                note: 'كل الفترة', sub: 'الوسيط ' + hrs(med) }) +
+          kpi({ v: String(total(audit, function (x) { return String(x.day) >= dayStr(D - 1); })),
+                l: 'عملية على المحتوى', icon: 'log',
+                delta: delta(audit, D * 2), spark: spark(null, audit) });
+      }
+
+      var cbox = $('#dv-charts');
+      if (cbox) {
+        cbox.innerHTML = noStats
+          ? '<div class="notice" style="margin-block-end:14px">' +
+            '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
+            'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>'
+          : card('اتجاه زيارات الصفحات — آخر ' + D + ' يومًا',
+              chartLine(series(daily, D, function (x) { return x.kind === 'page'; }),
+                        { label: 'زيارات الصفحات', h: 190 }),
+              'كل نقطةٍ يومٌ واحد. الأيام الخالية أصفارٌ لا فراغات.') +
+            '<div class="chart-grid" style="align-items:start">' +
+              card('أكثر الصفحات زيارةً',
+                chartBars(sumBy(byPath, function (x) { return pageName(x.path); },
+                                function (x) { return x.kind === 'page'; }), { top: 8 })) +
+              card('أكثر الملفّات تنزيلًا',
+                chartBars(sumBy(byLabel, function (x) { return x.label; },
+                                function (x) { return x.kind === 'file_dl'; }), { top: 8, gold: 1 }),
+                'التنزيل الفعليّ لا المعاينة في المتصفّح.') +
+            '</div>' +
+            card('الأجهزة',
+              chartDonut(sumBy(byDev, function (x) {
+                return { mobile: 'جوال', tablet: 'لوحيّ', desktop: 'حاسب' }[x.device] || 'غير معروف';
+              }), { unit: 'زيارة' }),
+              'نسبةُ الجوال إلى الحاسب — منها تُقرَّر أولويّة أيّ الشاشتين نُحسّن أوّلًا.');
+      }
+
+      /* الجرد مضغوطٌ في الأسفل: أرقامٌ لا تتغيّر كثيرًا ولا تستدعي عملًا */
+      var ibox = $('#dv-inv');
+      if (ibox) {
+        ibox.innerHTML = '<div class="iaq-card" style="margin-block-end:14px">' +
+          '<h3 class="card-h">جرد المحتوى المنشور</h3>' +
+          '<div class="stat-grid" id="dv-inv-grid" style="grid-template-columns:repeat(4,1fr)">' +
+          DASH.map(function (g, gi) {
+            return g.items.map(function (it, i) {
+              return '<div class="stat-box"><div class="sb-val" id="dv-' + gi + '-' + i + '">…</div>' +
+                '<div class="sb-label">' + esc(it.l) + '</div></div>';
+            }).join('');
+          }).join('') + '</div></div>';
+        DASH.forEach(function (g, gi) {
+          g.items.forEach(function (it, i) {
+            countOf(it.q).then(function (n) {
+              if (!alive(myKey)) return;
+              var el = $('#dv-' + gi + '-' + i);
+              if (!el) return;
+              if (n < 0) { el.textContent = '—'; el.title = 'تعذّرت القراءة'; return; }
+              el.textContent = String(n);
+              if (it.hot && n > 0) el.style.color = '#8c3d1c';
+            });
+          });
+        });
+      }
     });
 
     api('submissions?select=id,kind,status,created_at,payload&order=created_at.desc&limit=5')
