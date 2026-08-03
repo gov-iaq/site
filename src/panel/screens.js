@@ -1290,6 +1290,65 @@ window.IAQ_SCREENS = (function () {
       box.innerHTML = html;
     });
   }
+  /* شريطُ ترشيحٍ من الفاعلين والأقسام الموجودين فعلًا في المدى المعروض */
+  /* مستمعٌ مفوَّضٌ لعناصر الترشيح — يعمل بعد كل إعادة رسم */
+  var wlWired = false;
+  function wireWl() {
+    if (wlWired) return;
+    wlWired = true;
+    var area = document.getElementById('viewArea') || document.body;
+    area.addEventListener('change', function (e) {
+      var el = e.target, k = el && el.getAttribute && el.getAttribute('data-wl');
+      if (!k) return;
+      if (k === 'actor') wlActor = el.value;
+      else if (k === 'entity') wlEntity = el.value;
+      else if (k === 'only') wlOnlyUndo = !!el.checked;
+      paintWorklog(cur);
+    });
+  }
+
+  function wlBar(ad) {
+    wireWl();
+    var actors = {}, ents = {};
+    (ad || []).forEach(function (x) {
+      if (x.actor_email) actors[x.actor_email] = 1;
+      if (x.entity) ents[x.entity] = 1;
+    });
+    function sel(id, cur, map, all, tr) {
+      var ks = Object.keys(map).sort();
+      return '<select data-wl="' + id + '" style="min-width:150px">' +
+        '<option value=""' + (cur === '' ? ' selected' : '') + '>' + esc(all) + '</option>' +
+        ks.map(function (k) {
+          return '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' +
+            esc(tr ? (tr[k] || k) : k) + '</option>';
+        }).join('') + '</select>';
+    }
+    return '<div class="addrow" style="margin-block-end:12px;flex-wrap:wrap">' +
+      sel('actor', wlActor, actors, 'كل الفاعلين') +
+      sel('entity', wlEntity, ents, 'كل الأقسام', ENT_AR) +
+      '<label class="small" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer">' +
+      '<input type="checkbox" data-wl="only"' + (wlOnlyUndo ? ' checked' : '') +
+      ' style="width:16px;height:16px;accent-color:var(--teal)"> ما يمكن التراجع عنه فقط</label>' +
+      '</div>';
+  }
+
+  /* خليّة التراجع: زرٌّ إن جاز، وسببٌ مفهومٌ إن لم يجُز */
+  function undoCell(a) {
+    if (a.undone_at) return '<span class="small muted">تُرَاجِع عنه</span>';
+    if (a.undo_of) return '<span class="small muted">عمليةُ تراجع</span>';
+    if (a.can_undo) {
+      return '<button class="btn ghost sm" data-sc="undo" data-id="' + esc(String(a.id)) + '">تراجَع</button>';
+    }
+    if (a.skipped === 'pii') return '<span class="small muted" title="بيانات الزوّار لا تُخزَّن">بيانات شخصية</span>';
+    if (a.skipped === 'size') return '<span class="small muted" title="القيمة أكبر من سقف التخزين">كبيرٌ جدًّا</span>';
+    if (a.later_edits > 0) {
+      return '<span class="small muted" title="استعادةُ القيمة القديمة تدهس ما جرى بعدها">' +
+        'بعده ' + a.later_edits + ' تعديلًا</span>';
+    }
+    if (!a.pk) return '<span class="small muted" title="قيدٌ سابقٌ لترقية v9">قيدٌ قديم</span>';
+    return '<span class="small muted">—</span>';
+  }
+
   function box2(n, label) {
     return '<div class="stat-box"><div class="sb-val">' + esc(String(n)) + '</div>' +
            '<div class="sb-label">' + esc(label) + '</div></div>';
@@ -1308,16 +1367,91 @@ window.IAQ_SCREENS = (function () {
       '<div class="iaq-card"><div class="muted">جارٍ قراءة السجلّ…</div></div></div>';
   }
 
+  /* ---------------- سجلّ العمل: ترشيحٌ وتراجع ---------------- */
+  var WL_LIMIT = 100;
+  var wlActor = '', wlEntity = '', wlOnlyUndo = false;
+  /* الرسالة تنجو من إعادة الرسم: كانت تُكتب في عقدةٍ داخل ما يُعاد بناؤه فتُمحى
+     قبل أن تُرى. وتُطفأ بعد ثمانِ ثوانٍ كي لا تبقى بعد أن فقدت معناها. */
+  var wlMsg = null, wlMsgT = null;
+  function setWlMsg(text, kind) {
+    wlMsg = text ? { text: text, kind: kind || '' } : null;
+    if (wlMsgT) clearTimeout(wlMsgT);
+    if (text) wlMsgT = setTimeout(function () { wlMsg = null; }, 8000);
+  }
+  function wlMsgHtml() {
+    if (!wlMsg) return '<div id="wl-msg" class="small" style="margin-block-end:10px"></div>';
+    var col = wlMsg.kind === 'err' ? '#8c3d1c' : '#0c6c6c';
+    return '<div id="wl-msg" class="small" style="margin-block-end:10px;color:' + col + '">' +
+      esc(wlMsg.text) + '</div>';
+  }
+
+  function wlFilter() {
+    var q = '';
+    if (wlActor) q += '&actor_email=eq.' + encodeURIComponent(wlActor);
+    if (wlEntity) q += '&entity=eq.' + encodeURIComponent(wlEntity);
+    if (wlOnlyUndo) q += '&can_undo=is.true';
+    return q;
+  }
+
+  /* التراجع: القرار في القاعدة، والواجهة تعرض سببَ الرفض كما جاء */
+  function doUndo(id) {
+    if (busy) return;
+    busy = true;
+    var msg = $('#wl-msg');
+    if (msg) { msg.style.color = ''; msg.textContent = 'جارٍ التراجع…'; }
+    api('rpc/undo_change', { method: 'POST', body: JSON.stringify({ log_id: Number(id) }) })
+      .then(function (out) {
+        if (out && out.ok === false) throw new Error(out.why || 'تعذّر التراجع');
+        close();
+        setWlMsg('تمّ التراجع — يسري على الموقع عند أوّل تحميل.', 'ok');
+      })
+      .catch(function (e) {
+        close();
+        setWlMsg(e.message, 'err');
+      })
+      .then(function () {
+        busy = false;
+        paintWorklog(cur);      /* الرسالة تُعاد رسمها معه */
+      });
+  }
+
+  function askUndo(id) {
+    var r = null;
+    (WL_ROWS || []).forEach(function (x) { if (String(x.id) === String(id)) r = x; });
+    if (!r) return;
+    var what = (ACT_AR[r.action] || r.action) + ' في ' + (ENT_AR[r.entity] || r.entity);
+    var body = '<p>التراجع عن: <b>' + esc(what) + '</b>' +
+      (r.entity_id ? ' <span class="mono small muted">#' + esc(r.entity_id) + '</span>' : '') + '</p>' +
+      '<p class="muted small">' +
+      (r.action === 'insert'
+        ? 'هذا العنصرُ أُضيف، فالتراجع عنه <b>حذفٌ نهائيّ</b> له.'
+        : (r.action === 'delete'
+          ? 'هذا العنصرُ حُذف، فالتراجع يُعيده بمعرّفه القديم.'
+          : 'تُستعاد القيم التي كانت قبل هذا التعديل.')) +
+      '</p>';
+    /* «إضافة» تراجعُها حذف: تُطلب كلمة المرور. وغيرها استعادةٌ لا تُفقد شيئًا. */
+    if (r.action === 'insert') {
+      askPassword('تأكيد التراجع (حذف)', body, function () { doUndo(id); });
+    } else {
+      modal('تأكيد التراجع', body,
+        '<button class="btn ghost" data-sc="close">إلغاء</button>' +
+        '<button class="btn" data-sc="undoyes" data-id="' + esc(String(id)) + '">تراجَع</button>');
+    }
+  }
+
+  var WL_ROWS = null;
+
   function paintWorklog(myKey) {
     var d = RANGE;
     Promise.all([
       readView('v_audit_daily', d),
-      api('audit_log?select=created_at,actor_email,action,entity,entity_id,detail' +
-          '&order=created_at.desc&limit=60').catch(function () { return []; }),
+      api('v_audit_recent?select=*&order=created_at.desc&limit=' + WL_LIMIT +
+          wlFilter()).catch(function () { return []; }),
       api('v_subs_response?select=*&order=created_at.desc&limit=1000').catch(function () { return []; })
     ]).then(function (r) {
       if (!alive(myKey)) return;
       var ad = r[0], recent = r[1], subs = r[2];
+      WL_ROWS = recent;
       var box = $('#sc-body');
       if (!box) return;
       var ep = $('#sc-err');
@@ -1370,10 +1504,12 @@ window.IAQ_SCREENS = (function () {
         card('نوع العمل',
           chartDonut(sumBy(ad, function (x) { return ACT_AR[x.action] || x.action; }), { unit: 'عملية' })) +
 
-        card('آخر ٦٠ عملية',
+        card('سجلّ التعديلات والتراجع',
+          wlBar(ad) +
+          wlMsgHtml() +
           (recent && recent.length
-            ? '<div style="max-height:420px;overflow:auto"><table class="tbl"><thead><tr>' +
-              '<th>الوقت</th><th>من</th><th>العمل</th><th>القسم</th><th>التفصيل</th>' +
+            ? '<div style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>' +
+              '<th>الوقت</th><th>من</th><th>العمل</th><th>القسم</th><th>التفصيل</th><th>التراجع</th>' +
               '</tr></thead><tbody>' + recent.map(function (a) {
                 var det = '';
                 if (a.detail && a.detail.from) det = esc(a.detail.from) + ' ← ' + esc(a.detail.to);
@@ -1383,10 +1519,15 @@ window.IAQ_SCREENS = (function () {
                   '<td class="small">' + esc(a.actor_email || '—') + '</td>' +
                   '<td>' + chipOf(a.action, ACT_AR) + '</td>' +
                   '<td class="small">' + esc(ENT_AR[a.entity] || a.entity || '—') + '</td>' +
-                  '<td class="small">' + det + '</td></tr>';
+                  '<td class="small">' + det + '</td>' +
+                  '<td>' + undoCell(a) + '</td></tr>';
               }).join('') + '</tbody></table></div>'
             : '<div class="muted" style="padding:22px;text-align:center">لا عمليات مسجّلة بعد — ' +
-              'السجلّ يبدأ من تشغيل schema-v8.</div>'));
+              'السجلّ يبدأ من تشغيل schema-v8.</div>'),
+          'التراجع متاحٌ ما لم يجرِ تعديلٌ أحدثُ على العنصر نفسه — واستعادةُ قيمةٍ ' +
+          'قديمة تدهس ما جرى بعدها، فالدمجُ الآليّ تخمين. والقيودُ السابقة لترقية ' +
+          'schema-v9 لا قيمَ محفوظةً لها فلا تراجعَ فيها. وطلباتُ الزوّار تُخزَّن ' +
+          'منها الحالةُ والنوعُ والتاريخُ فقط — فبياناتهم الشخصية لا تدخل السجلّ.');
 
       box.innerHTML = html;
     });
@@ -2677,6 +2818,8 @@ window.IAQ_SCREENS = (function () {
     if (a === 'save') { e.preventDefault(); saveForm(id); return; }
     if (a === 'del') { e.preventDefault(); askDelete(id); return; }
     if (a === 'pwyes') { e.preventDefault(); runPasswordGate(); return; }
+    if (a === 'undo') { e.preventDefault(); askUndo(id); return; }
+    if (a === 'undoyes') { e.preventDefault(); doUndo(id); return; }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
     if (a === 'reload') {
