@@ -987,6 +987,43 @@ window.IAQ_SCREENS = (function () {
     (rows || []).forEach(function (r) { if (!filter || filter(r)) s += Number(r.n) || 0; });
     return s;
   }
+  /* ------------------ صحّةُ أرقام الزوّار ------------------
+     الإدراجُ مفتوحٌ للزائر بالضرورة (لا حساب ولا معرّف)، فالرقمُ قابلٌ للتلفيق
+     مبدئيًّا. وترقيةُ v11 تحدُّ حجمَ التلفيق بسقفٍ يوميّ وتمنع تلفيقَ التاريخ —
+     لكنّ السقفَ الصامت كذبةٌ ثانية: يومٌ بلغه يُعرض قياسًا وهو حدٌّ. فنقرأ
+     v_views_health ونُعلن. والمنظرُ غيرُ موجودٍ قبل v11: نصمت ولا نُخيف. */
+  function readHealth() {
+    return api('v_views_health?select=*&limit=1')
+      .then(function (r) { return (r && r[0]) || null; })
+      .catch(function () { return null; });
+  }
+  function healthNotice(h) {
+    if (!h) return '';
+    var msgs = [];
+    if (Number(h.capped_days) > 0) {
+      msgs.push('<b>' + Number(h.capped_days) + ' يومًا بلغ سقفَ التسجيل (' +
+        Number(h.cap) + ' سطرًا لليوم).</b> أرقامُ تلك الأيام حدٌّ لا قياس: ' +
+        'الحقيقةُ عندها أو أكثر، وقد يكون بعضُها تضخيمًا مقصودًا.');
+    }
+    if (Number(h.future_rows) > 0) {
+      msgs.push('<b>' + Number(h.future_rows) + ' سطرًا بتاريخٍ في المستقبل.</b> ' +
+        'أُدرجت قبل ترقية v11 حين كان تلفيقُ التاريخ ممكنًا — احذفها من ' +
+        'قاعدة البيانات كي لا تُسمّم المقارنات.');
+    }
+    if (!msgs.length) return '';
+    return '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c;' +
+      'margin-block-end:14px">' + msgs.join('<br><br>') + '</div>';
+  }
+
+  /* عمرٌ بالمللي ثانية إلى عبارةٍ عربية. مشتركٌ بين تبويبَي اللوحة كي لا
+     يفترق الرقمُ نفسه بينهما كما افترق سلفًا. */
+  function ageLabel(ms) {
+    if (ms == null) return '—';
+    var h = ms / 3600000;
+    if (h < 1) return Math.round(h * 60) + ' دقيقة';
+    if (h < 48) return Math.round(h) + ' ساعة';
+    return Math.round(h / 24) + ' يومًا';
+  }
   /* سلسلة يوميّة كاملة — الأيام الخالية أصفار كي لا يكذب الرسم */
   function series(rows, days, filter) {
     var m = {};
@@ -1476,85 +1513,97 @@ window.IAQ_SCREENS = (function () {
   function paintDash(myKey) {
     /* المدى المختار؛ وصفرٌ = منذ الإنشاء فنقرأ الكلّ ونحسب المدى من البيانات */
     var D = RANGE || 0;
+    var subsErr = null;
     /* ثلاث قراءاتٍ لا أكثر — والمقارنة من ضِعف المدى في القراءة نفسها */
     Promise.all([
       readView('v_views_daily', D ? D * 2 : 0),
-      api('v_subs_response?select=status,created_at,hours_to_first&order=created_at.desc&limit=1000')
-        .catch(function () { return []; }),
+      /* الفشلُ يُرفع لا يُبلَع: كان catch يُرجع [] فتُطبع «٠ طلب لم يُفتح ·
+         لا متأخّر» — وعطلٌ يُقرأ طمأنينةً أسوأ من عطلٍ يُعلن عن نفسه.
+         و hours_to_first لم يُعَد مطلوبًا: الحالةُ في جدول الطلبات تكفي. */
+      api('v_subs_response?select=status,created_at&order=created_at.desc&limit=1000')
+        .catch(function (e) { subsErr = e.message || 'تعذّرت القراءة'; return null; }),
       readView('v_audit_daily', D ? D * 2 : 0),
       readView('v_views_by_path', D),
       readView('v_views_by_label', D),
-      readView('v_views_by_device', D)
+      readView('v_views_by_device', D),
+      readHealth()
     ]).then(function (r) {
       if (!alive(myKey)) return;
       /* «منذ الإنشاء»: المدى من أقدم يومٍ في البيانات، فلا تُقصّ السلسلة */
       if (!D) D = spanOf(r[0]);
-      var daily = r[0] || [], subs = r[1] || [], audit = r[2] || [];
+      var daily = r[0] || [], subs = r[1], audit = r[2] || [];
       var byPath = r[3] || [], byLabel = r[4] || [], byDev = r[5] || [];
 
-      /* في المدى المعروض وحده (النصف الأحدث) */
-      /* حين يكون المدى «منذ الإنشاء» فالنصفُ الأحدث هو المدى المحسوب نفسه */
-      var HALF = (RANGE ? RANGE : Math.ceil(D / 2));
+      /* المدى المعروض. نقرأ ضِعفَه كي تُحسب المقارنة، فالجمعُ يقتصر على نصفِه
+         الأحدث — إلّا في «منذ الإنشاء»: ليس قبله مدًى يُقارَن، والمدى المعروض
+         هو العمرُ كلّه بلا حدٍّ سفليّ. كان الحدُّ هنا نصفَ العمر، فعرضَ هذا
+         التبويبُ نصفَ الرقم الذي يعرضه تبويبُ الزوّار على المدى نفسه. */
+      var SPAN = RANGE || D;
+      var FROM = RANGE ? dayStr(SPAN - 1) : '';   /* '' = بلا حدّ: كلُّ يومٍ ≥ '' */
       function tot(kind) {
-        var from = dayStr(HALF - 1);
         return total(daily, function (x) {
-          return String(x.day) >= from && (!kind || x.kind === kind);
+          return String(x.day) >= FROM && (!kind || x.kind === kind);
         });
       }
       var noStats = !daily.length;
 
-      var ans = [], open = 0, late = 0, now = Date.now();
-      subs.forEach(function (s) {
-        if (s.hours_to_first != null) ans.push(Number(s.hours_to_first));
-        if (s.status === 'new') {
-          open++;
-          if (now - new Date(s.created_at).getTime() > 3 * 86400000) late++;
-        }
+      /* مؤشّرا الوارد من حالة الطلب في جدوله نفسه، لا من hours_to_first: ذاك
+         يُشتقّ من سجلّ العمل الذي تُفرغه purge_audit بعد ثلاثين يومًا، فالمُجاب
+         عليه قديمًا يعود «بلا ردّ». وكان المتوسّط يحسب المُجاب عليه وحده —
+         فكلّما زاد الإهمال جَمُلَ الرقم. */
+      var open = 0, late = 0, oldest = null, now = Date.now();
+      (subs || []).forEach(function (s) {
+        if (s.status !== 'new') return;
+        open++;
+        var age = now - new Date(s.created_at).getTime();
+        if (age > 3 * 86400000) late++;
+        if (oldest === null || age > oldest) oldest = age;
       });
-      var avg = ans.length ? (ans.reduce(function (a, b) { return a + b; }, 0) / ans.length) : null;
-      ans.sort(function (a, b) { return a - b; });
-      var med = ans.length ? ans[Math.floor(ans.length / 2)] : null;
-      function hrs(v) {
-        if (v == null) return '—';
-        if (v < 1) return Math.round(v * 60) + ' د';
-        if (v < 48) return (Math.round(v * 10) / 10) + ' س';
-        return Math.round(v / 24) + ' ي';
-      }
+      var seen = (subs || []).length;
+      var rate = seen ? Math.round(((seen - open) / seen) * 100) : null;
+
       function spark(kind, rows) {
-        return chartLine(series(rows || daily, HALF, kind ? function (x) { return x.kind === kind; } : null),
+        return chartLine(series(rows || daily, SPAN, kind ? function (x) { return x.kind === kind; } : null),
                          { bare: 1, h: 34 });
       }
       function dash(v) { return noStats ? '—' : String(v); }
 
-      var dlt = RANGE ? (RANGE * 2) : D;    /* المقارنة بين نصفَي ما قُرئ */
+      /* المقارنة تحتاج مدًى سابقًا قُرئ فعلًا. و«منذ الإنشاء» لا قبلَه شيء،
+         فسهمُه كان يقارن نصفَ عمر الجمعية بنصفِه — وليس هذا ما يُقرأ منه. */
+      var NOTE = RANGE ? '' : 'منذ الإنشاء';
+      function dlt(f, rows) { return RANGE ? delta(rows || daily, RANGE * 2, f) : null; }
+
       var kbox = $('#dv-kpi');
       if (kbox) {
         kbox.innerHTML =
-          kpi({ v: dash(tot('page')), l: 'زيارة صفحة', icon: 'eye',
-                delta: delta(daily, dlt, function (x) { return x.kind === 'page'; }),
+          kpi({ v: dash(tot('page')), l: 'زيارة صفحة', icon: 'eye', note: NOTE,
+                delta: dlt(function (x) { return x.kind === 'page'; }),
                 spark: noStats ? '' : spark('page') }) +
-          kpi({ v: dash(tot('file_dl')), l: 'تنزيل ملفّ', icon: 'down',
-                delta: delta(daily, dlt, function (x) { return x.kind === 'file_dl'; }),
+          kpi({ v: dash(tot('file_dl')), l: 'تنزيل ملفّ', icon: 'down', note: NOTE,
+                delta: dlt(function (x) { return x.kind === 'file_dl'; }),
                 spark: noStats ? '' : spark('file_dl') }) +
-          kpi({ v: dash(tot('form')), l: 'إرسال نموذج', icon: 'inbox2',
-                delta: delta(daily, dlt, function (x) { return x.kind === 'form'; }) }) +
-          kpi({ v: String(open), l: 'طلب لم يُفتح بعد', icon: 'inbox2', gold: 1,
-                sub: late ? ('منها ' + late + ' متأخّرٌ فوق ٣ أيام') : 'لا متأخّر' }) +
-          kpi({ v: hrs(avg), l: 'متوسّط زمن أوّل ردّ', icon: 'log',
-                note: 'كل الفترة', sub: 'الوسيط ' + hrs(med) }) +
-          kpi({ v: String(total(audit, function (x) { return String(x.day) >= dayStr(HALF - 1); })),
-                l: 'عملية على المحتوى', icon: 'log',
-                delta: delta(audit, dlt), spark: spark(null, audit) });
+          kpi({ v: dash(tot('form')), l: 'إرسال نموذج', icon: 'inbox2', note: NOTE,
+                delta: dlt(function (x) { return x.kind === 'form'; }) }) +
+          kpi({ v: subsErr ? '—' : String(open), l: 'طلب لم يُفتح بعد', icon: 'inbox2', gold: 1,
+                sub: subsErr ? 'تعذّرت قراءة الطلبات — الرقم غير معروف'
+                   : (late ? ('منها ' + late + ' متأخّرٌ فوق ٣ أيام') : 'لا متأخّر') }) +
+          kpi({ v: subsErr || rate == null ? '—' : rate + '%', l: 'من الوارد فُتح وعُومل',
+                icon: 'log', note: subsErr ? '' : (seen ? 'آخر ' + seen + ' طلبًا' : ''),
+                sub: subsErr ? 'تعذّرت قراءة الطلبات — الرقم غير معروف'
+                   : (open ? 'أقدمُ طلبٍ بلا ردّ: ' + ageLabel(oldest) : 'لا طلبَ بلا ردّ') }) +
+          kpi({ v: String(total(audit, function (x) { return String(x.day) >= FROM; })),
+                l: 'عملية على المحتوى', icon: 'log', note: NOTE,
+                delta: dlt(null, audit), spark: spark(null, audit) });
       }
 
       var cbox = $('#dv-charts');
       if (cbox) {
-        cbox.innerHTML = noStats
+        cbox.innerHTML = healthNotice(r[6]) + (noStats
           ? '<div class="notice" style="margin-block-end:14px">' +
             '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
             'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>'
           : card('اتجاه زيارات الصفحات — ' + (RANGE ? 'آخر ' + RANGE + ' يومًا' : 'منذ الإنشاء'),
-              chartLine(series(daily, HALF, function (x) { return x.kind === 'page'; }),
+              chartLine(series(daily, SPAN, function (x) { return x.kind === 'page'; }),
                         { label: 'زيارات الصفحات', h: 190 }),
               'كل نقطةٍ يومٌ واحد. الأيام الخالية أصفارٌ لا فراغات.') +
             '<div class="chart-grid" style="align-items:start">' +
@@ -1570,7 +1619,7 @@ window.IAQ_SCREENS = (function () {
               chartDonut(sumBy(byDev, function (x) {
                 return { mobile: 'جوال', tablet: 'لوحيّ', desktop: 'حاسب' }[x.device] || 'غير معروف';
               }), { unit: 'زيارة' }),
-              'نسبةُ الجوال إلى الحاسب — منها تُقرَّر أولويّة أيّ الشاشتين نُحسّن أوّلًا.');
+              'نسبةُ الجوال إلى الحاسب — منها تُقرَّر أولويّة أيّ الشاشتين نُحسّن أوّلًا.'));
       }
 
       /* الجرد مضغوطٌ في الأسفل: أرقامٌ لا تتغيّر كثيرًا ولا تستدعي عملًا */
@@ -1656,7 +1705,8 @@ window.IAQ_SCREENS = (function () {
       readView('v_views_by_label', d),
       readView('v_views_by_ref', d),
       readView('v_views_by_device', d),
-      api('v_views_hourly?select=*&limit=200').catch(function () { return []; })
+      api('v_views_hourly?select=*&limit=200').catch(function () { return []; }),
+      readHealth()
     ]).then(function (r) {
       if (!alive(myKey)) return;
       var daily = r[0], byPath = r[1], byLabel = r[2], byRef = r[3], byDev = r[4], hourly = r[5];
@@ -1678,11 +1728,14 @@ window.IAQ_SCREENS = (function () {
 
       /* الفرز في ترويسة الشاشة مرّةً واحدةً لا في كل تبويب: التبويبات كانت
          شاشاتٍ مستقلّةً لكلٍّ شريطُها، فبقيا معًا بعد الدمج فظهر مكرّرًا. */
-      var html = 
+      var html = healthNotice(r[6]) +
         card('الخلاصة',
           grid(6) + box2(pv, 'زيارة صفحة') + box2(dl, 'تنزيل ملفّ') + box2(fv, 'معاينة ملفّ') +
           box2(cta, 'نقر زرّ') + box2(ct, 'نقر تواصل') + box2(fm, 'إرسال نموذج') + '</div>',
-          'المدى: آخر ' + d + ' يومًا بتوقيت الرياض. ولا نحسب زوّارًا فريدين — لا معرّف زائر ولا كوكيز.') +
+          'المدى: ' + (RANGE ? 'آخر ' + d + ' يومًا' : 'منذ الإنشاء — ' + d + ' يومًا') +
+          ' بتوقيت الرياض، وهو المدى نفسه وبالحساب نفسه في تبويب «نظرة عامّة». ' +
+          'ولا نحسب زوّارًا فريدين — لا معرّف زائر ولا كوكيز. والتسجيل مفتوحٌ للزائر ' +
+          'بالضرورة، فسقفٌ يوميّ يحدُّ أيَّ تضخيم، وأيُّ يومٍ يبلغه يُعلَن أعلاه.') +
 
         card('اتجاه زيارات الصفحات',
           chartLine(series(daily, d, function (x) { return x.kind === 'page'; }), { label: 'زيارات الصفحات' })) +
@@ -1890,11 +1943,14 @@ window.IAQ_SCREENS = (function () {
 
   function paintWorklog(myKey) {
     var d = RANGE || 0;
+    var subsErr = null;
     Promise.all([
       readView('v_audit_daily', d),
       api('v_audit_recent?select=*&order=created_at.desc&limit=' + WL_LIMIT +
           wlFilter()).catch(function () { return []; }),
-      api('v_subs_response?select=*&order=created_at.desc&limit=1000').catch(function () { return []; })
+      /* كما في التبويب الأوّل: الفشلُ يُعلَن ولا يُقرأ صفرًا */
+      api('v_subs_response?select=status,created_at&order=created_at.desc&limit=1000')
+        .catch(function (e) { subsErr = e.message || 'تعذّرت القراءة'; return null; })
     ]).then(function (r) {
       if (!alive(myKey)) return;
       var ad = r[0], recent = r[1], subs = r[2];
@@ -1908,40 +1964,37 @@ window.IAQ_SCREENS = (function () {
           '<b>تعذّرت قراءة بعض البيانات</b><br>' + esc(err) +
           '<br><span class="small">إن كانت المناظر غير موجودة فشغّل <b>supabase/schema-v8.sql</b>.</span></div>' : '';
 
-      /* مؤشّرات الردّ */
-      var answered = [], open = 0, late = 0, closed = 0;
+      /* مؤشّرات الوارد — بالحساب نفسه الذي في تبويب «نظرة عامّة» حرفيًّا.
+         كانا حسابين مختلفين للمعنى الواحد فأعطيا رقمين مختلفين. */
+      var open = 0, late = 0, closed = 0, oldest = null;
       var now = Date.now();
       (subs || []).forEach(function (s) {
-        if (s.hours_to_first != null) answered.push(Number(s.hours_to_first));
-        if (s.status === 'new') {
-          open++;
-          if (now - new Date(s.created_at).getTime() > 3 * 86400000) late++;
-        }
         if (s.status === 'closed') closed++;
+        if (s.status !== 'new') return;
+        open++;
+        var age = now - new Date(s.created_at).getTime();
+        if (age > 3 * 86400000) late++;
+        if (oldest === null || age > oldest) oldest = age;
       });
-      var avg = answered.length
-        ? (answered.reduce(function (a, b) { return a + b; }, 0) / answered.length) : null;
-      answered.sort(function (a, b) { return a - b; });
-      var med = answered.length ? answered[Math.floor(answered.length / 2)] : null;
-      function hrs(v) {
-        if (v == null) return '—';
-        if (v < 1) return Math.round(v * 60) + ' د';
-        if (v < 48) return (Math.round(v * 10) / 10) + ' س';
-        return Math.round(v / 24) + ' ي';
-      }
+      var seen = (subs || []).length;
+      var rate = seen ? Math.round(((seen - open) / seen) * 100) : null;
+      function q(v) { return subsErr ? '—' : String(v); }
 
       /* الفرز في ترويسة الشاشة مرّةً واحدةً لا في كل تبويب: التبويبات كانت
          شاشاتٍ مستقلّةً لكلٍّ شريطُها، فبقيا معًا بعد الدمج فظهر مكرّرًا. */
       var html = 
         card('مؤشّرات الردّ على الوارد',
           grid(5) +
-            box2(hrs(avg), 'متوسّط زمن أوّل ردّ') +
-            box2(hrs(med), 'الوسيط') +
-            box2(open, 'لم يُفتح بعد') +
-            box2(late, 'متأخّر فوق ٣ أيام') +
-            box2(closed, 'مُغلق') + '</div>',
-          'زمن الردّ = من وصول الطلب إلى أوّل تغيير لحالته. ويُحسب من سجلّ العمل، ' +
-          'فالطلبات التي عُدّلت قبل تشغيل سجلّ العمل لا زمنَ لها.') +
+            box2(subsErr || rate == null ? '—' : rate + '%', 'من الوارد فُتح وعُومل') +
+            box2(subsErr ? '—' : ageLabel(oldest), 'عمرُ أقدمِ طلبٍ بلا ردّ') +
+            box2(q(open), 'لم يُفتح بعد') +
+            box2(q(late), 'متأخّر فوق ٣ أيام') +
+            box2(q(closed), 'مُغلق') + '</div>',
+          subsErr
+            ? 'تعذّرت قراءة الطلبات: ' + subsErr + ' — الأرقام أعلاه غير معروفة، وليست أصفارًا.'
+            : 'المدى: آخر ' + seen + ' طلبًا وصلت، بحالتها في جدول الطلبات. ' +
+              'ولا نعرض متوسّطَ زمنِ الردّ: كان يحسب المُجاب عليه وحده فيَجمُل كلّما زاد ' +
+              'الإهمال، ومصدرُه سجلٌّ يُفرَّغ بعد ثلاثين يومًا.') +
 
         card('نشاط الفريق يوميًّا', chartLine(series(ad, d), { label: 'عمليات' })) +
 
