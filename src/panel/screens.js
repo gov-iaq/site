@@ -205,6 +205,14 @@ window.IAQ_SCREENS = (function () {
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
     heroslides: {
+      settingsTitle: 'الخلفية العامّة للسلايدر',
+      settings: [
+        { key: 'hero_bg_image', l: 'صورة الخلفية لكل الشرائح', t: 'img',
+          hint: 'تُستعمل في كل شريحةٍ لم تُحدَّد لها صورةٌ خاصّة في الجدول أدناه' },
+        { key: 'hero_overlay', l: 'تعتيم فوق الصورة %', t: 'int', def: 62, min: 0, max: 100, half: 1,
+          hint: 'كي يبقى النصّ مقروءًا' },
+        { key: 'hero_emblem_op', l: 'شفافية شعار الخلفية %', t: 'int', def: 8, min: 0, max: 60, half: 1 }
+      ],
       nav: 'السلايدر الرئيسي', h1: 'شرائح السلايدر الرئيسي',
       sub: 'الشرائح المتعاقبة في صدر الصفحة الرئيسة — نصوصها وروابطها وأيقوناتها.',
       table: 'hero_slides', filter: '', fixed: {}, audit: 1,
@@ -238,6 +246,25 @@ window.IAQ_SCREENS = (function () {
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
     },
     menuitems: {
+      settingsTitle: 'خلفية الشريط العلويّ وألوانه',
+      settings: [
+        { key: 'header_mode', l: 'نمط الخلفية', t: 'select',
+          o: { glass: 'زجاجيّ شفّاف (الافتراضي)', solid: 'لونٌ واحد', gradient: 'تدرّج لونيّ', image: 'صورة' }, def: 'glass',
+          hint: 'الزجاجيّ يُظهر ما تحته مموّهًا — وهو المبنيّ في الموقع' },
+        { key: 'header_color', l: 'اللون الأوّل', t: 'color', def: '#ffffff',
+          hint: 'يُستعمل في «لونٌ واحد» و«تدرّج»، وطبقةً فوق الصورة' },
+        { key: 'header_color2', l: 'اللون الثاني', t: 'color', def: '#f3f6f7',
+          hint: 'للتدرّج وحده' },
+        { key: 'header_angle', l: 'زاوية التدرّج', t: 'int', def: 135, min: 0, max: 360, half: 1,
+          hint: 'بالدرجات — ١٣٥ افتراضًا' },
+        { key: 'header_image', l: 'صورة الخلفية', t: 'img',
+          hint: 'تُغطّي الشريط. اترك الحقل فارغًا لإلغائها' },
+        { key: 'header_overlay', l: 'تعتيم فوق الصورة %', t: 'int', def: 55, min: 0, max: 100, half: 1,
+          hint: 'كي يبقى النصّ مقروءًا فوق الصورة' },
+        { key: 'header_ink', l: 'لون نصّ القائمة', t: 'color', def: '#12302c' },
+        { key: 'header_hover', l: 'لون النصّ عند المرور', t: 'color', def: '#007878' },
+        { key: 'header_line', l: 'لون الخطّ السفليّ', t: 'color', def: '#e6e9e9' }
+      ],
       nav: 'القوائم الرئيسية', h1: 'عناصر القائمة الرئيسية',
       sub: 'تسميات عناصر القائمة وروابطها وترتيبها وظهورها — بمستويين.',
       table: 'menu_items', filter: '', fixed: {}, audit: 1, selectAll: 1,
@@ -298,6 +325,35 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
+    footcfg: {
+      nav: 'التذييل', h1: 'التذييل — الخلفية والنصوص',
+      sub: 'خلفية شريط التذييل وألوانه ونصوصه الثابتة — تسري على كل صفحات الموقع.',
+      kind: 'settings',
+      reach: 'يسري على تذييل كل الصفحات عند أوّل تحميل بلا إعادة بناء. وأمّا الهاتف والبريد ' +
+             'وروابط المنصّات فمكانها شاشة «التواصل والروابط» — فهي تظهر في التذييل وفي صفحة ' +
+             '«تواصل معنا» معًا.',
+      rows: [
+        { key: 'footer_mode', l: 'نمط الخلفية', t: 'select', o: { solid: 'لونٌ واحد (الافتراضي)', gradient: 'تدرّج لونيّ', image: 'صورة' }, def: 'solid' },
+        { key: 'footer_color', l: 'اللون الأوّل', t: 'color', def: '#04342c',
+          hint: 'يُستعمل في «لونٌ واحد» و«تدرّج»، وطبقةً فوق الصورة' },
+        { key: 'footer_color2', l: 'اللون الثاني', t: 'color', def: '#063f36',
+          hint: 'للتدرّج وحده' },
+        { key: 'footer_angle', l: 'زاوية التدرّج', t: 'int', def: 135, min: 0, max: 360, half: 1 },
+        { key: 'footer_image', l: 'صورة الخلفية', t: 'img',
+          hint: 'اترك الحقل فارغًا لإلغائها' },
+        { key: 'footer_overlay', l: 'تعتيم فوق الصورة %', t: 'int', def: 78, min: 0, max: 100, half: 1,
+          hint: 'التذييل نصُّه فاتحٌ، فيحتاج تعتيمًا أقوى من الترويسة' },
+        { key: 'footer_ink', l: 'لون النصّ', t: 'color', def: '#bfd0cd' },
+        { key: 'footer_head', l: 'لون العناوين', t: 'color', def: '#ffffff' },
+        { key: 'footer_line', l: 'لون الخطوط الفاصلة', t: 'color', def: '#28504a' },
+        { key: 'footer_about', l: 'نبذة التذييل', t: 'area', dyn: 'footer.about',
+          hint: 'الفقرة تحت الشعار في التذييل' },
+        { key: 'footer_newsletter', l: 'نصّ النشرة', t: 'area', dyn: 'footer.newsletter' },
+        { key: 'footer_rights', l: 'سطر الحقوق', t: 'text', dyn: 'footer.rights',
+          hint: 'بلا سنةٍ — السنة تُحدَّث تلقائيًّا' }
+      ]
+    },
+
     contactcfg: {
       nav: 'التواصل والروابط', h1: 'بيانات التواصل والروابط الاجتماعية',
       sub: 'الهاتف والبريد وروابط المنصّات — تسري على كل صفحات الموقع.',
@@ -489,6 +545,15 @@ window.IAQ_SCREENS = (function () {
               { l: DOCCAT.minutes, c: 'category', v: 'minutes' }]
     },
     partnerlist: {
+      settingsTitle: 'طريقة عرض شريط الشركاء',
+      settings: [
+        { key: 'partners_strip_mode', l: 'نمط العرض', t: 'select',
+          o: { auto: 'تمريرٌ متّصل لا ينقطع', manual: 'تحريكٌ يدويّ بالأسهم والسحب',
+               fade: 'تبديل مجموعاتٍ بالتلاشي' }, def: 'auto' },
+        { key: 'partners_strip_speed', l: 'سرعة التمرير (ثانية للدورة)', t: 'int',
+          def: 42, min: 10, max: 180, half: 1,
+          hint: 'الأكبر أبطأ. يخصّ النمط المتّصل وحده' }
+      ],
       nav: 'الشركاء', h1: 'شعارات الشركاء',
       sub: 'شركاء النجاح كما يظهرون في شريط الصفحة الرئيسة — تعديل وحذف وإضافة وترتيب.',
       table: 'partners', filter: '', fixed: {}, logoDir: 'partners', audit: 1,
@@ -698,10 +763,20 @@ window.IAQ_SCREENS = (function () {
     if (sc.kind === 'visits') return visitsView(sc, myKey);
     if (sc.kind === 'worklog') return worklogView(sc, myKey);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
+    /* كتلة الإعدادات — إن كان للشاشة كتلةٌ — تُقرأ وتُرسم مستقلّةً عن الجدول،
+       فلا تُسقط قراءةٌ فاشلةٌ منهما الأخرى. */
+    if (sc.settings) {
+      setTimeout(function () {
+        loadSettings(sc).then(function () { if (alive(myKey)) paintSettings(sc); });
+      }, 0);
+    }
     /* الأزرار في الهيكل الثابت: لو تعذّرت القراءة تبقى الشاشة صالحة ويظهر السبب */
     return '<div class="view-head"><h1>' + esc(sc.h1) +
       '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
+      (sc.settings ? '<div class="iaq-card" style="margin-block-end:14px">' +
+        (sc.settingsTitle ? '<h2 class="sub" style="margin-block-start:0">' + esc(sc.settingsTitle) + '</h2>' : '') +
+        '<div id="sc-form"><div class="muted">جارٍ التحميل…</div></div></div>' : '') +
       '<div class="iaq-card" style="margin-block-end:14px">' + toolbar(sc) +
         '<div id="sc-diag" class="muted small">جارٍ التحميل…</div></div>' +
       '<div id="sc-err"></div><div id="sc-stats"></div>' +
@@ -712,6 +787,10 @@ window.IAQ_SCREENS = (function () {
      تقرأ صفوفًا مُسمّاة من جدول settings وتكتبها عامّةً — فيقرأها الموقع.
      ليست جدول سجلّات فلا تُستخدم دوالّ القوائم هنا. */
   var setVals = {};
+
+  /* صفوف الإعدادات: شاشةُ إعداداتٍ خالصة تُعرّفها في rows، وشاشةُ جدولٍ
+     تُعرّف كتلتها في settings — فتصلح الماكينة نفسها للاثنين. */
+  function setRows(sc) { return sc.rows || sc.settings || []; }
 
   function settingsView(sc, myKey) {
     setVals = {};
@@ -1280,7 +1359,7 @@ window.IAQ_SCREENS = (function () {
 
   function loadSettings(sc) {
     err = null;
-    var keys = sc.rows.map(function (r) { return r.key; });
+    var keys = setRows(sc).map(function (r) { return r.key; });
     return api('settings?select=key,value&key=in.(' + encodeURIComponent(keys.join(',')) + ')')
       .then(function (r) {
         setVals = {};
@@ -1314,6 +1393,23 @@ window.IAQ_SCREENS = (function () {
         'placeholder="لا شعار مخصّص — يُستخدم المبنيّ" style="margin-block-end:8px">' +
         '<input type="file" id="' + id + '-f" accept="' + esc(r.accept || 'image/*') + '" ' +
         'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
+    } else if (r.t === 'color') {
+      /* المنتقي والنصّ معًا: المنتقي للاختيار، والنصّ لمن عنده رمز الهوية.
+         وقيمةُ الحفظ من النصّ لأنّ منتقي المتصفّح يرفض الفارغ ويُطبّع الحرف. */
+      var cv = String(v == null ? '' : v).trim();
+      var ok6 = /^#[0-9a-fA-F]{6}$/.test(cv);
+      h += '<div style="display:flex;gap:8px;align-items:center">' +
+        '<input type="color" id="' + id + '-p" value="' + esc(ok6 ? cv : (r.def || '#000000')) + '" ' +
+        'aria-label="' + esc(r.l) + ' — منتقي اللون" ' +
+        'style="width:44px;height:38px;padding:2px;border:1px solid var(--line);' +
+        'border-radius:9px;background:#fff;cursor:pointer;flex:0 0 auto">' +
+        '<input type="text" id="' + id + '" value="' + esc(cv) + '" dir="ltr" ' +
+        'placeholder="' + esc(r.def || '#000000') + '" style="flex:1">' +
+        '</div>';
+    } else if (r.t === 'area') {
+      h += '<textarea id="' + id + '" rows="3" ' +
+        'style="width:100%;font:inherit;line-height:1.9;resize:vertical">' +
+        esc(v == null ? '' : v) + '</textarea>';
     } else {
       h += '<input type="text" id="' + id + '" value="' + esc(v == null ? '' : v) + '"' +
         (r.unit ? ' aria-describedby="' + id + '-u"' : '') + '>' +
@@ -1323,13 +1419,35 @@ window.IAQ_SCREENS = (function () {
     return h + '</div>';
   }
 
+  /* المنتقي والنصّ يتبع كلٌّ الآخر. مستمعٌ مفوَّضٌ واحد فيعمل بعد كل إعادة رسم. */
+  var colorWired = false;
+  function wireColors() {
+    if (colorWired) return;
+    colorWired = true;
+    var area = document.getElementById('viewArea') || document.body;
+    area.addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el || !el.id) return;
+      if (el.type === 'color' && /^sc-s-.+-p$/.test(el.id)) {
+        var txt = document.getElementById(el.id.slice(0, -2));
+        if (txt) txt.value = el.value;
+        return;
+      }
+      if (/^sc-s-/.test(el.id) && el.tagName === 'INPUT' && el.type === 'text') {
+        var pick = document.getElementById(el.id + '-p');
+        if (pick && /^#[0-9a-fA-F]{6}$/.test(el.value.trim())) pick.value = el.value.trim();
+      }
+    });
+  }
+
   function paintSettings(sc) {
+    wireColors();
     var box = $('#sc-form'), ep = $('#sc-err');
     if (!box) return;
     if (ep) ep.innerHTML = err
       ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
         '<b>تعذّر تنفيذ الإجراء</b><br>' + esc(err) + '</div>' : '';
-    box.innerHTML = sc.rows.map(setCtl).join('') +
+    box.innerHTML = setRows(sc).map(setCtl).join('') +
       '<div id="sc-setmsg" class="muted small" style="margin-block-end:10px"></div>' +
       '<div class="btnbar" style="justify-content:flex-start">' +
       '<button class="btn" data-sc="setsave">حفظ الإعدادات</button>' +
@@ -1344,7 +1462,7 @@ window.IAQ_SCREENS = (function () {
     /* الرفع أوّلًا: لا يُسجَّل رابطٌ لصورة لم تصل */
     var upRow = null, upFile = null;
     /* حقلا صورة في الشاشة: يُرفع واحدٌ في كل نداء ثم يُعاد النداء للآخر */
-    sc.rows.forEach(function (r) {
+    setRows(sc).forEach(function (r) {
       if (r.t !== 'img' || upFile) return;
       var fi = $('#sc-s-' + r.key + '-f');
       if (fi && fi.files && fi.files[0]) { upRow = r; upFile = fi.files[0]; }
@@ -1368,7 +1486,7 @@ window.IAQ_SCREENS = (function () {
       return;
     }
     var out = [], bad = null;
-    sc.rows.forEach(function (r) {
+    setRows(sc).forEach(function (r) {
       if (bad) return;
       var el = $('#sc-s-' + r.key);
       if (!el) return;

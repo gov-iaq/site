@@ -839,6 +839,9 @@ SCREEN_ICON_PATHS = {
     "pages2": '<rect x="7" y="3" width="12" height="15" rx="2"/>'
               '<path d="M15 21H5.5A1.5 1.5 0 0 1 4 19.5V7"/>'
               '<path d="M10.5 8h5M10.5 11.5h5M10.5 15h3"/>',
+    # التذييل: مستطيلٌ بشريطٍ سفليٍّ مُصمَت
+    "foot": '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/>'
+            '<path d="M3.5 14.5h17"/><path d="M7 17.5h5"/>',
     # إحصاءات: أعمدة بيانيّة
     "chart": '<path d="M4 20V4"/><path d="M4 20h16"/>'
              '<rect x="7" y="12" width="3" height="5" rx="1"/>'
@@ -910,13 +913,14 @@ PANEL_NAV = [
     ("i", "surveylist", "استجابات الرضا",       "poll"),
 
     ("g", "بنية الموقع"),
-    ("i", "menuitems",  "القوائم الرئيسية",     "menu2"),
+    ("i", "menuitems",  "القائمة العلوية",      "menu2"),
+    ("i", "footcfg",    "التذييل",              "foot"),
     ("i", "sections",   "أقسام الرئيسية",       "sections"),
     ("i", "pagelist",   "صفحات الموقع",         "pages2"),
 
     ("g", "الهوية والمظهر"),
     ("i", "theme",      "الألوان والحواف",      "theme"),
-    ("i", "sitecfg",    "الشعار والخطّ والحركة", "sliders"),
+    ("i", "sitecfg",    "الشعار والخطّ",        "sliders"),
     ("i", "contactcfg", "التواصل والروابط",     "phone2"),
 
     ("g", "النظام"),
@@ -1045,7 +1049,7 @@ def build_panel(out_dir, cmap, amap):
     # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
     extra_views = ("".join(
         '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
-        for k in ("visits", "worklog")))
+        for k in ("visits", "worklog", "footcfg")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ

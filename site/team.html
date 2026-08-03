@@ -1421,13 +1421,89 @@ var IAQ_PATH = (function () {
     return n;
   }
 
+
+  /* ------------------- خلفيّتا الترويسة والتذييل -------------------
+     أنماطٌ يختارها المدير. والقيمة تُركَّب هنا لا في CSS، فيبقى في الصفحة
+     متغيّرٌ واحدٌ لكل سطحٍ ولا يتغيّر ترتيب الطبقات. */
+  function css_url(u) {
+    /* الرابط بين قوسين مزدوجَي الاقتباس، وما فيه من اقتباسٍ يُهرَّب: رابطٌ
+       فيه " يكسر القيمة ويُبطل الخلفية كلَّها. */
+    return 'url("' + String(u).replace(/["\\]/g, '\\$&') + '")';
+  }
+  function pct(v, dflt) {
+    var n = Number(v);
+    return (isFinite(n) && n >= 0 && n <= 100) ? n : dflt;
+  }
+  function flat(hex, alpha) {
+    var c = hex2rgb(hex);
+    return c ? rgba(c, String(alpha)) : 'rgba(0,0,0,' + alpha + ')';
+  }
+
+  /* يبني قيمة background من نمطٍ ومعاملاته. يُرجع '' إن لم يكتمل المطلوب —
+     فيبقى المبنيّ كما هو ولا نضع خلفيةً نصفَ مضبوطة. */
+  function surface(mode, c1, c2, angle, img, overlay, fallback) {
+    var a = Number(angle);
+    if (!isFinite(a)) a = 135;
+    if (mode === 'image') {
+      if (!img) return '';
+      var ov = pct(overlay, 55) / 100;
+      var tint = flat(c1 || fallback, ov.toFixed(2));
+      /* التدرّج المسطّح فوق الصورة يُقرأ نصًّا في الطبقة نفسها */
+      return 'linear-gradient(' + tint + ',' + tint + '), ' + css_url(img) + ' center/cover no-repeat';
+    }
+    if (mode === 'gradient') {
+      if (!c1 || !c2) return '';
+      return 'linear-gradient(' + a + 'deg,' + c1 + ',' + c2 + ')';
+    }
+    if (mode === 'solid') return c1 || '';
+    return '';                       /* 'glass' أو غير معروف: يبقى المبنيّ */
+  }
+
+  function applyChrome() {
+    var n = 0;
+    /* يُزيل عند الفراغ لا يتجاهل: بلا الإزالة يبقى ما كُتب سابقًا فلا يستطيع
+       المدير العودةَ إلى المبنيّ بعد أن جرّب تدرّجًا. */
+    function put(k, v) {
+      if (v) { root.style.setProperty(k, v); n++; }
+      else if (root.style.getPropertyValue(k)) { root.style.removeProperty(k); n++; }
+    }
+    /* للمتغيّرات التي يملك المظهرُ قيمتها الاحتياطيّة: تُكتب ولا تُزال */
+    function keep(k, v) { if (v) { root.style.setProperty(k, v); n++; } }
+
+    /* ---- الترويسة ---- */
+    var hm = String(IAQ.setting('header_mode') || '').trim();
+    var hbg = surface(hm, IAQ.setting('header_color'), IAQ.setting('header_color2'),
+                      IAQ.setting('header_angle'), IAQ.setting('header_image'),
+                      IAQ.setting('header_overlay'), '#ffffff');
+    put('--header-bg', hbg);
+    /* الحالة الثانية (بعد التمرير) نفس السطح: وإلّا وقع وميضٌ عند التمرير */
+    put('--header-bg2', hbg);
+    var hi = IAQ.setting('header_ink');
+    put('--nav-ink', hi);
+    put('--brand-en', hi);
+    keep('--nav-hover', IAQ.setting('header_hover'));   /* المظهر يملك الاحتياط */
+    put('--header-line', IAQ.setting('header_line'));
+
+    /* ---- التذييل ---- */
+    var fm = String(IAQ.setting('footer_mode') || '').trim();
+    var fbg = surface(fm, IAQ.setting('footer_color'), IAQ.setting('footer_color2'),
+                      IAQ.setting('footer_angle'), IAQ.setting('footer_image'),
+                      IAQ.setting('footer_overlay'), '#04342c');
+    put('--foot-bg', fbg);
+    put('--foot-ink', IAQ.setting('footer_ink'));
+    put('--foot-head', IAQ.setting('footer_head'));
+    put('--foot-line', IAQ.setting('footer_line'));
+    return n;
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var codeDone = false;
 
   function applyAll() {
     var th = IAQ.setting('theme');
     var t = applyTheme(th);
-    var done = { theme: t, secVars: 0, font: 0, logo: 0, contact: 0, hero: 0, sections: 0, code: 0 };
+    var done = { theme: t, secVars: 0, font: 0, logo: 0, contact: 0, hero: 0,
+                 sections: 0, chrome: 0, code: 0 };
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
@@ -1437,6 +1513,7 @@ var IAQ_PATH = (function () {
       done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
                             IAQ.setting('hero_emblem_op'));
       done.sections = applySections(IAQ.setting('sections'));
+      done.chrome = applyChrome();
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */
       if (!codeDone) {
