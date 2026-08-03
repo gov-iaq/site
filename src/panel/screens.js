@@ -337,6 +337,18 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
+    blankpages: {
+      nav: 'الصفحات الجاهزة', h1: 'الصفحات الجاهزة الفارغة',
+      sub: 'عشر صفحاتٍ مبنيّةٍ سلفًا وفارغة — املأ ما تحتاجه منها ثم أضفه إلى القائمة.',
+      kind: 'settings',
+      reach: 'تسري على الصفحة المختارة عند أوّل تحميل بلا إعادة بناء: عنوانها ونصوصها ' +
+             'وعنوان تبويب المتصفّح. والكتلة التي يخلو عنوانها ونصُّها تُخفى تلقائيًّا. ' +
+             'ولإظهارها للزوّار أضف عنصرًا إلى «القائمة العلوية» يشير إليها. ' +
+             'وحدٌّ صريح: الصفحة الفارغة لا تُفهرَس في محرّكات البحث ولا تدخل خريطة ' +
+             'الموقع — فلإدخالها يلزم إعادة نشرٍ واحدة بعد أن تملأها.',
+      rows: function () { return blankRows(); }
+    },
+
     footcfg: {
       nav: 'التذييل', h1: 'التذييل — الخلفية والنصوص',
       sub: 'خلفية شريط التذييل وألوانه ونصوصه الثابتة — تسري على كل صفحات الموقع.',
@@ -800,9 +812,45 @@ window.IAQ_SCREENS = (function () {
      ليست جدول سجلّات فلا تُستخدم دوالّ القوائم هنا. */
   var setVals = {};
 
+  /* ---------------- الصفحات الجاهزة الفارغة ----------------
+     المُنتقى يُحفظ في المتصفّح لا في القاعدة: هو اختيارُ عرضٍ لا إعدادَ موقع. */
+  var BLANK_N = 10, BLANK_BLOCKS = 4;
+  var blankPick = 'page-1';
+  try {
+    var bp = localStorage.getItem('iaq_blank_pick');
+    if (bp && /^page-([1-9]|10)$/.test(bp)) blankPick = bp;
+  } catch (e) { }
+
+  function blankOpts() {
+    var o = {};
+    for (var i = 1; i <= BLANK_N; i++) o['page-' + i] = 'صفحة إضافية ' + i + '  (page-' + i + '.html)';
+    return o;
+  }
+
+  function blankRows() {
+    var s = blankPick;
+    var r = [{ key: '__pick', l: 'أيّ صفحةٍ تُحرّر؟', t: 'select', o: blankOpts(), def: s,
+               local: 1, hint: 'اختر الصفحة فتظهر حقولها. والحفظ يخصّ المختارة وحدها' },
+             { key: 'page_' + s + '_title', l: 'عنوان الصفحة', t: 'text',
+               hint: 'يظهر في صدر الصفحة وفي تبويب المتصفّح' },
+             { key: 'page_' + s + '_crumb', l: 'نصّ مسار التنقّل', t: 'text',
+               hint: 'اتركه فارغًا فيتبع العنوان' },
+             { key: 'page_' + s + '_lead', l: 'المقدّمة', t: 'area' }];
+    for (var i = 1; i <= BLANK_BLOCKS; i++) {
+      r.push({ key: 'page_' + s + '_h' + i, l: 'عنوان الكتلة ' + i, t: 'text' });
+      r.push({ key: 'page_' + s + '_t' + i, l: 'نصّ الكتلة ' + i, t: 'area',
+               hint: i === 1 ? 'الكتلة التي يخلو عنوانها ونصُّها تُخفى من الصفحة' : '' });
+    }
+    return r;
+  }
+
   /* صفوف الإعدادات: شاشةُ إعداداتٍ خالصة تُعرّفها في rows، وشاشةُ جدولٍ
      تُعرّف كتلتها في settings — فتصلح الماكينة نفسها للاثنين. */
-  function setRows(sc) { return sc.rows || sc.settings || []; }
+  function setRows(sc) {
+    var r = sc.rows || sc.settings || [];
+    /* دالّةٌ لا مصفوفة: شاشة الصفحات الجاهزة تُحسب حقولها من الصفحة المختارة */
+    return (typeof r === 'function') ? r() : r;
+  }
 
   function settingsView(sc, myKey) {
     setVals = {};
@@ -1440,6 +1488,15 @@ window.IAQ_SCREENS = (function () {
     area.addEventListener('input', function (e) {
       var el = e.target;
       if (!el || !el.id) return;
+      /* تبديل الصفحة المُحرَّرة: يُحفظ محليًّا وتُعاد الحقول */
+      if (el.id === 'sc-s-__pick') {
+        blankPick = el.value;
+        try { localStorage.setItem('iaq_blank_pick', blankPick); } catch (e2) { }
+        var sc0 = S0();
+        setVals = {};
+        loadSettings(sc0).then(function () { paintSettings(sc0); });
+        return;
+      }
       if (el.type === 'color' && /^sc-s-.+-p$/.test(el.id)) {
         var txt = document.getElementById(el.id.slice(0, -2));
         if (txt) txt.value = el.value;
@@ -1520,6 +1577,8 @@ window.IAQ_SCREENS = (function () {
         bad = r.l + ': الرابط يبدأ بـ https:// أو يُترك فارغًا';
         return;
       }
+      /* الحقل المحليّ اختيارُ عرضٍ لا إعدادَ موقع: لا يُرسل إلى القاعدة */
+      if (r.local) return;
       out.push({ key: r.key, value: v, label: r.l, is_public: true,
                  updated_by: (S && S.email) || '' });
     });

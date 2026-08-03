@@ -161,6 +161,86 @@
       "desc": "شروط استخدام موقع جمعية حاضنة الجمعيات وخدماته الإلكترونية.",
       "url": "https://iaq.org.sa/terms.html",
       "active": []
+    },
+    {
+      "slug": "page-1",
+      "title": "صفحة إضافية 1 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-1.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-2",
+      "title": "صفحة إضافية 2 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-2.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-3",
+      "title": "صفحة إضافية 3 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-3.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-4",
+      "title": "صفحة إضافية 4 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-4.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-5",
+      "title": "صفحة إضافية 5 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-5.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-6",
+      "title": "صفحة إضافية 6 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-6.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-7",
+      "title": "صفحة إضافية 7 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-7.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-8",
+      "title": "صفحة إضافية 8 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-8.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-9",
+      "title": "صفحة إضافية 9 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-9.html",
+      "active": [],
+      "blank": true
+    },
+    {
+      "slug": "page-10",
+      "title": "صفحة إضافية 10 | جمعية حاضنة الجمعيات",
+      "desc": "صفحةٌ جاهزةٌ للتحرير من لوحة المدير.",
+      "url": "https://iaq.org.sa/page-10.html",
+      "active": [],
+      "blank": true
     }
   ]
 }

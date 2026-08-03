@@ -519,6 +519,66 @@
     return n;
   }
 
+
+  /* ------------------- نصوص الصفحة الجاهزة -------------------
+     الصفحات الجاهزة الفارغة (page-1 … page-10) تُملأ من الإعدادات. المفتاح
+     يحمل سَلَق الصفحة فتستقلّ كلٌّ بنصوصها، والوسم data-iaq-p نفسه في كلّها. */
+  var PG_SLOTS = ['title', 'lead', 'crumb'];
+  var PG_BLOCKS = 4;
+
+  function applyPageText() {
+    var slug = (typeof IAQ_SLUG === 'string') ? IAQ_SLUG : '';
+    if (!slug) return 0;
+    if (!document.querySelector('[data-iaq-p]')) return 0;   /* ليست صفحةً جاهزة */
+    var n = 0;
+
+    function val(slot) { return IAQ.setting('page_' + slug + '_' + slot); }
+
+    /* هل مُسّت هذه الصفحة؟ نصوصُها المبنيّة نائبةٌ لا محتوًى، فما لم تُمسّ تبقى
+       كما هي، وبمجرّد تحرير حقلٍ واحدٍ تصير الإعداداتُ المصدرَ الوحيد — وإلّا
+       لم يستطع المدير محو كتلةٍ أبدًا. */
+    var SLOTS_ALL = PG_SLOTS.slice();
+    for (var q = 1; q <= PG_BLOCKS; q++) { SLOTS_ALL.push('h' + q); SLOTS_ALL.push('t' + q); }
+    var touched = SLOTS_ALL.some(function (s) { return val(s) !== undefined; });
+
+    function put(slot, v) {
+      var el = document.querySelector('[data-iaq-p="' + slot + '"]');
+      if (!el) return;
+      var s = String(v == null ? '' : v).trim();
+      if (!s && !touched) return;           /* لم تُمسّ: يبقى النائب */
+      if (el.textContent === s) return;
+      el.textContent = s;
+      n++;
+    }
+
+    var ttl = val('title');
+    PG_SLOTS.forEach(function (s) {
+      /* «المسار» يتبع العنوان إن لم يُحدَّد له نصٌّ خاصّ */
+      put(s, s === 'crumb' ? (val('crumb') || ttl) : val(s));
+    });
+    /* عنوان التبويب: يُضبط من العنوان إن وُجد — فالمدير يملك عنوان صفحته */
+    if (String(ttl || '').trim()) {
+      try { document.title = String(ttl).trim() + ' | ' + (IAQ.setting('site_name') || document.title.split('|').pop().trim()); }
+      catch (e) { }
+      n++;
+    }
+
+    for (var i = 1; i <= PG_BLOCKS; i++) {
+      var h = val('h' + i), tx = val('t' + i);
+      put('h' + i, h);
+      put('t' + i, tx);
+      /* الكتلة الخالية تُخفى: فراغاتٌ متتالية أسوأ من صفحةٍ قصيرة */
+      var box = document.querySelector('[data-iaq-p="block' + i + '"]');
+      if (box) {
+        var hEl = box.querySelector('[data-iaq-p="h' + i + '"]');
+        var tEl = box.querySelector('[data-iaq-p="t' + i + '"]');
+        var empty = !(hEl && hEl.textContent.trim()) && !(tEl && tEl.textContent.trim());
+        if (box.hidden !== empty) { box.hidden = empty; n++; }
+      }
+    }
+    return n;
+  }
+
   /* ------------------------------ التشغيل ------------------------------ */
   var codeDone = false;
 
@@ -537,6 +597,7 @@
       done.hero = applyHero(null, null, IAQ.setting('hero_emblem_op')) + paintHeroBg();
       done.sections = applySections(IAQ.setting('sections'));
       done.chrome = applyChrome();
+      done.pageText = applyPageText();
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
          فيُحسب القياس مرّتين. والمظهر والأقسام تطبيقهما لا يضرّ تكراره. */
       if (!codeDone) {

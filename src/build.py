@@ -930,6 +930,7 @@ PANEL_NAV = [
     ("i", "footcfg",    "التذييل",              "foot"),
     ("i", "sections",   "أقسام الرئيسية",       "sections"),
     ("i", "pagelist",   "صفحات الموقع",         "pages2"),
+    ("i", "blankpages", "الصفحات الجاهزة",      "pages2"),
 
     ("g", "الهوية والمظهر"),
     ("i", "theme",      "الألوان والحواف",      "theme"),
@@ -1062,7 +1063,7 @@ def build_panel(out_dir, cmap, amap):
     # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
     extra_views = ("".join(
         '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
-        for k in ("visits", "worklog", "footcfg")))
+        for k in ("visits", "worklog", "footcfg", "blankpages")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
@@ -1154,6 +1155,9 @@ def sitemap_xml(prod, base, pages):
         slug = pg.get("slug", "")
         if not slug or slug == "index":
             continue
+        #  الفارغة تُستثنى: خريطةٌ تُرشد إلى صفحاتٍ فارغة تُضرّ بالترتيب
+        if pg.get("blank"):
+            continue
         pri = "0.7" if slug in ("about", "programs", "news", "governance", "contact") else "0.5"
         rows.append('  <url><loc>%s/%s.html</loc><changefreq>monthly</changefreq>'
                     '<priority>%s</priority></url>' % (b, esc(slug), pri))
@@ -1207,6 +1211,13 @@ def build(out_dir):
                 .replace(b"{{DESC}}",  pg["desc"].encode("utf-8"))
                 .replace(b"{{URL}}",   pg["url"].encode("utf-8"))
                 .replace(b"{{RUNTIME}}", runtime_script(slug)))
+        #  الصفحة الجاهزة الفارغة لا تُفهرَس: صفحةٌ فارغةٌ في نتائج البحث تُضرّ
+        #  ولا تنفع. وتبقى تعمل ويمكن مشاركة رابطها — والفهرسة تحتاج إعادة نشر
+        #  بعد أن يملؤها المدير.
+        if pg.get("blank") and prod:
+            head = head.replace(
+                b"</title>",
+                b"</title>\n<meta name=\"robots\" content=\"noindex, follow\" />")
         body_tag = ('<body class="hybrid" data-page="%s">' % slug).encode("utf-8")
         header = header_tpl
         active = set(pg.get("active", []))
