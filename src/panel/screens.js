@@ -778,7 +778,12 @@ window.IAQ_SCREENS = (function () {
     var sc = S0(), myKey = cur;
     err = null;
     var cols = ['id'];
-    fieldsOf(sc).forEach(function (f) { if (cols.indexOf(f.k) < 0) cols.push(f.k); });
+    fieldsOf(sc).forEach(function (f) {
+      /* حقل الرفع ليس عمودًا في القاعدة — طلبُه في select يُفشل القراءة كلّها
+         بـ«column X does not exist». وشاشة الوثائق كانت تنجو لأنّها select=*. */
+      if (f.t === 'file') return;
+      if (cols.indexOf(f.k) < 0) cols.push(f.k);
+    });
     /* جداولٌ بلا عمود ترتيب (الأخبار) — طلبه أو الترتيب به يُفشل الطلب كلّه */
     if (!sc.nosort && cols.indexOf('sort') < 0) cols.push('sort');
     if (sc.table === 'people' && cols.indexOf('title') < 0) cols.push('title');

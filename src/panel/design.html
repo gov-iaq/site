@@ -10,6 +10,11 @@
 <style>
 :root{--t:#007878;--td:#063f36;--g:#c09048;--ink:#0f2a2a;--body:#47534f;--muted:#7a8683;--line:#e5eae9;--bg:#f3f6f7;--surface:#fff;--disp:'El Messiri',serif;--ui:'Tajawal',sans-serif;--teal:var(--t);--teal-600:var(--td);--gold:var(--g);--gold-600:#a3762f;--surface-2:#eef3f3}
 *{box-sizing:border-box;margin:0;padding:0}
+/* الوسم hidden يجب أن يُخفي دائمًا. قاعدةُ المتصفّح [hidden]{display:none}
+   تتغلّب عليها أي قاعدةٍ للمؤلّف تُعطي العنصر display صريحًا — و.btn
+   يُعطيه inline-flex، فبقي زرُّ الحفظ الأعلى ظاهرًا رغم إخفائه. أُصلح
+   هذا في نمط الموقع ونُسي في نمط اللوحة. */
+[hidden]{display:none!important}
 body{font-family:var(--ui);background:var(--bg);color:var(--body);line-height:1.7;-webkit-font-smoothing:antialiased}
 a{text-decoration:none;color:inherit}
 :focus-visible{outline:2px solid var(--t);outline-offset:2px}
