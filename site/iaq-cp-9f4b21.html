@@ -192,6 +192,32 @@ body::before{
     </form>
 
     <div class="foot"><a href="index.html">&#8592; العودة إلى الموقع</a></div>
+    <form id="setForm" hidden>
+      <div class="field">
+        <label for="np">كلمة المرور الجديدة</label>
+        <div class="pwrap">
+          <input type="password" id="np" autocomplete="new-password" placeholder="ثمانية محارف على الأقل" />
+          <button type="button" class="peye" id="npeye" aria-label="استعراض كلمة المرور" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="np2">أعدها للتأكيد</label>
+        <input type="password" id="np2" autocomplete="new-password" placeholder="••••••••" />
+      </div>
+      <button type="submit" class="btn" id="setBtn"><span>تعيين كلمة المرور والدخول</span></button>
+    </form>
+
+    <div class="lrow" id="firstRow">
+      <span class="small" style="color:#6b7f7c">أُضيف حسابك ولم تُعيّن كلمة مرورٍ بعد؟</span>
+      <button type="button" class="flink" id="first">عيّن كلمة مروري لأوّل مرّة</button>
+    </div>
+
     <p class="note">الدخول مقصور على المخوّلين، والبيانات محميّة بسياسات الوصول في قاعدة البيانات.</p>
   </div>
 </div>
@@ -435,10 +461,14 @@ body::before{
       }
       if(!CFG||!CFG.url||!CFG.key){ show('err','إعداد الاتصال غير مكتمل.'); return; }
       forgot.disabled=true;
-      fetch(CFG.url+'/auth/v1/recover', {
+      /* redirect_to إلى هذه الصفحة نفسها: بلاها يهبط الرابطُ على الرئيسة
+         ولا يعالجه شيء — وهو ما كان. ويجب أن يكون العنوان مُصرَّحًا في
+         إعدادات Supabase (Redirect URLs) وإلّا رفضته الخدمة. */
+      var back = location.origin + location.pathname;
+      fetch(CFG.url+'/auth/v1/recover?redirect_to='+encodeURIComponent(back), {
         method:'POST',
         headers:{'apikey':CFG.key,'Content-Type':'application/json'},
-        body:JSON.stringify({email:email})
+        body:JSON.stringify({email:email, redirect_to:back})
       }).then(function(){
         show('ok','إن كان هذا البريد مسجَّلًا فستصلك رسالةٌ فيها رابط تعيين كلمة مرور جديدة. تحقّق من صندوقك ومن «المهملات».');
       }).catch(function(){
@@ -446,6 +476,143 @@ body::before{
       }).then(function(){
         setTimeout(function(){ forgot.disabled=false; }, 30000);
       });
+    });
+  }
+
+  /* ---------------- تعيين كلمة المرور ----------------
+     ثلاثةُ مداخل إلى النموذج نفسه: رابطُ الاستعادة من البريد، وزرُّ «أوّل مرّة»،
+     ولا شيءَ غيرهما. والفرقُ بينهما رمزٌ نحمله أو لا نحمله. */
+  var setForm=document.getElementById('setForm'),
+      loginF=document.getElementById('loginForm'),
+      firstRow=document.getElementById('firstRow'),
+      npEl=document.getElementById('np'), np2El=document.getElementById('np2'),
+      lrow=document.querySelector('.lrow');
+  var recToken=null, mode=null;
+
+  function showSet(which, note){
+    mode=which;
+    if(loginF) loginF.hidden=true;
+    if(lrow) lrow.hidden=true;
+    if(firstRow) firstRow.hidden=true;
+    if(setForm) setForm.hidden=false;
+    if(note) show('ok', note);
+    setTimeout(function(){ if(npEl) npEl.focus(); }, 60);
+  }
+  function showLogin(){
+    mode=null;
+    if(setForm) setForm.hidden=true;
+    if(loginF) loginF.hidden=false;
+    if(lrow) lrow.hidden=false;
+    if(firstRow) firstRow.hidden=false;
+  }
+
+  /* رابطُ الاستعادة يهبط بالرمز في جزء العنوان (hash) لا في استعلامه.
+     ويُعالَج مرّتين: عند التحميل، وعند تغيّر الـhash — لأنّ الانتقال إلى نفس
+     المسار بـhash مختلفٍ لا يُعيد تحميل الصفحة، فلا يعمل معالجُ التحميل. */
+  function readHash(){
+    var h=String(location.hash||'').replace(/^#/,'');
+    if(!h) return;
+    var q={};
+    h.split('&').forEach(function(kv){
+      var i=kv.indexOf('='); if(i>0) q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));
+    });
+    if(q.error_description){ show('err', q.error_description); history.replaceState(null,'',location.pathname); return; }
+    if(q.access_token && (q.type==='recovery'||q.type==='invite'||q.type==='signup')){
+      recToken=q.access_token;
+      /* يُمحى من شريط العنوان فورًا: رمزٌ في العنوان يُنسخ ويُشارَك سهوًا */
+      history.replaceState(null,'',location.pathname);
+      showSet('recover','تحقّقنا من الرابط. عيّن كلمة مرورٍ جديدة الآن.');
+    }
+  }
+  readHash();
+  window.addEventListener('hashchange', readHash);
+
+  var firstBtn=document.getElementById('first');
+  if(firstBtn){
+    firstBtn.addEventListener('click', function(){
+      var em=(emailEl.value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){
+        show('err','اكتب بريدك الإلكتروني أوّلًا ثم اضغط «عيّن كلمة مروري لأوّل مرّة».');
+        emailEl.focus(); return;
+      }
+      showSet('first','سنُنشئ كلمة مرورٍ للبريد: '+em);
+    });
+  }
+
+  var npeye=document.getElementById('npeye');
+  if(npeye){
+    npeye.addEventListener('click', function(){
+      var on = npEl.type==='password';
+      npEl.type = on ? 'text' : 'password';
+      npeye.setAttribute('aria-pressed', String(on));
+      npeye.setAttribute('aria-label', on ? 'إخفاء كلمة المرور' : 'استعراض كلمة المرور');
+      npEl.focus();
+    });
+  }
+
+  if(setForm){
+    setForm.addEventListener('submit', function(e){
+      e.preventDefault(); hide();
+      var p1=npEl.value||'', p2=np2El.value||'';
+      if(p1.length<8){ show('err','كلمة المرور ثمانية محارف على الأقل.'); npEl.focus(); return; }
+      if(p1!==p2){ show('err','الكلمتان غير متطابقتين.'); np2El.focus(); return; }
+      var em=(emailEl.value||'').trim();
+      var btn2=document.getElementById('setBtn');
+      if(btn2) btn2.disabled=true;
+
+      var req;
+      if(mode==='recover' && recToken){
+        /* الرمز من الرابط يُصرَّح به مرّةً واحدةً لتغيير الكلمة */
+        req = fetch(CFG.url+'/auth/v1/user', {
+          method:'PUT',
+          headers:{'apikey':CFG.key,'Content-Type':'application/json',
+                   'Authorization':'Bearer '+recToken},
+          body:JSON.stringify({password:p1})
+        });
+      } else {
+        req = fetch(CFG.url+'/auth/v1/signup', {
+          method:'POST',
+          headers:{'apikey':CFG.key,'Content-Type':'application/json'},
+          body:JSON.stringify({email:em, password:p1})
+        });
+      }
+
+      req.then(function(r){ return r.json().then(function(j){ return {ok:r.ok, st:r.status, d:j}; }); })
+        .then(function(res){
+          if(btn2) btn2.disabled=false;
+          if(!res.ok){
+            var m=(res.d && (res.d.msg||res.d.error_description||res.d.message))||'';
+            if(/already registered|already been registered/i.test(m)){
+              show('err','هذا البريد له كلمة مرورٍ سلفًا. استخدم «نسيت كلمة المرور؟» لتغييرها.');
+              showLogin(); return;
+            }
+            if(res.st===401 || res.st===403){
+              show('err','انتهت صلاحية رابط الاستعادة. اطلب رابطًا جديدًا من «نسيت كلمة المرور؟».');
+              showLogin(); return;
+            }
+            show('err', m || 'تعذّر تعيين كلمة المرور. حاول مرّةً أخرى.');
+            return;
+          }
+          /* بعض المشاريع تشترط تأكيد البريد؛ فإن لم نُعطَ رمزًا فالتأكيد مطلوب */
+          if(res.d && res.d.access_token){
+            var sess={
+              access_token:res.d.access_token,
+              refresh_token:res.d.refresh_token,
+              expires_at:res.d.expires_at || (Math.floor(Date.now()/1000)+(res.d.expires_in||3600)),
+              email:(res.d.user&&res.d.user.email)||em
+            };
+            if(A) A.write(sess, true); else sessionStorage.setItem('iaq_session', JSON.stringify(sess));
+            show('ok','تمّ. جارٍ فتح اللوحة…');
+            setTimeout(function(){ location.replace(PANEL); }, 700);
+            return;
+          }
+          show('ok','عُيّنت كلمة المرور. إن طُلب تأكيدُ البريد فستصلك رسالةٌ — ثم ادخل بها من هنا.');
+          showLogin();
+        })
+        .catch(function(){
+          if(btn2) btn2.disabled=false;
+          show('err','تعذّر الاتصال بالخدمة. تحقّق من الإنترنت وأعد المحاولة.');
+        });
     });
   }
 

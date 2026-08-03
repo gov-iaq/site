@@ -1111,6 +1111,30 @@ def build_panel(out_dir, cmap, amap):
     page = page.replace(a, "</script>" + NLS + "<script>" + NLS + bridge + "</script>" + NLS + "</body>", 1)
     steps.append("bridge")
 
+    # 6) زرّ الخروج: كان رابطًا إلى admin-login.html — ملفٌّ لا وجود له في
+    #    site/، فالنقر يُعطي 404 يُقرأ خروجًا **والجلسة باقية** في
+    #    localStorage. وIAQ_LOGOUT معرَّفةٌ في البوّابة ولا يُناديها أحد.
+    a = '<a class="btn ghost" href="admin-login.html">'
+    assert page.count(a) == 1, "logout open"
+    page = page.replace(a, '<button class="btn ghost" type="button" data-act="iaq-logout">', 1)
+    i = page.find('data-act="iaq-logout"')
+    j = page.find("</a>", i)
+    assert i > 0 and j > i, "logout close"
+    page = page[:j] + "</button>" + page[j + 4:]
+    #  ملفّ التصميم فيه </body> مرّتين: الأولى داخل نصٍّ في شيفرة معاينة
+    #  الأكواد. فالاستبدال بأوّل ظهورٍ يُدفن المستمعُ في ذلك النصّ ولا
+    #  يُنفَّذ أبدًا — وهو ما وقع. فنُثبّته على الأخير.
+    bi = page.rfind("</body>")
+    assert bi > 0, "logout body"
+    page = page[:bi] + (
+        "<script>" + NLS +
+        "document.addEventListener('click',function(e){" + NLS +
+        "var b=e.target.closest&&e.target.closest('[data-act=\"iaq-logout\"]');" + NLS +
+        "if(!b)return;e.preventDefault();" + NLS +
+        "if(window.IAQ_LOGOUT)window.IAQ_LOGOUT();});" + NLS +
+        "</script>" + NLS) + page[bi:]
+    steps.append("logout")
+
     # 6) اسم الصنف ad-card تحجبه مانعات الإعلانات (يبدأ بـ ad-)، وهو الحاوية
     #    الوحيدة لكل بطاقات اللوحة — فكانت الشاشات تبدو فارغة تمامًا للمدير.
     #    نُبدّله عند البناء فيبقى ملف التصميم كما أرسله صاحبه.
