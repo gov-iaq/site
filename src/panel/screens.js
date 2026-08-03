@@ -337,6 +337,20 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
+    syscfg: {
+      nav: 'إعدادات النظام', h1: 'إعدادات النظام',
+      sub: 'أعلامُ تشغيلٍ تمسّ سلوك الموقع لا مظهره.',
+      kind: 'settings',
+      reach: 'تسري على كل الصفحات عند أوّل تحميل. وهذه أعلامٌ تقنيّة — الأصلُ ' +
+             'إبقاؤها كما هي إلّا لسببٍ تعرفه.',
+      rows: [
+        { key: 'lists_from_db', l: 'قاعدة البيانات هي مصدر القوائم', t: 'bool', def: false,
+          hint: 'مُطفأ: القائمة المبنيّة تبقى إن خلت القاعدة — وهو الأسلم. ' +
+                'مُشعَل: قائمةٌ فارغة في القاعدة تُفرّغ القائمة في الموقع، ' +
+                'فلا تُشعله إلّا بعد التأكّد من اكتمال البيانات.' }
+      ]
+    },
+
     blankpages: {
       nav: 'الصفحات الجاهزة', h1: 'الصفحات الجاهزة الفارغة',
       sub: 'عشر صفحاتٍ مبنيّةٍ سلفًا وفارغة — املأ ما تحتاجه منها ثم أضفه إلى القائمة.',
@@ -411,10 +425,33 @@ window.IAQ_SCREENS = (function () {
       ]
     },
     sitecfg: {
-      nav: 'الشعار والخطّ والحركة', h1: 'الشعار والخطّ وحركة العرض',
-      sub: 'خيارات تسري على الموقع مباشرةً عند أوّل تحميل لصفحة الزائر.',
+      nav: 'إعدادات الهوية البصرية', h1: 'إعدادات الهوية البصرية',
+      sub: 'الألوان والحواف والشعار والخطّ — أساسُ مظهر الموقع كلّه في مكانٍ واحد.',
       kind: 'settings',
+      before: function () { return presetBar(); },
+      reach: 'تسري على كل صفحات الموقع عند أوّل تحميل بلا إعادة بناء. وأمّا خلفية ' +
+             'الشريط العلويّ فمكانها شاشة «القائمة العلوية»، وخلفية التذييل شاشة ' +
+             '«التذييل»، وخلفية السلايدر شاشته، ونمط شريط الشركاء شاشته — كلٌّ في ' +
+             'الشاشة التي يخصّها.',
       rows: [
+        { key: 'theme.primary', l: 'اللون الأساسي (تركوازي)', t: 'color', def: '#007878',
+          hint: 'يُشتقّ منه نحو عشرين لونًا في الموقع: الأزرار والأيقونات والروابط' },
+        { key: 'theme.accent', l: 'لون التمييز (ذهبي)', t: 'color', def: '#c09048' },
+        { key: 'theme.deep', l: 'التركوازي الغامق', t: 'color', def: '#063f36' },
+        { key: 'theme.heroBg', l: 'خلفية صدر الصفحات', t: 'color', def: '#edf6f5',
+          hint: 'خلفيةُ السلايدر وصدرِ الصفحات الداخلية — لا شريط القائمة' },
+        { key: 'theme.bg', l: 'خلفية الصفحة', t: 'color', def: '#ffffff' },
+        { key: 'theme.surface', l: 'خلفية البطاقات', t: 'color', def: '#ffffff' },
+        { key: 'theme.surface2', l: 'خلفية الأقسام', t: 'color', def: '#f5f8f8' },
+        { key: 'theme.ink', l: 'لون العناوين', t: 'color', def: '#0f2a2a' },
+        { key: 'theme.body', l: 'لون النصّ', t: 'color', def: '#47534f' },
+        { key: 'theme.radius', l: 'استدارة الحواف', t: 'int', def: 12, min: 0, max: 24,
+          unit: 'بكسل', hint: 'صفر = حوافٌّ حادّة' },
+        { key: 'site_logo', l: 'شعار الموقع', t: 'img', def: '',
+          accept: '.png,.svg,.webp,.jpg,.jpeg,image/*',
+          hint: 'اختر صورة فتُرفع ويُستبدل الشعار في الترويسة والتذييل وخلفية السلايدر. ' +
+                'يُفضَّل PNG أو SVG بخلفية شفّافة وارتفاع 120 بكسلًا على الأقل. ' +
+                'واتركه فارغًا فيبقى الشعار المبنيّ.' },
         { key: 'site_font', l: 'خطّ المنصّة', t: 'select', def: 'IBM Plex Sans Arabic',
           o: { 'IBM Plex Sans Arabic': 'آي بي إم بلكس عربي — هندسيّ مؤسسيّ (الموصى به)',
                'Cairo': 'القاهرة — شائع في المواقع المؤسسية',
@@ -424,34 +461,6 @@ window.IAQ_SCREENS = (function () {
           hint: 'يسري على كل نصوص الموقع: العناوين والنصوص واسم الجمعية معًا. ' +
                 'الخطوط مستضافة في الموقع نفسه فلا اتصال بخدمة خارجية. ' +
                 'وفراغات القائمة تُشدّ آليًّا مع الخطوط العريضة كي لا تفيض الترويسة.' },
-        { key: 'partners_strip_mode', l: 'حركة شريط الشركاء', t: 'select', def: 'auto',
-          o: { auto: 'شريط متّصل — تمرير دائري لا يتوقّف',
-               manual: 'تحريك يدوي — أسهم ونقاط وسحب',
-               fade: 'تبديل بالتلاشي — مجموعات تتعاقب' },
-          hint: 'الأنماط الثلاثة مبنيّة في الموقع؛ هذا الخيار يبدّل بينها.' },
-        { key: 'partners_strip_speed', l: 'زمن دورة الشريط المتّصل', t: 'int', def: 34,
-          min: 8, max: 180, unit: 'ثانية',
-          hint: 'الأصغر أسرع. يعمل مع النمط المتّصل وحده، ويُقيَّد بين 8 و180 ثانية.' },
-        { key: 'hero_bg_image', l: 'صورة خلفية السلايدر', t: 'img', def: '',
-          accept: '.jpg,.jpeg,.png,.webp,image/*',
-          hint: 'تظهر خلف شرائح السلايدر. اتركها فارغة فتبقى الخلفية اللونية من «المظهر». ' +
-                'يُفضَّل صورة عريضة 1920×900 على الأقل.' },
-        { key: 'hero_overlay', l: 'تعتيم صورة الخلفية', t: 'int', def: 45,
-          min: 0, max: 90, unit: 'بالمئة',
-          hint: 'طبقةٌ داكنة فوق الصورة كي يبقى النصّ الأبيض مقروءًا. الأعلى أعتم. ' +
-                'الصور الفاتحة تحتاج 55 وما فوق.' },
-        { key: 'hero_emblem_op', l: 'ظهور شعار الخلفية في السلايدر', t: 'int', def: 10,
-          min: 0, max: 60, unit: 'بالمئة',
-          hint: 'الشعار الكبير الباهت في زاوية السلايدر. صفر يُخفيه.' },
-        { key: 'site_logo', l: 'شعار الموقع', t: 'img', def: '',
-          accept: '.png,.svg,.webp,.jpg,.jpeg,image/*',
-          hint: 'اختر صورة فتُرفع ويُستبدل الشعار في الترويسة والتذييل وخلفية الترويسة. ' +
-                'يُفضَّل PNG أو SVG بخلفية شفّافة وارتفاع 120 بكسلًا على الأقل. ' +
-                'واتركه فارغًا فيبقى الشعار المبنيّ.' },
-        { key: 'lists_from_db', l: 'قاعدة البيانات هي مصدر القوائم', t: 'bool', def: false,
-          hint: 'مُطفأ: القائمة المبنيّة تبقى إن خلت القاعدة — وهو الأسلم. ' +
-                'مُشعَل: قائمةٌ فارغة في القاعدة تُفرّغ القائمة في الموقع، ' +
-                'فلا تُشعله إلا بعد التأكّد من اكتمال البيانات.' }
       ]
     },
     subslist: {
@@ -617,6 +626,9 @@ window.IAQ_SCREENS = (function () {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   function $(s) { return document.querySelector(s); }
+  /* المفتاح المركّب فيه نقطة، و querySelector يُفسّرها صنفًا: «#sc-s-theme.primary»
+     يعني «معرّفٌ sc-s-theme وصنفٌ primary» فلا يجد شيئًا. getElementById لا يُفسّر. */
+  function byId(id) { return document.getElementById(id); }
   function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
   /* الرمز من وحدة الجلسة لا من نسخةٍ قديمة: بعد أي تجديدٍ يصل الجديد
      إلى كل الطلبات بلا إعادة تحميل. */
@@ -811,6 +823,71 @@ window.IAQ_SCREENS = (function () {
      تقرأ صفوفًا مُسمّاة من جدول settings وتكتبها عامّةً — فيقرأها الموقع.
      ليست جدول سجلّات فلا تُستخدم دوالّ القوائم هنا. */
   var setVals = {};
+
+  /* ---------------- الهوية البصرية ----------------
+     الأنماط الستّة منقولةٌ كما هي من الشاشة السابقة: إسقاطُ ميزةٍ قائمةٍ في
+     أثناء «تنظيم» انحدار. وحُذفت منها الحقول الميّتة (خطّا العناوين والنصّ
+     والنمط الهندسيّ) فلا تُكتب قيمٌ لا يقرؤها أحد. */
+  var BRAND_PRESETS = {
+    hybrid:    { l: 'العصري النظيف (الحالي)', primary: '#007878', accent: '#c09048', deep: '#063f36',
+                 bg: '#ffffff', surface: '#ffffff', surface2: '#f5f8f8', ink: '#0f2a2a',
+                 body: '#47534f', heroBg: '#edf6f5', radius: 12 },
+    editorial: { l: 'التحريري', primary: '#007878', accent: '#d9a441', deep: '#1c1a15',
+                 bg: '#faf7f1', surface: '#fffdf9', surface2: '#f3efe6', ink: '#1c1a15',
+                 body: '#403d34', heroBg: '#1c1a15', radius: 0 },
+    bold:      { l: 'الجريء', primary: '#007878', accent: '#c09048', deep: '#052e29',
+                 bg: '#ffffff', surface: '#ffffff', surface2: '#f2f7f6', ink: '#082523',
+                 body: '#3a4746', heroBg: '#007878', radius: 16 },
+    human:     { l: 'الإنساني', primary: '#0f6e56', accent: '#c09048', deep: '#0c342c',
+                 bg: '#fdf9f2', surface: '#fffdf9', surface2: '#f6efe3', ink: '#2a2a26',
+                 body: '#4a4a42', heroBg: '#0f6e56', radius: 20 },
+    dark:      { l: 'الداكن الفخم', primary: '#c09048', accent: '#e8c98a', deep: '#04231f',
+                 bg: '#062b26', surface: '#0b3a33', surface2: '#083029', ink: '#f3ece0',
+                 body: '#c9d3cf', heroBg: '#04231f', radius: 12 },
+    geo:       { l: 'الهندسي', primary: '#007878', accent: '#c09048', deep: '#063f36',
+                 bg: '#f6f3ec', surface: '#fffdf7', surface2: '#efeadd', ink: '#14322e',
+                 body: '#41504c', heroBg: '#063f36', radius: 6 }
+  };
+
+  function presetBar() {
+    var ks = Object.keys(BRAND_PRESETS);
+    return '<div class="fld"><label>أنماط جاهزة</label>' +
+      '<div class="addrow" style="flex-wrap:wrap;gap:8px">' +
+      ks.map(function (k) {
+        return '<button type="button" class="btn ghost sm" data-brandpreset="' + k + '">' +
+          esc(BRAND_PRESETS[k].l) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="muted small" style="margin-block-start:6px">' +
+      'يملأ حقول الألوان والحواف أدناه، ولا يُحفظ حتى تضغط «حفظ الإعدادات» — ' +
+      'فتستطيع التعديل عليه قبل الحفظ.</div></div>';
+  }
+
+  /* مستمعٌ مفوَّضٌ للأنماط: يعمل بعد كل إعادة رسم */
+  /* السمة data-preset يملكها ملفّ التصميم بمعالجٍ عالميّ على document
+     يُبدّل الشاشة ويكتب في صفٍّ غير علنيّ — فنستعمل سمةً خاصّةً بنا. */
+  var presetWired = false;
+  function wirePresets() {
+    if (presetWired) return;
+    presetWired = true;
+    var area = document.getElementById('viewArea') || document.body;
+    area.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-brandpreset]');
+      if (!b) return;
+      e.preventDefault();
+      var p = BRAND_PRESETS[b.getAttribute('data-brandpreset')];
+      if (!p) return;
+      Object.keys(p).forEach(function (k) {
+        if (k === 'l') return;
+        var el = document.getElementById('sc-s-theme.' + k);
+        if (!el) return;
+        el.value = String(p[k]);
+        var pick = document.getElementById('sc-s-theme.' + k + '-p');
+        if (pick && /^#[0-9a-fA-F]{6}$/.test(String(p[k]))) pick.value = String(p[k]);
+      });
+      var m = $('#sc-setmsg');
+      if (m) { m.style.color = ''; m.textContent = 'مُلئت الحقول من نمط «' + p.l + '» — اضغط «حفظ الإعدادات» لتطبيقه.'; }
+    });
+  }
 
   /* ---------------- الصفحات الجاهزة الفارغة ----------------
      المُنتقى يُحفظ في المتصفّح لا في القاعدة: هو اختيارُ عرضٍ لا إعدادَ موقع. */
@@ -1560,7 +1637,15 @@ window.IAQ_SCREENS = (function () {
 
   function loadSettings(sc) {
     err = null;
-    var keys = setRows(sc).map(function (r) { return r.key; });
+    /* المفتاح المنقوط «a.b» يعني خاصيّةَ b في الكائن المخزَّن تحت a: نقرأ a
+       مرّةً واحدةً ثم نوزّع خصائصه. */
+    var rowsAll = setRows(sc);
+    var bases = {};
+    rowsAll.forEach(function (r) {
+      var d = String(r.key).indexOf('.');
+      bases[d > 0 ? String(r.key).slice(0, d) : r.key] = 1;
+    });
+    var keys = Object.keys(bases);
     return api('settings?select=key,value&key=in.(' + encodeURIComponent(keys.join(',')) + ')')
       .then(function (r) {
         setVals = {};
@@ -1650,14 +1735,27 @@ window.IAQ_SCREENS = (function () {
     });
   }
 
+  /* يُوزّع خصائص الكائنات المقروءة على المفاتيح المنقوطة */
+  function spreadComposites(sc) {
+    setRows(sc).forEach(function (r) {
+      var k = String(r.key), d = k.indexOf('.');
+      if (d <= 0) return;
+      var base = k.slice(0, d), prop = k.slice(d + 1);
+      var obj = setVals[base];
+      if (obj && typeof obj === 'object' && obj.hasOwnProperty(prop)) setVals[k] = obj[prop];
+    });
+  }
+
   function paintSettings(sc) {
     wireColors();
+    wirePresets();
+    spreadComposites(sc);
     var box = $('#sc-form'), ep = $('#sc-err');
     if (!box) return;
     if (ep) ep.innerHTML = err
       ? '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c">' +
         '<b>تعذّر تنفيذ الإجراء</b><br>' + esc(err) + '</div>' : '';
-    box.innerHTML = setRows(sc).map(setCtl).join('') +
+    box.innerHTML = (sc.before ? sc.before() : '') + setRows(sc).map(setCtl).join('') +
       '<div id="sc-setmsg" class="muted small" style="margin-block-end:10px"></div>' +
       '<div class="btnbar" style="justify-content:flex-start">' +
       '<button class="btn" data-sc="setsave">حفظ الإعدادات</button>' +
@@ -1674,7 +1772,7 @@ window.IAQ_SCREENS = (function () {
     /* حقلا صورة في الشاشة: يُرفع واحدٌ في كل نداء ثم يُعاد النداء للآخر */
     setRows(sc).forEach(function (r) {
       if (r.t !== 'img' || upFile) return;
-      var fi = $('#sc-s-' + r.key + '-f');
+      var fi = byId('sc-s-' + r.key + '-f');
       if (fi && fi.files && fi.files[0]) { upRow = r; upFile = fi.files[0]; }
     });
     if (upFile) {
@@ -1682,9 +1780,9 @@ window.IAQ_SCREENS = (function () {
       if (m0) { m0.style.color = ''; m0.textContent = 'جارٍ رفع الصورة…'; }
       busy = true;
       uploadFile(upFile, 'brand').then(function (url) {
-        var el = $('#sc-s-' + upRow.key);
+        var el = byId('sc-s-' + upRow.key);
         if (el) el.value = url;
-        var fi2 = $('#sc-s-' + upRow.key + '-f');
+        var fi2 = byId('sc-s-' + upRow.key + '-f');
         if (fi2) fi2.value = '';
         busy = false;
         saveSettings(sc);
@@ -1695,10 +1793,10 @@ window.IAQ_SCREENS = (function () {
       });
       return;
     }
-    var out = [], bad = null;
+    var out = [], bad = null, comp = {}, compLabel = {};
     setRows(sc).forEach(function (r) {
       if (bad) return;
-      var el = $('#sc-s-' + r.key);
+      var el = byId('sc-s-' + r.key);
       if (!el) return;
       var v;
       if (r.t === 'bool') v = (el.value === '1');
@@ -1720,7 +1818,24 @@ window.IAQ_SCREENS = (function () {
       }
       /* الحقل المحليّ اختيارُ عرضٍ لا إعدادَ موقع: لا يُرسل إلى القاعدة */
       if (r.local) return;
+      var dot = String(r.key).indexOf('.');
+      if (dot > 0) {
+        /* خاصيّةٌ في كائن: تُجمَّع ثم تُدمج فوق الكائن المقروء — لا تُكتب
+           الكائنَ من الحقول المعروضة وحدها، فيسقط ما لا يُعرَض منها. */
+        var b = String(r.key).slice(0, dot), pr = String(r.key).slice(dot + 1);
+        if (!comp[b]) {
+          var was = setVals[b];
+          comp[b] = (was && typeof was === 'object') ? JSON.parse(JSON.stringify(was)) : {};
+          compLabel[b] = r.compLabel || 'المظهر والألوان';
+        }
+        comp[b][pr] = v;
+        return;
+      }
       out.push({ key: r.key, value: v, label: r.l, is_public: true,
+                 updated_by: (S && S.email) || '' });
+    });
+    Object.keys(comp).forEach(function (b) {
+      out.push({ key: b, value: comp[b], label: compLabel[b], is_public: true,
                  updated_by: (S && S.email) || '' });
     });
     var msg = $('#sc-setmsg');

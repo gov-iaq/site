@@ -933,12 +933,12 @@ PANEL_NAV = [
     ("i", "blankpages", "الصفحات الجاهزة",      "pages2"),
 
     ("g", "الهوية والمظهر"),
-    ("i", "theme",      "الألوان والحواف",      "theme"),
-    ("i", "sitecfg",    "الشعار والخطّ",        "sliders"),
+    ("i", "sitecfg",    "إعدادات الهوية البصرية", "theme"),
     ("i", "contactcfg", "التواصل والروابط",     "phone2"),
 
     ("g", "النظام"),
     ("i", "adminlist",  "المستخدمون والأدوار",  "keys"),
+    ("i", "syscfg",     "إعدادات النظام",       "sliders"),
     ("i", "code",       "الأكواد المخصّصة",     "code"),
 ]
 
@@ -1063,7 +1063,7 @@ def build_panel(out_dir, cmap, amap):
     # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
     extra_views = ("".join(
         '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
-        for k in ("visits", "worklog", "footcfg", "blankpages")))
+        for k in ("visits", "worklog", "footcfg", "blankpages", "syscfg")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
