@@ -1676,7 +1676,9 @@ window.IAQ_SCREENS = (function () {
       var fm = total(daily, function (x) { return x.kind === 'form'; });
       var cta = total(daily, function (x) { return x.kind === 'cta'; });
 
-      var html = rangeBar(d) +
+      /* الفرز في ترويسة الشاشة مرّةً واحدةً لا في كل تبويب: التبويبات كانت
+         شاشاتٍ مستقلّةً لكلٍّ شريطُها، فبقيا معًا بعد الدمج فظهر مكرّرًا. */
+      var html = 
         card('الخلاصة',
           grid(6) + box2(pv, 'زيارة صفحة') + box2(dl, 'تنزيل ملفّ') + box2(fv, 'معاينة ملفّ') +
           box2(cta, 'نقر زرّ') + box2(ct, 'نقر تواصل') + box2(fm, 'إرسال نموذج') + '</div>',
@@ -1928,7 +1930,9 @@ window.IAQ_SCREENS = (function () {
         return Math.round(v / 24) + ' ي';
       }
 
-      var html = rangeBar(d) +
+      /* الفرز في ترويسة الشاشة مرّةً واحدةً لا في كل تبويب: التبويبات كانت
+         شاشاتٍ مستقلّةً لكلٍّ شريطُها، فبقيا معًا بعد الدمج فظهر مكرّرًا. */
+      var html = 
         card('مؤشّرات الردّ على الوارد',
           grid(5) +
             box2(hrs(avg), 'متوسّط زمن أوّل ردّ') +
