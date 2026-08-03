@@ -277,17 +277,22 @@ window.IAQ_SCREENS = (function () {
       table: 'menu_items', filter: '', fixed: {}, audit: 1, selectAll: 1,
       clientOrder: [['parent', 1], ['sort', 1], ['id', 1]],
       nameKey: 'label', searchKeys: ['label', 'href', 'mkey'],
-      noAdd: 1, noDelete: 1,
-      /* لا إضافة ولا حذف: كل عنصرٍ مرتبطٌ بعنصرٍ مبنيٍّ بمفتاحه (أيقونته
-         وموضعه)، وعنصرٌ بلا مقابلٍ مبنيّ لا يظهر في الموقع. الإخفاء يكفي. */
+      autoKey: 'mkey',
+      groupSort: 'parent',
+      delNote: 'العنصر يُرفع من القائمة في كل الصفحات. والعنصر الرئيس الذي له أبناءٌ ' +
+               'تُصبح أبناؤه بلا أبٍ فلا تظهر — فانقلها إلى أبٍ آخر قبل حذفه.',
       reach: 'يسري على القائمة في كل صفحات الموقع عند أوّل تحميل. ولا تُفرَّغ القائمة أبدًا: ' +
-             'إن لم يبقَ عنصرٌ رئيسٌ ظاهر بقيت القائمة المبنيّة.',
+             'إن لم يبقَ عنصرٌ رئيسٌ ظاهر بقيت القائمة المبنيّة. والعنصر الجديد يُبنى ' +
+             'بمظهر العناصر القائمة بلا أيقونة، ويلزمه رابطٌ صحيح — وإلّا لم يظهر.',
       fields: [
         { k: 'label', l: 'التسمية', t: 'text', req: 1 },
-        { k: 'href', l: 'الرابط', t: 'href',
+        { k: 'parent', l: 'المستوى', t: 'parent', def: '',
+          hint: '«عنصر رئيسي» يظهر في الشريط، والفرعيّ يظهر داخل منسدلة الأب. ' +
+                'وتغييرُ هذا الحقل هو التحويل بين المستويين.' },
+        { k: 'href', l: 'الرابط', t: 'href', req: 1,
           hint: 'يُختار من صفحات الموقع فقط، أو مرساة في الصفحة الرئيسة، أو رابط خارجي كامل. ' +
                 'فلا يمكن أن يُفضي إلى صفحة غير موجودة.' },
-        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا — داخل مستواه' },
+        { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'اتركه فارغًا فيصير آخر مستواه' },
         { k: 'visible', l: 'الظهور', t: 'bool', half: 1, def: true }
       ],
       list: [{ k: 'mkey', l: 'المفتاح', f: 'mono' },
@@ -1843,6 +1848,28 @@ window.IAQ_SCREENS = (function () {
         '<input type="text" id="' + id + '-ext" placeholder="https://example.org" value="' +
         (isExt ? esc(cur0) : '') + '" style="margin-block-start:8px' +
         (isExt ? '' : ';display:none') + '">';
+    } else if (f.t === 'parent') {
+      /* الآباء المتاحون: العناصر الرئيسة وحدها (parent فارغ). ويُستثنى العنصرُ
+         نفسه وأبناؤه، فلا يصير أبًا لنفسه ولا تحت ابنه. */
+      var me = staged && staged.mkey ? String(staged.mkey) : '';
+      var mine = {};
+      if (me) {
+        mine[me] = 1;
+        rows.forEach(function (r) { if (String(r.parent || '') === me) mine[String(r.mkey)] = 1; });
+      }
+      var cur1 = String(val == null ? '' : val).trim();
+      var opts = rows.filter(function (r) {
+        return !String(r.parent || '').trim() && !mine[String(r.mkey)];
+      });
+      h += '<select id="' + id + '">' +
+        '<option value=""' + (cur1 === '' ? ' selected' : '') + '>عنصر رئيسي (في الشريط)</option>' +
+        opts.map(function (r) {
+          return '<option value="' + esc(r.mkey) + '"' + (String(r.mkey) === cur1 ? ' selected' : '') +
+            '>فرعيّ تحت: ' + esc(r.label || r.mkey) + '</option>';
+        }).join('') +
+        (cur1 && !opts.some(function (r) { return String(r.mkey) === cur1; }) ?
+          '<option value="' + esc(cur1) + '" selected>⚠ ' + esc(cur1) + ' — أبٌ غير موجود</option>' : '') +
+        '</select>';
     } else if (f.t === 'bool') {
       h += '<select id="' + id + '">' +
         '<option value="1"' + (val === false ? '' : ' selected') + '>ظاهر</option>' +
@@ -1906,6 +1933,7 @@ window.IAQ_SCREENS = (function () {
       if (!el) return;
       var v = el.value;
       if (f.t === 'bool') { rec[f.k] = (v === '1'); return; }
+      if (f.t === 'parent') { rec[f.k] = norm(v); return; }
       if (f.t === 'href') {
         var pick = norm(v);
         if (pick === '__ext__') {
@@ -1974,6 +2002,14 @@ window.IAQ_SCREENS = (function () {
       q2 = api(sc.table + '?id=eq.' + idPart(sc, id) + '&select=id',
                { method: 'PATCH', body: JSON.stringify(rec) });
     } else {
+      /* مفتاحٌ مُولَّدٌ للصفّ الجديد: العمود not null بلا افتراض. يُشتقّ من
+         التسمية بحرفٍ لاتينيٍّ آمنٍ مع لاحقةِ وقتٍ تمنع التصادم، ولا يُعدَّل بعد
+         الإنشاء لأنّه الوصلة بين الصفّ والعنصر المبنيّ. */
+      if (sc.autoKey && !norm(rec[sc.autoKey])) {
+        var base = String(rec[sc.nameKey] || '').trim()
+          .replace(/[^\u0621-\u064Aa-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+        rec[sc.autoKey] = (base ? base : 'item') + '-' + Date.now().toString(36).slice(-5);
+      }
       if (!sc.nosort || hasCol('sort')) {
         /* آخر ملفٍّ في تصنيفه: نقيس أكبر ترتيبٍ داخل المجموعة نفسها لا في
            الجدول كلّه — وإلّا قفز ملفٌّ جديدٌ في تصنيفٍ صغير إلى آخر الجميع. */
@@ -1999,18 +2035,69 @@ window.IAQ_SCREENS = (function () {
     }).then(function () { busy = false; });
   }
 
+  /* ---------------- بوّابة كلمة المرور قبل الحذف ----------------
+     الحذف لا رجعةَ فيه، وسجلّ التراجع لا يغطّي ما جرى قبل ترقية v9. فكلمة
+     المرور حاجزٌ أرخص من فقدان بيانات. والتحقّق حقيقيّ لا مربّعُ تأكيد. */
+  function verifyPassword(pass) {
+    var email = (window.IAQ_AUTH && window.IAQ_AUTH.email()) || (S && S.email) || '';
+    if (!email) return Promise.reject(new Error('لا بريد في الجلسة — اخرج وادخل من جديد.'));
+    if (!pass || pass.length < 6) return Promise.reject(new Error('كلمة المرور قصيرة جدًّا.'));
+    return fetch(CFG.url + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass })
+    }).then(function (r) {
+      if (r.ok) return true;
+      if (r.status === 429) throw new Error('محاولات كثيرة — انتظر قليلًا ثم أعد المحاولة.');
+      throw new Error('كلمة المرور غير صحيحة.');
+    });
+  }
+
+  /* ما يجري بعد نجاح التحقّق — يُضبط قبل فتح النافذة */
+  var pendingDelete = null;
+
+  function askPassword(title, body, onOk) {
+    pendingDelete = onOk;
+    modal(title,
+      body +
+      '<div class="fld" style="margin-block-start:14px">' +
+      '<label for="sc-pw">أكّد هويّتك بكلمة مرور حسابك</label>' +
+      '<input type="password" id="sc-pw" autocomplete="current-password" ' +
+      'placeholder="••••••••" style="width:100%">' +
+      '<div class="muted small" style="margin-block-start:6px">' +
+      esc((window.IAQ_AUTH && window.IAQ_AUTH.email()) || (S && S.email) || '') + '</div>' +
+      '</div><div id="sc-pwerr" class="small" style="color:#8c3d1c;margin-block-start:8px"></div>',
+      '<button class="btn ghost" data-sc="close">إلغاء</button>' +
+      '<button class="btn danger" data-sc="pwyes">تأكيد الحذف</button>');
+    setTimeout(function () { var el = $('#sc-pw'); if (el) el.focus(); }, 60);
+  }
+
+  function runPasswordGate() {
+    var el = $('#sc-pw'), ep = $('#sc-pwerr');
+    if (!el) return;
+    var pass = el.value;
+    if (ep) { ep.style.color = ''; ep.textContent = 'جارٍ التحقّق…'; }
+    verifyPassword(pass).then(function () {
+      var fn = pendingDelete;
+      pendingDelete = null;
+      if (fn) fn();
+    }).catch(function (e) {
+      if (ep) { ep.style.color = '#8c3d1c'; ep.textContent = e.message; }
+      if (el) { el.value = ''; el.focus(); }
+    });
+  }
+
   function askDelete(id) {
     var sc = S0(), r = null;
     rows.forEach(function (x) { if (String(x.id) === String(id)) r = x; });
     if (!r) return;
-    modal('تأكيد الحذف',
+    askPassword('تأكيد الحذف',
       '<p>حذف <b>' + esc(labelOf(sc, r)) + '</b> نهائيًّا من قاعدة البيانات؟</p>' +
       '<p class="muted small">' + (sc.delNote ||
         ('سيُرفع من الموقع عند أوّل تحميل للصفحة. وإن أردت إبقاءه في السجلّ ' +
          'وإخفاءه فقط فاستخدم «تعديل» واختر ' +
          (sc.table === 'news' ? '«مسودّة»' : '«مخفي»') + '.')) + '</p>',
-      '<button class="btn ghost" data-sc="close">إلغاء</button>' +
-      '<button class="btn danger" data-sc="delyes" data-id="' + r.id + '">حذف نهائي</button>');
+      function () { doDelete(r.id); });
   }
   function doDelete(id) {
     if (busy) return;
@@ -2530,6 +2617,7 @@ window.IAQ_SCREENS = (function () {
     if (a === 'importgo') { e.preventDefault(); importGo(); return; }
     if (a === 'save') { e.preventDefault(); saveForm(id); return; }
     if (a === 'del') { e.preventDefault(); askDelete(id); return; }
+    if (a === 'pwyes') { e.preventDefault(); runPasswordGate(); return; }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
     if (a === 'reload') {

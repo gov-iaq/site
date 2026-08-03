@@ -745,9 +745,27 @@
         var byKey = {};
         [].slice.call(keyed).forEach(function (el) { byKey[el.getAttribute('data-mk')] = el; });
 
+        /* قالبٌ لبناء عنصرٍ جديدٍ لا مقابلَ له في المبنيّ: ننسخ أوّل رابطٍ
+           عاديٍّ في القائمة فيرث أصنافه ومظهره، ونُجرّده من أيقونته ومفتاحه. */
+        var plain = nav.querySelector('a.nav-link:not(.has-dropdown)');
+        function fresh(r) {
+          if (!plain || !okHref(r.href)) return null;
+          var a = plain.cloneNode(true);
+          var sv = a.querySelector('svg');
+          if (sv) sv.parentNode.removeChild(sv);      /* لا أيقونةَ لعنصرٍ جديد */
+          a.setAttribute('href', r.href);
+          a.setAttribute('data-mk', r.mkey);
+          a.classList.remove('is-active');
+          setLabel(a, r.label);
+          return a;
+        }
+
         var tops = [], kids = {};
         rows.forEach(function (r) {
-          if (!r || !r.mkey || !byKey[r.mkey]) return;   /* مفتاح لا مقابل له */
+          if (!r || !r.mkey) return;
+          /* عنصرٌ لا مقابلَ له يُبنى من القالب — بشرط رابطٍ مقبول. وبلا رابطٍ
+             مقبولٍ يُتجاهَل: عنصرٌ يُفضي إلى لا شيء أسوأ من غيابه. */
+          if (!byKey[r.mkey] && !okHref(r.href)) return;
           if (r.parent) (kids[r.parent] = kids[r.parent] || []).push(r);
           else tops.push(r);
         });
@@ -757,6 +775,11 @@
         var frag = document.createDocumentFragment(), n = 0;
         vis.forEach(function (r) {
           var built = byKey[r.mkey];
+          if (!built) {                       /* عنصرٌ جديدٌ رئيسيّ */
+            var nn = fresh(r);
+            if (nn) { frag.appendChild(nn); n++; }
+            return;
+          }
           /* العنصر الرئيس: إمّا رابط، وإمّا زرُّ منسدلة داخل حاويته */
           var host = built.closest('.nav-item.has-dropdown');
           var node = (host || built).cloneNode(true);
@@ -771,8 +794,17 @@
                 var kf = document.createDocumentFragment();
                 list.forEach(function (c) {
                   var src = byKey[c.mkey];
-                  if (!src) return;
-                  var a = src.cloneNode(true);
+                  var a;
+                  if (src) {
+                    a = src.cloneNode(true);
+                  } else {
+                    /* ابنٌ جديد: ننسخ أوّل أخٍ مبنيٍّ قالبًا فيرث مظهر المنسدلة */
+                    var sib = inner.querySelector('a');
+                    if (!sib || !okHref(c.href)) return;
+                    a = sib.cloneNode(true);
+                    a.setAttribute('data-mk', c.mkey);
+                    a.classList.remove('is-active');
+                  }
                   setLabel(a, c.label);
                   if (okHref(c.href)) a.setAttribute('href', c.href);
                   kf.appendChild(a);
