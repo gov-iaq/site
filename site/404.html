@@ -1105,6 +1105,24 @@ var IAQ_PATH = (function () {
   /* -------------------------- خلفية الترويسة --------------------------- */
   /* صورةٌ خلف الترويسة مع طبقة تعتيم كي يبقى النصّ مقروءًا — وهذا شرطٌ لا
      تحسين: صورةٌ فاتحة تحت نصٍّ أبيض تجعله غير مقروء. */
+  /* الخلفية المعروضة: صورةُ الشريحة النشطة إن وُجدت، وإلّا العامّة. مالكٌ
+     واحدٌ لهذه العقدة، يُنادى من ثلاثة مواضع: تطبيق المظهر، وتبديل الشريحة،
+     وإعادة بناء الشرائح من القاعدة. */
+  function paintHeroBg() {
+    var hero = document.querySelector('section.hero');
+    if (!hero) return 0;
+    var act = hero.querySelector('.hero-slide.is-active') || hero.querySelector('.hero-slide');
+    var img = act && act.getAttribute('data-bg');
+    var ov = act && act.getAttribute('data-ov');
+    if (!String(img || '').trim()) {
+      img = IAQ.setting('hero_bg_image');
+      ov = IAQ.setting('hero_overlay');
+    }
+    return applyHero(img, ov, null);
+  }
+  IAQ.paintHeroBg = paintHeroBg;
+  window.IAQ_HERO_BG = paintHeroBg;
+
   function applyHero(img, overlay, emblemOp) {
     var hero = document.querySelector('section.hero');
     if (!hero) return 0;
@@ -1146,7 +1164,9 @@ var IAQ_PATH = (function () {
               social_whatsapp: 'whatsapp', social_instagram: 'instagram',
               social_tiktok: 'tiktok', social_facebook: 'facebook' };
   /* الحقول النصّية الموسومة في البناء */
-  var FIELDS = { contact_city: 'city', contact_addr_short: 'addr_short',
+  var FIELDS = { footer_about: 'foot_about', footer_newsletter: 'foot_news',
+                 footer_rights: 'foot_rights',
+                 contact_city: 'city', contact_addr_short: 'addr_short',
                  contact_addr_line: 'addr_line', contact_hours: 'hours',
                  contact_license: 'license' };
   function okLink(u) {
@@ -1396,8 +1416,8 @@ var IAQ_PATH = (function () {
       done.font = applyFont(IAQ.setting('site_font'));
       done.logo = applyLogo(IAQ.setting('site_logo'));
       done.contact = applyContact();
-      done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
-                            IAQ.setting('hero_emblem_op'));
+      /* شفافية الشعار إعدادٌ عامّ، والخلفية من الشريحة النشطة */
+      done.hero = applyHero(null, null, IAQ.setting('hero_emblem_op')) + paintHeroBg();
       done.sections = applySections(IAQ.setting('sections'));
       done.chrome = applyChrome();
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
@@ -2045,6 +2065,18 @@ var IAQ_PATH = (function () {
   }
 
   function fillSlide(node, row, tpl) {
+    /* خلفية الشريحة تُحمل على العقدة نفسها لا تُطبَّق هنا: مالكها paintHeroBg
+       في طبقة المظهر، فلا تتنازع آليّتان على خلفيةٍ واحدة. */
+    var bg = String(row.bg_image == null ? '' : row.bg_image).trim();
+    if (bg) {
+      node.setAttribute('data-bg', bg);
+      var ov = Number(row.bg_overlay);
+      if (isFinite(ov) && ov >= 0 && ov <= 100) node.setAttribute('data-ov', String(ov));
+      else node.removeAttribute('data-ov');
+    } else {
+      node.removeAttribute('data-bg');
+      node.removeAttribute('data-ov');
+    }
     var eb = node.querySelector('.hero-eyebrow');
     if (eb) {
       if (norm(row.eyebrow)) { eb.textContent = row.eyebrow; eb.hidden = false; }
@@ -2101,7 +2133,7 @@ var IAQ_PATH = (function () {
   function heroSlides() {
     var wrap = document.getElementById('heroSlider');
     if (!wrap) return;
-    return get('hero_slides?select=eyebrow,title,accent,text,cta1_label,cta1_url,cta1_icon,'
+    return get('hero_slides?select=eyebrow,title,accent,text,bg_image,bg_overlay,cta1_label,cta1_url,cta1_icon,'
       + 'cta2_label,cta2_url&status=eq.published&order=sort.asc,id.asc').then(function (rows) {
         if (!rows) return;                        // فشل قراءة → يبقى المبنيّ
         var olds = [].slice.call(wrap.querySelectorAll('.hero-slide'));
@@ -2124,6 +2156,8 @@ var IAQ_PATH = (function () {
         if (window.IAQ_REINDEX && window.IAQ_REINDEX.hero) {
           try { window.IAQ_REINDEX.hero(); } catch (e) { }
         }
+        /* الشرائح تبدّلت فالخلفية تُعاد حسابها من النشطة الجديدة */
+        if (window.IAQ_HERO_BG) { try { window.IAQ_HERO_BG(); } catch (e) { } }
         document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'hero', count: rows.length } }));
       });
   }

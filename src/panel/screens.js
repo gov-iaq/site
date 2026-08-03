@@ -232,10 +232,17 @@ window.IAQ_SCREENS = (function () {
         { k: 'cta1_icon', l: 'أيقونة الزرّ الأول', t: 'select', o: CTAIC, def: 'arrow' },
         { k: 'cta2_label', l: 'نصّ الزرّ الثاني', t: 'text', half: 1 },
         { k: 'cta2_url', l: 'رابط الزرّ الثاني', t: 'text', half: 1 },
+        { k: 'bgfile', l: 'صورة خلفيةٍ لهذه الشريحة (اختياري)', t: 'file', accept: 'image/*',
+          hint: 'اترك الحقل فارغًا فتستعمل الشريحةُ الخلفيةَ العامّة أعلاه' },
+        { k: 'bg_image', l: 'رابط خلفية الشريحة', t: 'text', viaFile: 1,
+          hint: 'يُملأ تلقائيًّا عند الرفع. امحُه ليعود إلى الخلفية العامّة' },
+        { k: 'bg_overlay', l: 'تعتيم خلفية الشريحة %', t: 'int', half: 1,
+          hint: 'اتركه فارغًا فيُستعمل التعتيم العامّ' },
         { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا' },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهرة', draft: 'مسودّة (لا تظهر)' }, def: 'published', half: 1 }
       ],
       list: [{ k: 'sort', l: 'الترتيب', f: 'text' },
+             { k: 'bg_image', l: 'خلفية', f: 'file' },
              { k: 'eyebrow', l: 'العنوان الصغير', f: 'text' },
              { k: 'title', l: 'العنوان', f: 'clip' },
              { k: 'accent', l: 'المميّز', f: 'chip' },
@@ -1951,9 +1958,14 @@ window.IAQ_SCREENS = (function () {
     /* إن اختار المدير ملفًّا فيُرفع أوّلًا: نجاح الرفع شرطٌ لكتابة الرابط،
        فلا يُسجَّل في القاعدة مسارٌ لملفٍ لم يصل. */
     if (upField) delete rec[upField.k];   /* ليس عمودًا في القاعدة */
-    var pre = upFile ? uploadFile(upFile, rec.category, rec.title).then(function (url) {
-      rec.storage_path = url;
-      var sp = $('#sc-f-storage_path');
+    /* هدف الرفع هو الحقل الموسوم viaFile لا storage_path حرفيًّا: شاشة
+       الشرائح ترفع إلى bg_image، وشاشة الوثائق إلى storage_path. */
+    var tgt = null;
+    sc.fields.forEach(function (f) { if (f.viaFile && !tgt) tgt = f.k; });
+    tgt = tgt || 'storage_path';
+    var pre = upFile ? uploadFile(upFile, rec.category || sc.table, rec.title).then(function (url) {
+      rec[tgt] = url;
+      var sp = $('#sc-f-' + tgt);
       if (sp) sp.value = url;
     }) : Promise.resolve();
     var p = pre.then(function () {

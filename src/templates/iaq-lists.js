@@ -625,6 +625,18 @@
   }
 
   function fillSlide(node, row, tpl) {
+    /* خلفية الشريحة تُحمل على العقدة نفسها لا تُطبَّق هنا: مالكها paintHeroBg
+       في طبقة المظهر، فلا تتنازع آليّتان على خلفيةٍ واحدة. */
+    var bg = String(row.bg_image == null ? '' : row.bg_image).trim();
+    if (bg) {
+      node.setAttribute('data-bg', bg);
+      var ov = Number(row.bg_overlay);
+      if (isFinite(ov) && ov >= 0 && ov <= 100) node.setAttribute('data-ov', String(ov));
+      else node.removeAttribute('data-ov');
+    } else {
+      node.removeAttribute('data-bg');
+      node.removeAttribute('data-ov');
+    }
     var eb = node.querySelector('.hero-eyebrow');
     if (eb) {
       if (norm(row.eyebrow)) { eb.textContent = row.eyebrow; eb.hidden = false; }
@@ -681,7 +693,7 @@
   function heroSlides() {
     var wrap = document.getElementById('heroSlider');
     if (!wrap) return;
-    return get('hero_slides?select=eyebrow,title,accent,text,cta1_label,cta1_url,cta1_icon,'
+    return get('hero_slides?select=eyebrow,title,accent,text,bg_image,bg_overlay,cta1_label,cta1_url,cta1_icon,'
       + 'cta2_label,cta2_url&status=eq.published&order=sort.asc,id.asc').then(function (rows) {
         if (!rows) return;                        // فشل قراءة → يبقى المبنيّ
         var olds = [].slice.call(wrap.querySelectorAll('.hero-slide'));
@@ -704,6 +716,8 @@
         if (window.IAQ_REINDEX && window.IAQ_REINDEX.hero) {
           try { window.IAQ_REINDEX.hero(); } catch (e) { }
         }
+        /* الشرائح تبدّلت فالخلفية تُعاد حسابها من النشطة الجديدة */
+        if (window.IAQ_HERO_BG) { try { window.IAQ_HERO_BG(); } catch (e) { } }
         document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: 'hero', count: rows.length } }));
       });
   }

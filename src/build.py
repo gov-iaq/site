@@ -766,6 +766,19 @@ def panel_real():
         real["donate"] = c.get("donate_url", "")
     real["brand"] = {"ar": "حاضنة الجمعيات",
                      "en": "ASSOCIATION INCUBATOR"}
+    #  نصوص التذييل المبنيّة: تُعرض في اللوحة افتراضًا فيرى المدير ما هو قائمٌ
+    #  الآن لا حقلًا فارغًا يظنّه محتوًى مفقودًا. تُقرأ من القالب نفسه فلا
+    #  تتباعد نسختان.
+    foot = {"about": "", "newsletter": "", "rights": ""}
+    ft = os.path.join(TEMPLATES, "footer.html")
+    if os.path.exists(ft):
+        raw = rb(ft).decode("utf-8", "replace")
+        for key, mark in (("about", "foot_about"), ("newsletter", "foot_news"),
+                          ("rights", "foot_rights")):
+            m = re.search(r'data-iaq-f="' + mark + r'"[^>]*>([^<]*)<', raw)
+            if m:
+                foot[key] = m.group(1).strip()
+    real["footer"] = foot
     with io.open(DATA, encoding="utf-8") as f:
         pages = json.load(f)["pages"]
     real["pages"] = [{"id": "p" + pg["slug"], "title": pg["title"].split("|")[-1].strip(),

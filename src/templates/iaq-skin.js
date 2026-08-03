@@ -222,6 +222,24 @@
   /* -------------------------- خلفية الترويسة --------------------------- */
   /* صورةٌ خلف الترويسة مع طبقة تعتيم كي يبقى النصّ مقروءًا — وهذا شرطٌ لا
      تحسين: صورةٌ فاتحة تحت نصٍّ أبيض تجعله غير مقروء. */
+  /* الخلفية المعروضة: صورةُ الشريحة النشطة إن وُجدت، وإلّا العامّة. مالكٌ
+     واحدٌ لهذه العقدة، يُنادى من ثلاثة مواضع: تطبيق المظهر، وتبديل الشريحة،
+     وإعادة بناء الشرائح من القاعدة. */
+  function paintHeroBg() {
+    var hero = document.querySelector('section.hero');
+    if (!hero) return 0;
+    var act = hero.querySelector('.hero-slide.is-active') || hero.querySelector('.hero-slide');
+    var img = act && act.getAttribute('data-bg');
+    var ov = act && act.getAttribute('data-ov');
+    if (!String(img || '').trim()) {
+      img = IAQ.setting('hero_bg_image');
+      ov = IAQ.setting('hero_overlay');
+    }
+    return applyHero(img, ov, null);
+  }
+  IAQ.paintHeroBg = paintHeroBg;
+  window.IAQ_HERO_BG = paintHeroBg;
+
   function applyHero(img, overlay, emblemOp) {
     var hero = document.querySelector('section.hero');
     if (!hero) return 0;
@@ -263,7 +281,9 @@
               social_whatsapp: 'whatsapp', social_instagram: 'instagram',
               social_tiktok: 'tiktok', social_facebook: 'facebook' };
   /* الحقول النصّية الموسومة في البناء */
-  var FIELDS = { contact_city: 'city', contact_addr_short: 'addr_short',
+  var FIELDS = { footer_about: 'foot_about', footer_newsletter: 'foot_news',
+                 footer_rights: 'foot_rights',
+                 contact_city: 'city', contact_addr_short: 'addr_short',
                  contact_addr_line: 'addr_line', contact_hours: 'hours',
                  contact_license: 'license' };
   function okLink(u) {
@@ -513,8 +533,8 @@
       done.font = applyFont(IAQ.setting('site_font'));
       done.logo = applyLogo(IAQ.setting('site_logo'));
       done.contact = applyContact();
-      done.hero = applyHero(IAQ.setting('hero_bg_image'), IAQ.setting('hero_overlay'),
-                            IAQ.setting('hero_emblem_op'));
+      /* شفافية الشعار إعدادٌ عامّ، والخلفية من الشريحة النشطة */
+      done.hero = applyHero(null, null, IAQ.setting('hero_emblem_op')) + paintHeroBg();
       done.sections = applySections(IAQ.setting('sections'));
       done.chrome = applyChrome();
       /* الأكواد مرّةً واحدة لكل تحميل: إعادة إدراجها تُعيد تنفيذ سكربتاتها
