@@ -621,6 +621,22 @@ def strip_mode():
             return m
     return "auto"
 
+def panel_fonts():
+    """قواعد @font-face للعائلتين التي تستعملهما اللوحة، من ملفّ خطوط الموقع.
+
+    ملفّ التصميم كان يطلب خمسَ عائلاتٍ من fonts.googleapis.com ويستعمل اثنتين.
+    ونُرشّح لا نُدرج الكلّ: ثلاثُ عائلاتٍ لا تُستعمل حجمٌ بلا فائدة.
+    """
+    f = os.path.join(TEMPLATES, "fonts.css")
+    if not os.path.exists(f):
+        return b""
+    css = rb(f).decode("utf-8")
+    keep = ("'El Messiri'", "'Tajawal'")
+    out = [b for b in re.findall(r"@font-face\s*\{[^}]*\}", css)
+           if any(k in b for k in keep)]
+    return ("\n".join(out)).encode("utf-8")
+
+
 def admin_map():
     """إعداد Supabase العلني + رابط اللوحة، يُحقن في صفحات اللوحة فقط."""
     cfg = supa_cfg()
@@ -637,6 +653,9 @@ def admin_map():
         b"{{RUNTIME_404}}":  runtime_script("404"),
         #  وحدة الجلسة نفسها في صفحة الدخول وفي اللوحة: مصدرٌ واحد
         b"{{AUTH_JS}}":      rb(os.path.join(TEMPLATES, "iaq-auth.js")),
+        #  خطّا اللوحة مستضافان محليًّا كما في الموقع: لا طلبَ إلى جوجل،
+        #  ولا تسريبَ لعنوان المدير، وتعمل بلا اتصالٍ بمضيفٍ ثالث.
+        b"{{PANEL_FONTS}}":  panel_fonts(),
     }
 
 BAD_CHARS = '<>"'
