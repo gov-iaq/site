@@ -29,6 +29,12 @@
     if (!bar) {
       bar = document.createElement('div');
       bar.id = 'iaqStatus';
+      /* منطقةُ إعلانٍ واحدةٌ للوحة كلّها. كانت شريطًا مرئيًّا وحده: من يعتمد
+         على قارئ شاشةٍ لا يسمع «حُفظ» ولا «فشل الحفظ» — فيُعيد الضغطَ أو
+         يظنّ العملَ منشورًا. polite للحفظ الناجح، وatomic كي يُقرأ النصُّ
+         كاملًا لا الحرفَ المتغيّر منه. */
+      bar.setAttribute('aria-live', 'polite');
+      bar.setAttribute('aria-atomic', 'true');
       bar.style.cssText = 'position:fixed;inset-block-end:0;inset-inline:0;z-index:400;padding:9px 16px;' +
         'font-family:Tajawal,sans-serif;font-size:13px;line-height:1.7;text-align:center;' +
         'border-block-start:1px solid rgba(0,0,0,.08);direction:rtl';
@@ -38,6 +44,8 @@
     var c = kind === 'err' ? ['#fdf1ec', '#8c3d1c'] : (kind === 'warn' ? ['#fff8ec', '#7a5518'] : ['#eef4f3', '#0c6c6c']);
     bar.style.background = c[0];
     bar.style.color = c[1];
+    /* الخطأ يقطع القراءةَ الجارية؛ وغيرُه ينتظر دورَه */
+    bar.setAttribute('role', kind === 'err' ? 'alert' : 'status');
     bar.textContent = msg;
   }
 
@@ -192,6 +200,15 @@
      بهذا يرى المدير الحقيقة لا نسخة قديمة محفوظة في كائن اللوحة. */
   function overlaySite(c) {
     if (!T) return;
+    /* قسمٌ ليس في الصفحة لا سبيلَ إلى التحكّم به: collectSite تتخطّاه
+       (`if (!m) return`) فلا يُكتب له عنوانٌ ولا إظهار. وكان زرّ «إضافة قسم»
+       في ملفّ التصميم يُنشئ مثلَه بمفتاح custom_… ويحفظه في settings.sections
+       ويُصدر «تمت إضافة القسم» — فيبقى صفًّا دائمًا في اللوحة لا أثرَ له في
+       الموقع. حُذف الزرّ، وهذا يُنظّف ما أنشأه قبل حذفه.
+       ولا نُصفّي إن غاب T: قد يكون الإطارُ لم يُقرأ، فحذفُ الصفوف حينها ضرر. */
+    if (c.sections instanceof Array) {
+      c.sections = c.sections.filter(function (s) { return !!T.sections[s.key]; });
+    }
     (c.sections || []).forEach(function (s) {
       var m = T.sections[s.key];
       if (!m) return;
@@ -394,19 +411,29 @@
   /* -------------------------------- الحفظ -------------------------------- */
   var timer = null, lastJson = '', saving = false, pending = false;
 
-  window.IAQ_CFG_SAVE = function (config) {
-    if (timer) clearTimeout(timer);
+  /* now = true: زرُّ الحفظ ضُغط. بلا مُهلةٍ، ووعدٌ يُنتظر فتُقال النتيجةُ
+     الحقيقية. وبلاه كانت اللوحة تُصدر «تم حفظ التغييرات» في اللحظة نفسها،
+     أي قبل ٧٠٠ مللي من بدء الكتابة وقبل معرفة نجاحها — رسالةُ نجاحٍ لا
+     تعرف أنجحت. */
+  window.IAQ_CFG_SAVE = function (config, now) {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (now) return flush(config);
     timer = setTimeout(function () { flush(config); }, 700);
     status('جارٍ الحفظ…', 'warn');
+    return Promise.resolve(null);
   };
 
   function flush(config) {
-    if (saving) { pending = true; return; }
+    if (saving) { pending = true; return Promise.resolve(null); }
     var body;
-    try { body = JSON.stringify(config); } catch (e) { status('تعذّر تجهيز البيانات للحفظ: ' + e.message, 'err'); return; }
-    if (body === lastJson) { status('لا تغييرات جديدة', 'ok'); return; }
+    try { body = JSON.stringify(config); } catch (e) {
+      status('تعذّر تجهيز البيانات للحفظ: ' + e.message, 'err');
+      return Promise.resolve(false);
+    }
+    /* لا جديدَ ليس فشلًا: يُقال ويُرفع الحرز */
+    if (body === lastJson) { status('لا تغييرات جديدة', 'ok'); return Promise.resolve(true); }
     saving = true;
-    upsert('settings', [{ key: BLOB, value: config, label: 'حالة لوحة التحكّم', is_public: false,
+    return upsert('settings', [{ key: BLOB, value: config, label: 'حالة لوحة التحكّم', is_public: false,
                           updated_by: (S && S.email) || '' }], 'key')
       .then(function () {
         lastJson = body;
@@ -417,13 +444,16 @@
         status('حُفظ في قاعدة البيانات' +
                (live ? ' · سرى ' + live + ' تعديلًا على الموقع (يظهر للزائر عند أوّل تحميل)' : '') +
                (pub ? ' · حُدِّث المظهر والأقسام' : ''), 'ok');
+        return true;
       })
       .catch(function (e) {
         status('فشل الحفظ: ' + (e && e.message ? e.message : e), 'err');
+        return false;
       })
-      .then(function () {
+      .then(function (ok) {
         saving = false;
-        if (pending) { pending = false; flush(config); }
+        if (pending) { pending = false; return flush(config); }
+        return ok;
       });
   }
 

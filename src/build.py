@@ -1096,7 +1096,10 @@ def build_panel(out_dir, cmap, amap):
 
     a = "function save(){try{localStorage.setItem('aiSiteConfigV2',JSON.stringify(config));}catch(e){}}"
     assert page.count(a) == 1, "save fn"
-    page = page.replace(a, "function save(){if(window.IAQ_CFG_SAVE)window.IAQ_CFG_SAVE(config);}", 1)
+    #  now=true يُمرَّر من زرّ «حفظ التغييرات» وحده: بلا مُهلةٍ، ويُرجَع وعدٌ
+    #  يُنتظر فتُقال النتيجةُ الحقيقية بدل «تم الحفظ» قبل بدء الكتابة.
+    page = page.replace(
+        a, "function save(now){if(window.IAQ_CFG_SAVE)return window.IAQ_CFG_SAVE(config,now);}", 1)
     steps.append("save")
 
     # الجسر بعد السكربت الرئيسي

@@ -1642,6 +1642,14 @@ var IAQ_PATH = (function () {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
   function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+  /* مصدرُ صورةٍ: رابطٌ كامل كما هو، وإلّا فاسمُ ملفٍّ داخل مجلّد البناء.
+     دالّةٌ واحدةٌ لكلّ القوائم — كانت ثلاث نسخٍ متفرّقة وواحدةٌ ناقصة. */
+  function imgSrc(v, dir) {
+    var s = String(v || '');
+    if (!s) return '';
+    if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/' || /^data:/.test(s)) return s;
+    return dir + s;
+  }
   /* الحرف الأول للأفاتار — نفس قاعدة البنّاء: تُتجاهل «ال» التعريف */
   function initialOf(name) {
     var w = String(name || '').trim().split(/\s+/)[0] || '';
@@ -1688,7 +1696,9 @@ var IAQ_PATH = (function () {
             img = ph.querySelector('img');
           }
           if (img) {
-            img.setAttribute('src', 'img/' + kind + '/' + row.photo);
+            /* رابطٌ كامل يُقبل كما هو — كالأخبار والشركاء. كان يُلصَق دائمًا
+               بعد img/board/ فتنكسر كلُّ صورةٍ تُختار من مكتبة اللوحة. */
+            img.setAttribute('src', imgSrc(row.photo, 'img/' + kind + '/'));
             img.setAttribute('alt', ((row.title || '') + ' ' + row.name).trim());
           }
         } else if (ctx.symbolHTML) {
@@ -1800,11 +1810,7 @@ var IAQ_PATH = (function () {
     document.dispatchEvent(new CustomEvent('iaq:lists', { detail: { kind: kind, count: 0 } }));
   }
 
-  function logoSrc(logo) {
-    var s = String(logo || '');
-    if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/') return s;
-    return 'img/partners/' + s;
-  }
+  function logoSrc(logo) { return imgSrc(logo, 'img/partners/'); }
   function partners() {
     var track = document.getElementById('partnersTrack');
     if (!track) return;
@@ -1849,12 +1855,7 @@ var IAQ_PATH = (function () {
     if (!m) return String(iso || '');
     return Number(m[3]) + ' ' + (MONTHS[Number(m[2]) - 1] || m[2]) + ' ' + m[1];
   }
-  function newsImg(f) {
-    var s = String(f || '');
-    if (!s) return '';
-    if (/^(https?:)?\/\//.test(s) || s.charAt(0) === '/') return s;
-    return 'img/news/' + s;
-  }
+  function newsImg(f) { return imgSrc(f, 'img/news/'); }
   /* يُعيد عقدةً موجودة، أو يبنيها من قالبٍ محفوظ إن لزمت. لا نولّد ترميزًا
      جديدًا من عندنا فتبقى الأصناف والأيقونات كما بناها البنّاء. */
   function need(parent, sel, tplHTML, before) {

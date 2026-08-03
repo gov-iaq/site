@@ -136,7 +136,8 @@ window.IAQ_SCREENS = (function () {
         { k: 'role', l: 'المنصب', t: 'text', hint: 'كما يظهر في البطاقة: رئيس الجمعية، عضو…' },
         { k: 'rank', l: 'الرتبة', t: 'select', o: { member: RANK.member, chair: RANK.chair, vice: RANK.vice }, def: 'member',
           hint: 'الرئيس ونائبه يظهران في بطاقتَي الصدارة' },
-        { k: 'photo', l: 'اسم ملف الصورة', t: 'text', hint: 'داخل img/board — اتركه فارغًا فتظهر أيقونة رمزية' },
+        { k: 'photo', l: 'الصورة', t: 'text', pick: 1,
+          hint: 'اختر من المكتبة أو ارفع صورةً، أو اكتب اسم ملفٍّ موجودٍ في img/board. فارغًا تظهر أيقونة رمزية' },
         { k: 'sort', l: 'الترتيب', t: 'int', hint: 'الأصغر أوّلًا', half: 1 },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهر على الموقع', hidden: 'مخفي' }, def: 'published', half: 1 }
       ],
@@ -161,7 +162,8 @@ window.IAQ_SCREENS = (function () {
         { k: 'rank', l: 'الرتبة', t: 'select', o: { member: 'عضو فريق', lead: RANK.lead }, def: 'member' },
         { k: 'phone', l: 'الجوال', t: 'text', half: 1 },
         { k: 'email', l: 'البريد', t: 'text', half: 1 },
-        { k: 'photo', l: 'اسم ملف الصورة', t: 'text', hint: 'داخل img/team' },
+        { k: 'photo', l: 'الصورة', t: 'text', pick: 1,
+          hint: 'اختر من المكتبة أو ارفع صورةً، أو اكتب اسم ملفٍّ موجودٍ في img/team' },
         { k: 'sort', l: 'الترتيب', t: 'int', hint: 'الأصغر أوّلًا', half: 1 },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهر على الموقع', hidden: 'مخفي' }, def: 'published', half: 1 }
       ],
@@ -192,7 +194,8 @@ window.IAQ_SCREENS = (function () {
           hint: 'كل سطر: العنوان ثم نقطتان ثم القيمة — مثل «المدرب: د. أحمد الرفاعي». تظهر جدولًا في البطاقة.' },
         { k: 'cta_label', l: 'نصّ زرّ التسجيل', t: 'text', half: 1, hint: 'مثل: سجّل الآن' },
         { k: 'cta_url', l: 'رابط زرّ التسجيل', t: 'text', half: 1, hint: 'يبدأ بـ https — والزرّ لا يظهر بلا نصٍّ ورابط معًا' },
-        { k: 'image', l: 'اسم ملف الصورة', t: 'text', hint: 'داخل img/news — فارغًا تظهر أيقونة رمزية' },
+        { k: 'image', l: 'صورة الخبر', t: 'text', pick: 1,
+          hint: 'اختر من المكتبة أو ارفع صورةً، أو اكتب اسم ملفٍّ موجودٍ في img/news. فارغًا تظهر أيقونة رمزية' },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'منشور على الموقع', draft: 'مسودّة (لا تظهر)' }, def: 'published' }
       ],
       list: [{ k: 'image', l: 'الصورة', f: 'thumb', dir: 'news' },
@@ -232,10 +235,12 @@ window.IAQ_SCREENS = (function () {
         { k: 'cta1_icon', l: 'أيقونة الزرّ الأول', t: 'select', o: CTAIC, def: 'arrow' },
         { k: 'cta2_label', l: 'نصّ الزرّ الثاني', t: 'text', half: 1 },
         { k: 'cta2_url', l: 'رابط الزرّ الثاني', t: 'text', half: 1 },
-        { k: 'bgfile', l: 'صورة خلفيةٍ لهذه الشريحة (اختياري)', t: 'file', accept: 'image/*',
-          hint: 'اترك الحقل فارغًا فتستعمل الشريحةُ الخلفيةَ العامّة أعلاه' },
-        { k: 'bg_image', l: 'رابط خلفية الشريحة', t: 'text', viaFile: 1,
-          hint: 'يُملأ تلقائيًّا عند الرفع. امحُه ليعود إلى الخلفية العامّة' },
+        /* حُذف حقلُ bgfile: حقلٌ ثانٍ لغرضِ bg_image نفسِه، وهو المعطوب —
+           كان load() يطلبه في select فتفشل قراءةُ الشاشة كلّها بخطأ
+           «column hero_slides.bgfile does not exist». والمكتبةُ أدناه تفعل
+           ما كان يزعم أن يفعله: ترفع وتختار وتضع الرابطَ في الحقل. */
+        { k: 'bg_image', l: 'خلفية هذه الشريحة (اختياري)', t: 'text', pick: 1,
+          hint: 'اختر من المكتبة أو ارفع صورةً، أو امحُ الحقل ليعود إلى الخلفية العامّة أعلاه' },
         { k: 'bg_overlay', l: 'تعتيم خلفية الشريحة %', t: 'int', half: 1,
           hint: 'اتركه فارغًا فيُستعمل التعتيم العامّ' },
         { k: 'sort', l: 'الترتيب', t: 'int', half: 1, hint: 'الأصغر أوّلًا' },
@@ -587,7 +592,8 @@ window.IAQ_SCREENS = (function () {
       reach: 'التعديل والحذف والإضافة تسري على شريط الشركاء في الصفحة الرئيسة عند أوّل تحميل لها، بلا إعادة بناء.',
       fields: [
         { k: 'name', l: 'اسم الشريك', t: 'text', req: 1 },
-        { k: 'logo', l: 'الشعار', t: 'text', hint: 'اسم ملف داخل img/partners أو رابط كامل يبدأ بـ https' },
+        { k: 'logo', l: 'الشعار', t: 'text', pick: 1,
+          hint: 'اختر من المكتبة أو ارفع صورةً، أو اكتب اسم ملفٍّ موجودٍ في img/partners' },
         { k: 'url', l: 'رابط الشريك (اختياري)', t: 'text' },
         { k: 'sort', l: 'الترتيب', t: 'int', hint: 'الأصغر أوّلًا', half: 1 },
         { k: 'status', l: 'الحالة', t: 'select', o: { published: 'ظاهر على الموقع', hidden: 'مخفي' }, def: 'published', half: 1 }
@@ -613,6 +619,44 @@ window.IAQ_SCREENS = (function () {
   var epoch = 0;
   function alive(key) { return key === cur; }
   function S0() { return SCREENS[cur]; }
+
+  /* ==================== حرزُ العملِ الذي لم يُحفظ ====================
+     كانت اللوحة تطلب كلمةَ مرورٍ لحذف عضوٍ واحد، ثم تمحو ستّةَ عشرَ حقلًا
+     مكتوبًا بنقرةٍ واحدةٍ في القائمة الجانبية بلا كلمة. والكفّتان معكوستان:
+     الحذفُ له سجلٌّ وتراجع، وما لم يُحفَظ لا سجلَّ له ولا تراجع.
+
+     حرزٌ واحدٌ مشترك: شاشاتُ الإعدادات هنا، والشاشتان الحيّتان في ملفّ
+     التصميم، والخروجُ من الصفحة. ولا يُسأل إلّا حين يوجد ما يُفقَد. */
+  var DIRTY = null;                     /* عنوانُ الشاشة، أو null إن لا شيء */
+  var MODAL_DIRTY = false;              /* نموذجٌ في نافذةٍ مسَّه المدير */
+  window.IAQ_DIRTY = {
+    mark: function (what) { DIRTY = what || DIRTY || 'الشاشة الحالية'; },
+    clear: function () { DIRTY = null; },
+    has: function () { return !!DIRTY; },
+    /* true = تابعْ (ويُرفع الحرزُ فلا يُسأل مرّتين)، false = ابقَ حيث أنت */
+    ok: function () {
+      if (!DIRTY) return true;
+      var yes = window.confirm(
+        'في «' + DIRTY + '» تعديلٌ لم يُحفظ.\n\n' +
+        'المتابعةُ تفقده — وما لم يُحفظ لا يُسجَّل ولا يُتراجَع عنه.\n' +
+        'اختر «إلغاء» ثمّ اضغط زرَّ الحفظ، أو «موافق» للمتابعة وفقدِه.');
+      if (yes) DIRTY = null;
+      return yes;
+    }
+  };
+  /* التعديلُ يُرصد من الحقل نفسه: شاشةُ إعداداتٍ (#sc-form) أو نموذجٌ في
+     نافذةٍ يحمل زرَّ حفظ. ولا نرصد حقلَ البحث ولا كلمةَ مرورِ التأكيد. */
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || !t.closest || t.type === 'file') return;
+    if (t.closest('#sc-form')) {
+      var sc = S0();
+      window.IAQ_DIRTY.mark(sc && sc.h1 ? sc.h1 : null);
+      return;
+    }
+    var m = t.closest('#sc-modal');
+    if (m && m.querySelector('[data-sc="save"]')) MODAL_DIRTY = true;
+  });
 
   /* ------------------------------- أدوات ------------------------------- */
   function esc(s) {
@@ -1376,10 +1420,13 @@ window.IAQ_SCREENS = (function () {
   /* المكتبة نافذةٌ لا شاشة: تُفتح من أي حقل صورة، وفيها الشبكةُ والرفعُ والحذف.
      فتُدار الصور حيث تُستعمل، ولا تبقى شاشةٌ فارغةٌ في القائمة. */
   function pickerBody() {
+    /* زرٌّ حقيقيّ يفتح الحقلَ المخفيّ، لا <label> حوله: الحقلُ المخفيّ خارجٌ
+       من ترتيب التنقّل، و<label> ليس عنصرًا يُركَّز عليه — فكان الرفعُ مغلقًا
+       تمامًا على من لا يستعمل الفأرة. */
     return '<div class="addrow" style="flex-wrap:wrap;margin-block-end:12px">' +
-        '<label class="btn" style="cursor:pointer;margin:0">' + ico('up') + ' رفع صور' +
-          '<input type="file" id="ml-up" accept="image/*" multiple hidden>' +
-        '</label>' +
+        '<button type="button" class="btn" data-sc="filepick" data-t="ml-up">' +
+          ico('up') + ' رفع صور</button>' +
+        '<input type="file" id="ml-up" accept="image/*" multiple hidden>' +
         '<button class="btn ghost" data-sc="mlreload">' + ico('down') + ' تحديث</button>' +
       '</div>' +
       '<div id="ml-msg" class="muted small" style="margin-block-end:10px"></div>' +
@@ -2280,6 +2327,7 @@ window.IAQ_SCREENS = (function () {
       .then(function (res) {
         if (!res || !res.length) throw new Error('لم يُحفظ شيء — تحقّق من صلاحية حسابك.');
         if (msg) { msg.style.color = '#0c6c6c'; msg.textContent = 'حُفظ ' + res.length + ' إعدادًا · يسري على الموقع عند أوّل تحميل.'; }
+        window.IAQ_DIRTY.clear();       /* نُشر فعلًا: لا شيءَ يُفقَد بعد الآن */
         return loadSettings(sc);
       })
       .catch(function (e) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = e.message; } })
@@ -2503,7 +2551,10 @@ window.IAQ_SCREENS = (function () {
       '<div style="padding:20px 22px">' + bodyHtml + '</div>' +
       (footHtml ? '<div class="btnbar" style="padding:0 22px 20px">' + footHtml + '</div>' : '') + '</div>';
     document.body.appendChild(ov);
-    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    MODAL_DIRTY = false;
+    /* النقرُ خارج النافذة كان يمحو نموذجًا مكتوبًا بلا سؤال — وهو أسهلُ خطأٍ
+       يقع: النافذةُ ضيّقةٌ وما حولها كلُّه مساحةُ إغلاق. */
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeAsk(); });
     /* اختيار ملفّ: يُقرأ حجمه وعدد صفحاته فورًا فلا يكتبهما المدير بيد */
     ov.addEventListener('change', function (e) {
       var t0 = e.target;
@@ -2522,11 +2573,20 @@ window.IAQ_SCREENS = (function () {
     if (f) f.focus();
     return ov;
   }
+  /* close() للنداء الداخليّ بعد نجاحٍ أو انتقالٍ مقصود — لا يسأل.
+     closeAsk() لكل إغلاقٍ يبدأه المدير: Escape، وزرُّ الإغلاق، والنقرُ خارجها. */
   function close() {
     var m = document.getElementById('sc-modal');
     if (m) m.remove();
+    MODAL_DIRTY = false;
   }
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  function closeAsk() {
+    if (MODAL_DIRTY && !window.confirm(
+        'في هذا النموذج ما لم يُحفظ — والإغلاقُ يفقده.\n\n' +
+        '«إلغاء» للعودة إليه، و«موافق» لإغلاقه وفقدِ ما كُتب.')) return;
+    close();
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAsk(); });
 
   /* --- تحويل بين قيمة القاعدة ونصّ الحقل، للنوعين المركّبين --- */
   function linesToText(v) {
@@ -2628,9 +2688,10 @@ window.IAQ_SCREENS = (function () {
     } else {
       h += '<input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '">' +
         /* حقلٌ يملؤه الرفع (viaFile) وصورةٌ: يستحقّ منتقي المكتبة نفسه */
-        (f.viaFile && /image|img|bg/.test(String(f.k))
+        (f.pick
           ? '<button type="button" class="btn ghost sm" data-sc="mlopen" data-t="' + id +
-            '" style="margin-block-start:8px">مكتبة الصور — اختر أو ارفع</button>' : '');
+            '" style="margin-block-start:8px">' + ico('img') +
+            ' مكتبة الصور — اختر أو ارفع</button>' : '');
     }
     if (f.hint) h += '<div class="muted small" style="margin-block-start:4px">' + esc(f.hint) + '</div>';
     return h + '</div>';
@@ -3241,8 +3302,9 @@ window.IAQ_SCREENS = (function () {
       (c2.o ? ' من القائمة المنسدلة' : '') + '، ثم ارفع الملف هنا. تُقبل صيغة xlsx و CSV.</p>' +
       '<div class="btnbar" style="justify-content:flex-start;margin-block-end:14px">' +
         '<button class="btn ghost" data-sc="tpl">' + ico('down') + ' تنزيل القالب</button></div>' +
-      '<label class="upload big" for="sc-file">' + ico('up') + ' اختر الملف' +
-        '<input type="file" id="sc-file" accept=".xlsx,.csv,text/csv" hidden></label>' +
+      '<button type="button" class="upload big" data-sc="filepick" data-t="sc-file">' +
+        ico('up') + ' اختر الملف</button>' +
+      '<input type="file" id="sc-file" accept=".xlsx,.csv,text/csv" hidden>' +
       '<div id="sc-preview" style="margin-block-start:16px"></div>',
       '<button class="btn ghost" data-sc="close">إلغاء</button>' +
       '<button class="btn" data-sc="importgo" disabled id="sc-go">إضافة السجلّات</button>');
@@ -3348,7 +3410,14 @@ window.IAQ_SCREENS = (function () {
     var b = e.target.closest ? e.target.closest('[data-sc]') : null;
     if (!b) return;
     var a = b.getAttribute('data-sc'), id = b.getAttribute('data-id');
-    if (a === 'close') { e.preventDefault(); close(); return; }
+    if (a === 'close') { e.preventDefault(); closeAsk(); return; }
+    /* زرٌّ يفتح حقلَ ملفٍّ مخفيًّا — فيعمل الرفعُ بلوحة المفاتيح كما بالفأرة */
+    if (a === 'filepick') {
+      e.preventDefault();
+      var fe = byId(b.getAttribute('data-t') || '');
+      if (fe) fe.click();
+      return;
+    }
     if (a === 'tpl') { e.preventDefault(); downloadTemplate(); return; }
     if (a === 'export') { e.preventDefault(); exportSheet(); return; }
     if (a === 'range') {

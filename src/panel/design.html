@@ -166,7 +166,9 @@ input[type=range]{width:100%;accent-color:var(--t)}
 .mi-img img{max-width:100%;max-height:100%;object-fit:contain}
 .mi-name{padding:8px 12px;font-size:13px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mi-acts{display:flex;gap:6px;padding:0 12px 12px;align-items:center;justify-content:space-between}
-.upload{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border:1.5px dashed var(--t);border-radius:10px;color:var(--t);font-weight:700;cursor:pointer;font-size:14px;background:#f3f9f9}
+/* font-family:inherit كي يعمل الصنف على <button> أيضًا: أزرار الرفع صارت
+   أزرارًا حقيقيةً لا <label> يُخفي حقلًا — فلا يعمل إلّا بالفأرة. */
+.upload{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border:1.5px dashed var(--t);border-radius:10px;color:var(--t);font-weight:700;cursor:pointer;font-size:14px;font-family:inherit;background:#f3f9f9}
 .upload svg{width:18px;height:18px}.upload:hover{background:#e3f1f0}
 .upload.big{width:100%;justify-content:center;padding:24px}
 .logo-prev{width:160px;height:160px;border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:18px;background:#f7fafa;margin-bottom:14px}
@@ -705,8 +707,8 @@ function vPages(){
 }
 function vSections(){
  var core=["hero","about","news","programs","stats","testi","partners"];
- var rows=config.sections.map(function(s,i){var edit=s.editable?('<div class="sec-edit"><input type="text" data-bind="sections.'+i+'.title" value="'+esc(s.title||'')+'" placeholder="عنوان القسم"><input type="text" data-bind="sections.'+i+'.subtitle" value="'+esc(s.subtitle||'')+'" placeholder="وصف مختصر"></div>'):'<div class="sec-edit"><span class="muted small">قسم نظامي (يُدار محتواه من «النصوص»).</span></div>';return '<div class="li-item"><div class="li-main"><span class="drag">'+I.sections+'</span><span class="li-label as-text">'+esc(s.name)+'</span><div class="li-acts">'+sw("sections."+i+".visible",s.visible)+iconBtn("up","up","sections",i,"","لأعلى")+iconBtn("down","down","sections",i,"","لأسفل")+(core.indexOf(s.key)>-1?'':iconBtn("del","trash","sections",i,"danger","حذف"))+'</div></div>'+edit+'</div>';}).join('');
- return '<div class="view-head"><h1>أقسام الصفحة الرئيسية</h1><p>أظهر الأقسام أو أخفِها، وأعد ترتيبها، وحرّر عناوينها، وأضف أقسامًا جديدة.</p></div>'+card('<div class="li-list">'+rows+'</div>')+card('<h3>إضافة قسم جديد</h3><div class="addrow"><select id="newSecType"><option value="نص">قسم نصّي</option><option value="بطاقات">بطاقات</option><option value="إحصائيات">إحصائيات</option><option value="شهادات">شهادات</option><option value="شركاء">شعارات شركاء</option><option value="معرض">معرض صور</option><option value="دعوة">دعوة لإجراء (CTA)</option><option value="html">HTML مخصّص</option></select><input type="text" id="newSecTitle" placeholder="عنوان القسم"><button class="btn" data-act="add-section">'+I.plus+' إضافة</button></div>')+'<div class="btnbar"><button class="btn ok" data-act="save">حفظ التغييرات</button></div>';
+ var rows=config.sections.map(function(s,i){var edit=s.editable?('<div class="sec-edit"><input type="text" data-bind="sections.'+i+'.title" value="'+esc(s.title||'')+'" placeholder="عنوان القسم"><input type="text" data-bind="sections.'+i+'.subtitle" value="'+esc(s.subtitle||'')+'" placeholder="وصف مختصر"></div>'):'<div class="sec-edit"><span class="muted small">قسم نظامي (يُدار محتواه من «النصوص»).</span></div>';return '<div class="li-item"><div class="li-main"><span class="drag">'+I.sections+'</span><span class="li-label as-text">'+esc(s.name)+'</span><div class="li-acts">'+sw("sections."+i+".visible",s.visible)+iconBtn("up","up","sections",i,"","لأعلى")+iconBtn("down","down","sections",i,"","لأسفل")+'</div></div>'+edit+'</div>';}).join('');
+ return '<div class="view-head"><h1>أقسام الصفحة الرئيسية</h1><p>أظهر الأقسام أو أخفِها، وأعد ترتيبها، وحرّر عناوينها.</p></div>'+card('<div class="li-list">'+rows+'</div>')+card('<h3>لماذا لا يوجد «إضافة قسم» ولا «حذف»؟</h3><p class="muted small">أقسام الصفحة الرئيسة مبنيّةٌ في الصفحة نفسها، وهذه الشاشة تتحكّم بها: تُظهرها وتُخفيها وتُعيد ترتيبها وتُحرّر عناوينها. أمّا إنشاء قسمٍ جديد أو حذفُ قسمٍ نهائيًّا فيحتاج تعديلًا في بناء الموقع لا في لوحة التحكّم — وكان الزرّان هنا يُصدران رسالة نجاحٍ ولا يفعلان شيئًا في الموقع، فحُذفا. ولإخفاء قسمٍ لا تريده استعمل مفتاح الإظهار أعلاه: أثرُه في الموقع فوريّ وقابلٌ للرجوع.</p>')+'<div class="btnbar"><button class="btn ok" data-act="save">حفظ التغييرات</button></div>';
 }
 function vContent(){
  var slides=config.content.heroSlides.map(function(s,i){return card('<h3>شريحة '+(i+1)+'</h3><div class="fld"><label>تمهيد</label><input type="text" data-bind="content.heroSlides.'+i+'.eyebrow" value="'+esc(s.eyebrow)+'"></div><div class="fld"><label>العنوان</label><input type="text" data-bind="content.heroSlides.'+i+'.title" value="'+esc(s.title)+'"></div><div class="fld"><label>النص</label><textarea data-bind="content.heroSlides.'+i+'.text">'+esc(s.text)+'</textarea></div>');}).join('');
@@ -835,7 +837,12 @@ var NAV=[
 ];
 var current="dashboard", liveTimer=null;
 function renderSidebar(){$('#sidebarNav').innerHTML=NAV.map(function(n){if(n.group)return '<div class="nav-group">'+esc(n.group)+'</div>';return '<button class="nav-item'+(n.k===current?' active':'')+'" data-nav="'+n.k+'">'+I[n.icon]+'<span>'+esc(n.label)+'</span></button>';}).join('');}
-function switchView(k){current=k;renderSidebar();$('#viewArea').innerHTML=views[k]();afterRender(k);window.scrollTo(0,0);closeDrawer();}
+/* حرزُ ما لم يُحفظ قبل أيّ انتقال — من القائمة أو من زرٍّ داخليّ. الحرزُ
+   مشتركٌ مع شاشات screens.js فلا يفترق سلوكُ اللوحة بين نصفَيها. */
+function curLabel(){for(var i=0;i<NAV.length;i++){if(NAV[i]&&NAV[i].k===current)return NAV[i].label;}return 'الشاشة الحالية';}
+function switchView(k){if(k!==current&&window.IAQ_DIRTY&&!window.IAQ_DIRTY.ok())return;current=k;renderSidebar();$('#viewArea').innerHTML=views[k]();afterRender(k);window.scrollTo(0,0);closeDrawer();}
+/* إغلاقُ التبويب أو تحديثُه: المتصفّح يسأل بنفسه إن كان هناك ما يُفقَد */
+window.addEventListener('beforeunload',function(e){if(window.IAQ_DIRTY&&window.IAQ_DIRTY.has()){e.preventDefault();e.returnValue='';return '';}});
 function afterRender(k){ if(k==="theme")applyPreview(); startLive(k==="dashboard"); }
 
 function applyPreview(){var el=$('#themePreview');if(!el)return;var t=config.theme;el.style.setProperty('--pp',t.primary);el.style.setProperty('--pa',t.accent);el.style.setProperty('--pbg',t.bg);el.style.setProperty('--psurf',t.surface);el.style.setProperty('--psurf2',t.surface2);el.style.setProperty('--pink',t.ink);el.style.setProperty('--pbody',t.body);el.style.setProperty('--phero',t.heroBg);el.style.setProperty('--prad',t.radius+'px');el.style.setProperty('--phead',"'"+t.headFont+"'");el.style.setProperty('--pbodyf',"'"+t.bodyFont+"'");el.classList.toggle('pat',!!t.pattern);}
@@ -855,22 +862,35 @@ var PRESETS={
 };
 
 /* ---------- events ---------- */
-document.addEventListener('input',function(e){var t=e.target;var p=t.getAttribute('data-bind');if(!p)return;var v=(t.type==='checkbox')?t.checked:t.value;setP(config,p,v);save();if(t.hasAttribute('data-sync')){$$('[data-bind="'+p+'"][data-sync]').forEach(function(o){if(o!==t)o.value=t.value;});}if(p.indexOf('theme.')===0){applyPreview();if(p==='theme.radius'){var rv=$('#radVal');if(rv)rv.textContent=t.value;}}});
+/* كان هنا save() على كل حرفٍ يُكتب: نشرٌ تلقائيٌّ في شاشتين، وزرُّ «حفظ
+   التغييرات» تحتهما يُوهم أنّ ما قبله لم يُنشَر. الآن الزرُّ هو الناشرُ
+   الوحيد كما في الشاشات السبع عشرة الأخرى، والحرزُ يمنع فقدَ ما كُتب. */
+document.addEventListener('input',function(e){var t=e.target;var p=t.getAttribute('data-bind');if(!p)return;var v=(t.type==='checkbox')?t.checked:t.value;setP(config,p,v);if(window.IAQ_DIRTY)window.IAQ_DIRTY.mark(curLabel());if(t.hasAttribute('data-sync')){$$('[data-bind="'+p+'"][data-sync]').forEach(function(o){if(o!==t)o.value=t.value;});}if(p.indexOf('theme.')===0){applyPreview();if(p==='theme.radius'){var rv=$('#radVal');if(rv)rv.textContent=t.value;}}});
 document.addEventListener('change',function(e){var t=e.target;var up=t.getAttribute('data-upload');if(up){handleUpload(up,t);return;}var role=t.getAttribute('data-role');if(role==='assign'){var id=t.getAttribute('data-id');find(id).assignee=t.value;save();toast('تم الإسناد إلى '+(userName(t.value)||'لا أحد'));openSub(id);return;}if(role==='priority'){find(t.getAttribute('data-id')).priority=t.value;save();return;}if(role==='urole'){var u=config.users.filter(function(x){return x.id===t.getAttribute('data-id');})[0];if(u){u.role=t.value;save();toast('تم تحديث الدور');}return;}if(role==='codepage'){codePage=t.value;switchView('code');return;}var p=t.getAttribute('data-bind');if(p&&t.tagName==='SELECT'){setP(config,p,t.value);save();}});
 document.addEventListener('click',function(e){
  var nb=e.target.closest('[data-nav]');if(nb){switchView(nb.getAttribute('data-nav'));return;}
  var pr=e.target.closest('[data-preset]');if(pr){var key=pr.getAttribute('data-preset');if(PRESETS[key]){config.theme=JSON.parse(JSON.stringify(PRESETS[key]));save();switchView('theme');toast('تم تطبيق النمط');}return;}
  var a=e.target.closest('[data-act]');if(!a)return;var act=a.getAttribute('data-act');var path=a.getAttribute('data-path');var i=a.getAttribute('data-i');i=(i==null?null:parseInt(i,10));var id=a.getAttribute('data-id');
  switch(act){
-  case 'save': save();toast('تم حفظ التغييرات');break;
-  case 'toggle': setP(config,path,!getP(config,path));save();rerender();break;
-  case 'up': case 'down': {var arr=getP(config,path);var j=act==='up'?i-1:i+1;if(j<0||j>=arr.length)break;var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;save();rerender();break;}
+  /* الزرّ ينتظر النتيجةَ الحقيقية: كان يُصدر «تم حفظ التغييرات» فورًا، أي قبل
+     أن تبدأ الكتابةُ (مُهلة ٧٠٠ مللي) وقبل معرفةِ نجاحها. */
+  case 'save': {var sb=a;sb.disabled=true;var was=sb.textContent;sb.textContent='جارٍ الحفظ…';
+   Promise.resolve(save(true)).then(function(ok){sb.disabled=false;sb.textContent=was;
+    if(ok===false){toast('لم يُحفظ — التفصيل في شريط الأسفل');return;}
+    if(window.IAQ_DIRTY)window.IAQ_DIRTY.clear();toast('حُفظ ونُشر');});break;}
+  case 'toggle': setP(config,path,!getP(config,path));if(window.IAQ_DIRTY)window.IAQ_DIRTY.mark(curLabel());rerender();break;
+  case 'up': case 'down': {var arr=getP(config,path);var j=act==='up'?i-1:i+1;if(j<0||j>=arr.length)break;var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;if(window.IAQ_DIRTY)window.IAQ_DIRTY.mark(curLabel());rerender();break;}
   case 'del': {getP(config,path).splice(i,1);save();rerender();break;}
   case 'add-child': config.menu[i].children.push({id:uid(),label:"عنصر جديد",href:"#"});save();switchView('menu');break;
   case 'add-menu': config.menu.push({id:uid(),label:($('#newMenuLabel').value.trim()||"عنصر جديد"),href:($('#newMenuHref').value.trim()||"#"),visible:true,children:[]});save();switchView('menu');toast('تمت الإضافة');break;
   case 'add-page': {var tt=$('#npTitle').value.trim();if(!tt){toast('أدخل عنوان الصفحة');break;}config.pages.push({id:uid(),title:tt,slug:($('#npSlug').value.trim()||('page-'+uid())),type:$('#npType').value,status:$('#npStatus').value});save();switchView('pages');toast('تم إنشاء الصفحة');break;}
   case 'del-page': config.pages.splice(i,1);save();switchView('pages');break;
-  case 'add-section': {var st=$('#newSecType').value,stt=$('#newSecTitle').value.trim()||"قسم جديد";config.sections.push({id:uid(),key:'custom_'+uid(),name:stt+' ('+st+')',visible:true,editable:true,title:stt,subtitle:""});save();switchView('sections');toast('تمت إضافة القسم');break;}
+  /* case 'add-section' حُذف: كان يُنشئ قسمًا بمفتاح custom_… لا وجودَ له في
+     الصفحة، فتتخطّاه collectSite في الجسر ولا يُكتب له شيء — ومع ذلك يُصدر
+     «تمت إضافة القسم» ويبقى صفًّا دائمًا في settings.sections. وزرُّ الحذف
+     بجانبه حُذف كذلك: كان يُخرج القسمَ من القائمة، فإن كان مُخفيًا بقي
+     تجاوزُ الإخفاء ساريًا على الموقع بلا صفٍّ يُلغيه — إخفاءٌ لا رجعةَ فيه
+     من اللوحة. */
   case 'add-news': config.news.unshift({id:uid(),tag:"عام",date:"اليوم",title:"عنوان الخبر الجديد",excerpt:"اكتب مقتطف الخبر هنا."});save();switchView('news');break;
   case 'del-news': config.news.splice(i,1);save();switchView('news');break;
   case 'del-media': config.media.splice(i,1);save();switchView('media');break;
