@@ -92,7 +92,7 @@ window.IAQ_SCREENS = (function () {
   var SCREENS = {
     home: {
       nav: 'لوحة التحكم', h1: 'لوحة التحكم',
-      sub: 'أرقامٌ حقيقية من قاعدة البيانات — تُقرأ عند فتح الشاشة.',
+      sub: 'أرقامٌ حقيقيّة من قاعدة البيانات — نظرةٌ عامّة، وتفصيلُ الزوّار، وسجلُّ العمل.',
       kind: 'dash'
     },
     visits: {
@@ -960,13 +960,30 @@ window.IAQ_SCREENS = (function () {
   /* ====================== قراءة المناظر المُجمَّعة ======================
      PostgREST لا يجمع، فالتجميع في مناظر مبوّبة باليوم. نقرأ مدى الأيام
      ونطبق الجمع على عشرات الصفوف في المتصفّح — رخيصٌ ودقيق. */
-  var RANGE = 30;                      /* المدى الافتراضي بالأيام */
+  var RANGE = 30;                      /* المدى الافتراضي بالأيام — صفرٌ = منذ الإنشاء */
+  /* المدى الفعليّ للحساب حين يكون صفرًا: أقدمُ يومٍ في البيانات، فتُرسم السلسلة
+     كاملةً ولا تُقصّ عند ثلاثين يومًا. */
+  function spanOf(rows) {
+    var min = null;
+    (rows || []).forEach(function (r) {
+      var d = String(r.day || '');
+      if (d && (min === null || d < min)) min = d;
+    });
+    if (!min) return 30;
+    var days = Math.ceil((Date.now() - new Date(min + 'T00:00:00').getTime()) / 86400000) + 1;
+    return Math.max(7, Math.min(days, 1460));
+  }
   function dayStr(back) {
     var d = new Date(Date.now() - back * 86400000);
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
+  /* days = 0 تعني «منذ الإنشاء»: بلا ترشيح يومٍ أصلًا فلا حدَّ سفليّ. والسقف
+     يُرفع مع طول المدى — ٣٦٥ يومًا × عدد المسارات قد يتجاوز عشرين ألف صفّ. */
   function readView(name, days, extra) {
-    var q = name + '?select=*&day=gte.' + dayStr(days - 1) + '&limit=20000' + (extra || '');
+    var lim = (!days || days > 180) ? 100000 : 20000;
+    var q = name + '?select=*' +
+            (days ? '&day=gte.' + dayStr(days - 1) : '') +
+            '&limit=' + lim + (extra || '');
     return api(q).catch(function (e) { err = e.message; return []; });
   }
   /* يجمع صفوف المنظر على مفتاحٍ واحد */
@@ -1001,11 +1018,13 @@ window.IAQ_SCREENS = (function () {
     }
     return out;
   }
-  function rangeBar(active) {
-    return '<div class="btnbar" style="justify-content:flex-start;margin-block-end:14px">' +
-      [7, 30, 90].map(function (d) {
-        return '<button class="btn ' + (d === active ? '' : 'ghost') + '" data-sc="range" data-d="' + d + '">' +
-          (d === 7 ? 'أسبوع' : (d === 30 ? '٣٠ يومًا' : '٩٠ يومًا')) + '</button>';
+  function rangeBar(d) {
+    var OPTS = [[7, 'أسبوع'], [30, '٣٠ يومًا'], [90, '٩٠ يومًا'],
+                [365, 'سنة'], [0, 'منذ الإنشاء']];
+    return '<div class="addrow" style="margin-block-end:14px;flex-wrap:wrap">' +
+      OPTS.map(function (o) {
+        return '<button class="btn ' + (Number(d) === o[0] ? '' : 'ghost') +
+          '" data-sc="range" data-d="' + o[0] + '">' + esc(o[1]) + '</button>';
       }).join('') + '</div>';
   }
   function card(title, body, note) {
@@ -1413,40 +1432,82 @@ window.IAQ_SCREENS = (function () {
     return ((b - a) / a) * 100;
   }
 
+  /* ثلاث تبويباتٍ في شاشةٍ واحدة: الثلاثة تقرأ من المصادر نفسها، وكان
+     الانتقال بينها يُعيد كل القراءات من الصفر. التبويب يُبدّل العرضَ لا
+     القراءة، والمدى يُبدّل القراءة للثلاثة معًا. */
+  var DASH_TAB = 'now';
+  var DASH_TABS = [['now', 'نظرةٌ عامّة'], ['visits', 'الزوّار والصفحات'],
+                   ['work', 'سجلّ العمل والتراجع']];
+
+  function tabBar() {
+    return '<div class="dash-tabs">' + DASH_TABS.map(function (o) {
+      return '<button class="dash-tab' + (DASH_TAB === o[0] ? ' is-on' : '') +
+        '" data-sc="dtab" data-t="' + o[0] + '">' + esc(o[1]) + '</button>';
+    }).join('') + '</div>';
+  }
+
   function dashView(sc, myKey) {
-    setTimeout(function () { paintDash(myKey); }, 0);
+    setTimeout(function () { paintTab(myKey); }, 0);
     return '<div class="view-head"><h1>' + esc(sc.h1) + '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
+      tabBar() +
+      '<div id="dv-range">' + rangeBar(RANGE) + '</div>' +
       '<div id="sc-err"></div>' +
-      '<div id="dv-kpi" class="iaq-kpi-grid">' +
+      '<div id="dash-body"><div id="dv-kpi" class="iaq-kpi-grid">' +
         new Array(7).join('<div class="iaq-kpi"><div class="kpi-val">…</div>' +
           '<div class="kpi-lbl">جارٍ القراءة</div></div>') +
       '</div>' +
       '<div id="dv-charts"></div>' +
       '<div id="dv-inv"></div>' +
       '<div class="iaq-card"><h3 class="card-h">آخر الطلبات الواردة</h3>' +
-        '<div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
+        '<div id="dv-latest" class="muted">جارٍ القراءة…</div></div></div>';
+  }
+
+  /* يرسم التبويب المختار في الحاوية نفسها */
+  function paintTab(myKey) {
+    var box = $('#dash-body');
+    var rb = $('#dv-range');
+    if (rb) rb.innerHTML = rangeBar(RANGE);
+    if (!box) return;
+    if (DASH_TAB === 'visits') {
+      box.innerHTML = '<div class="iaq-card"><div class="muted">جارٍ قراءة الإحصاءات…</div></div>';
+      return paintVisits(myKey);
+    }
+    if (DASH_TAB === 'work') {
+      box.innerHTML = '<div class="iaq-card"><div class="muted">جارٍ قراءة السجلّ…</div></div>';
+      return paintWorklog(myKey);
+    }
+    box.innerHTML = '<div id="dv-kpi" class="iaq-kpi-grid"></div>' +
+      '<div id="dv-charts"></div><div id="dv-inv"></div>' +
+      '<div class="iaq-card"><h3 class="card-h">آخر الطلبات الواردة</h3>' +
+      '<div id="dv-latest" class="muted">جارٍ القراءة…</div></div>';
+    return paintDash(myKey);
   }
 
   function paintDash(myKey) {
-    var D = 30;
+    /* المدى المختار؛ وصفرٌ = منذ الإنشاء فنقرأ الكلّ ونحسب المدى من البيانات */
+    var D = RANGE || 0;
     /* ثلاث قراءاتٍ لا أكثر — والمقارنة من ضِعف المدى في القراءة نفسها */
     Promise.all([
-      readView('v_views_daily', D * 2),
+      readView('v_views_daily', D ? D * 2 : 0),
       api('v_subs_response?select=status,created_at,hours_to_first&order=created_at.desc&limit=1000')
         .catch(function () { return []; }),
-      readView('v_audit_daily', D * 2),
+      readView('v_audit_daily', D ? D * 2 : 0),
       readView('v_views_by_path', D),
       readView('v_views_by_label', D),
       readView('v_views_by_device', D)
     ]).then(function (r) {
       if (!alive(myKey)) return;
+      /* «منذ الإنشاء»: المدى من أقدم يومٍ في البيانات، فلا تُقصّ السلسلة */
+      if (!D) D = spanOf(r[0]);
       var daily = r[0] || [], subs = r[1] || [], audit = r[2] || [];
       var byPath = r[3] || [], byLabel = r[4] || [], byDev = r[5] || [];
 
       /* في المدى المعروض وحده (النصف الأحدث) */
+      /* حين يكون المدى «منذ الإنشاء» فالنصفُ الأحدث هو المدى المحسوب نفسه */
+      var HALF = (RANGE ? RANGE : Math.ceil(D / 2));
       function tot(kind) {
-        var from = dayStr(D - 1);
+        var from = dayStr(HALF - 1);
         return total(daily, function (x) {
           return String(x.day) >= from && (!kind || x.kind === kind);
         });
@@ -1471,29 +1532,30 @@ window.IAQ_SCREENS = (function () {
         return Math.round(v / 24) + ' ي';
       }
       function spark(kind, rows) {
-        return chartLine(series(rows || daily, D, kind ? function (x) { return x.kind === kind; } : null),
+        return chartLine(series(rows || daily, HALF, kind ? function (x) { return x.kind === kind; } : null),
                          { bare: 1, h: 34 });
       }
       function dash(v) { return noStats ? '—' : String(v); }
 
+      var dlt = RANGE ? (RANGE * 2) : D;    /* المقارنة بين نصفَي ما قُرئ */
       var kbox = $('#dv-kpi');
       if (kbox) {
         kbox.innerHTML =
           kpi({ v: dash(tot('page')), l: 'زيارة صفحة', icon: 'eye',
-                delta: delta(daily, D * 2, function (x) { return x.kind === 'page'; }),
+                delta: delta(daily, dlt, function (x) { return x.kind === 'page'; }),
                 spark: noStats ? '' : spark('page') }) +
           kpi({ v: dash(tot('file_dl')), l: 'تنزيل ملفّ', icon: 'down',
-                delta: delta(daily, D * 2, function (x) { return x.kind === 'file_dl'; }),
+                delta: delta(daily, dlt, function (x) { return x.kind === 'file_dl'; }),
                 spark: noStats ? '' : spark('file_dl') }) +
           kpi({ v: dash(tot('form')), l: 'إرسال نموذج', icon: 'inbox2',
-                delta: delta(daily, D * 2, function (x) { return x.kind === 'form'; }) }) +
+                delta: delta(daily, dlt, function (x) { return x.kind === 'form'; }) }) +
           kpi({ v: String(open), l: 'طلب لم يُفتح بعد', icon: 'inbox2', gold: 1,
                 sub: late ? ('منها ' + late + ' متأخّرٌ فوق ٣ أيام') : 'لا متأخّر' }) +
           kpi({ v: hrs(avg), l: 'متوسّط زمن أوّل ردّ', icon: 'log',
                 note: 'كل الفترة', sub: 'الوسيط ' + hrs(med) }) +
-          kpi({ v: String(total(audit, function (x) { return String(x.day) >= dayStr(D - 1); })),
+          kpi({ v: String(total(audit, function (x) { return String(x.day) >= dayStr(HALF - 1); })),
                 l: 'عملية على المحتوى', icon: 'log',
-                delta: delta(audit, D * 2), spark: spark(null, audit) });
+                delta: delta(audit, dlt), spark: spark(null, audit) });
       }
 
       var cbox = $('#dv-charts');
@@ -1502,8 +1564,8 @@ window.IAQ_SCREENS = (function () {
           ? '<div class="notice" style="margin-block-end:14px">' +
             '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
             'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>'
-          : card('اتجاه زيارات الصفحات — آخر ' + D + ' يومًا',
-              chartLine(series(daily, D, function (x) { return x.kind === 'page'; }),
+          : card('اتجاه زيارات الصفحات — ' + (RANGE ? 'آخر ' + RANGE + ' يومًا' : 'منذ الإنشاء'),
+              chartLine(series(daily, HALF, function (x) { return x.kind === 'page'; }),
                         { label: 'زيارات الصفحات', h: 190 }),
               'كل نقطةٍ يومٌ واحد. الأيام الخالية أصفارٌ لا فراغات.') +
             '<div class="chart-grid" style="align-items:start">' +
@@ -1598,7 +1660,7 @@ window.IAQ_SCREENS = (function () {
   }
 
   function paintVisits(myKey) {
-    var d = RANGE;
+    var d = RANGE || 0;
     Promise.all([
       readView('v_views_daily', d),
       readView('v_views_by_path', d),
@@ -1609,7 +1671,8 @@ window.IAQ_SCREENS = (function () {
     ]).then(function (r) {
       if (!alive(myKey)) return;
       var daily = r[0], byPath = r[1], byLabel = r[2], byRef = r[3], byDev = r[4], hourly = r[5];
-      var box = $('#sc-body');
+      if (!d) d = spanOf(daily);
+      var box = $('#dash-body') || $('#sc-body');
       if (!box) return;
       var ep = $('#sc-err');
       if (ep) ep.innerHTML = err
@@ -1835,7 +1898,7 @@ window.IAQ_SCREENS = (function () {
   var WL_ROWS = null;
 
   function paintWorklog(myKey) {
-    var d = RANGE;
+    var d = RANGE || 0;
     Promise.all([
       readView('v_audit_daily', d),
       api('v_audit_recent?select=*&order=created_at.desc&limit=' + WL_LIMIT +
@@ -1845,7 +1908,8 @@ window.IAQ_SCREENS = (function () {
       if (!alive(myKey)) return;
       var ad = r[0], recent = r[1], subs = r[2];
       WL_ROWS = recent;
-      var box = $('#sc-body');
+      if (!d) d = spanOf(ad);
+      var box = $('#dash-body') || $('#sc-body');
       if (!box) return;
       var ep = $('#sc-err');
       if (ep) ep.innerHTML = err
@@ -3239,11 +3303,14 @@ window.IAQ_SCREENS = (function () {
     if (a === 'export') { e.preventDefault(); exportSheet(); return; }
     if (a === 'range') {
       e.preventDefault();
-      RANGE = parseInt(b.getAttribute('data-d'), 10) || 30;
+      /* «منذ الإنشاء» قيمتها صفر، و«|| 30» كانت تُحوّلها إلى ثلاثين */
+      var dd = parseInt(b.getAttribute('data-d'), 10);
+      RANGE = (isFinite(dd) && dd >= 0) ? dd : 30;
       var sc1 = S0();
-      if (sc1.kind === 'visits') paintVisits(cur);
+      /* paintTab يُعيد رسم شريط المدى أيضًا — وبلا ذلك بقي الزرُّ النشط قديمًا */
+      if (sc1.kind === 'dash') paintTab(cur);
+      else if (sc1.kind === 'visits') paintVisits(cur);
       else if (sc1.kind === 'worklog') paintWorklog(cur);
-      else if (sc1.kind === 'dash') paintDash(cur);
       return;
     }
     if (a === 'add') { e.preventDefault(); openForm(null); return; }
@@ -3272,6 +3339,18 @@ window.IAQ_SCREENS = (function () {
     }
     if (a === 'mlopen') { e.preventDefault(); openPicker(b.getAttribute('data-t') || ''); return; }
     if (a === 'mlpick') { e.preventDefault(); applyPick(b.getAttribute('data-u') || ''); return; }
+    if (a === 'dtab') {
+      e.preventDefault();
+      DASH_TAB = b.getAttribute('data-t') || 'now';
+      var tb = document.querySelector('.dash-tabs');
+      if (tb) {
+        [].slice.call(tb.querySelectorAll('.dash-tab')).forEach(function (x) {
+          x.classList.toggle('is-on', x.getAttribute('data-t') === DASH_TAB);
+        });
+      }
+      paintTab(cur);
+      return;
+    }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
     if (a === 'reload') {
