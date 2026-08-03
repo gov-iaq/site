@@ -337,6 +337,16 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
+    medialib: {
+      nav: 'مكتبة الوسائط', h1: 'مكتبة الوسائط',
+      sub: 'الصور المرفوعة إلى تخزين الموقع — تُستعمل في الشعار والخلفيات من زرّ «من المكتبة».',
+      kind: 'media',
+      reach: 'الصور تُرفع إلى تخزين الموقع وتبقى. وتظهر في كل حقل صورةٍ في اللوحة ' +
+             'بزرّ «من المكتبة» — الشعار وخلفية الشريط العلويّ وخلفية التذييل وخلفية ' +
+             'السلايدر وخلفية كل شريحة. وحذفُ صورةٍ يحذف سطرها من المكتبة ويُبقي ' +
+             'الملفّ في التخزين، فالصفحات التي تستعملها لا تنكسر.'
+    },
+
     syscfg: {
       nav: 'إعدادات النظام', h1: 'إعدادات النظام',
       sub: 'أعلامُ تشغيلٍ تمسّ سلوك الموقع لا مظهره.',
@@ -798,6 +808,7 @@ window.IAQ_SCREENS = (function () {
     if (sc.kind === 'dash') return dashView(sc, myKey);
     if (sc.kind === 'visits') return visitsView(sc, myKey);
     if (sc.kind === 'worklog') return worklogView(sc, myKey);
+    if (sc.kind === 'media') return mediaView(sc, myKey);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* كتلة الإعدادات — إن كان للشاشة كتلةٌ — تُقرأ وتُرسم مستقلّةً عن الجدول،
        فلا تُسقط قراءةٌ فاشلةٌ منهما الأخرى. */
@@ -1179,6 +1190,181 @@ window.IAQ_SCREENS = (function () {
     ] }
   ];
 
+  /* ======================== مكتبة الوسائط ========================
+     رفعٌ حقيقيٌّ إلى دلو iaq-media وصفٌّ في public.media. والحذف يُزيل السطر
+     ويُبقي الملفّ: صفحةٌ تستعمل الصورة لا تنكسر بحذفها من المكتبة. */
+  var MEDIA = [];
+
+  function mediaUrl(m) {
+    var p = String(m.storage_path || '');
+    if (/^https?:\/\//i.test(p)) return p;
+    return CFG.url + '/storage/v1/object/public/' +
+      encodeURI((m.bucket || 'iaq-media') + '/' + p);
+  }
+  function kb(n) {
+    var b = Number(n) || 0;
+    if (!b) return '';
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return Math.round(b / 1024) + ' KB';
+    return (Math.round(b / 104857.6) / 10) + ' MB';
+  }
+
+  function mediaView(sc, myKey) {
+    wireMedia();
+    setTimeout(function () { loadMedia(myKey); }, 0);
+    return head(sc) +
+      '<div id="sc-err"></div>' +
+      '<div class="iaq-card" style="margin-block-end:14px">' +
+        '<div class="addrow" style="flex-wrap:wrap">' +
+          '<label class="btn" style="cursor:pointer;margin:0">' + ico('up') + ' رفع صور' +
+            '<input type="file" id="ml-up" accept="image/*" multiple hidden>' +
+          '</label>' +
+          '<button class="btn ghost" data-sc="mlreload">' + ico('down') + ' تحديث</button>' +
+        '</div>' +
+        '<div id="ml-msg" class="muted small" style="margin-block-start:10px"></div>' +
+      '</div>' +
+      '<div class="iaq-card"><div id="ml-grid" class="muted">جارٍ القراءة…</div>' +
+        '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p></div>';
+  }
+
+  function loadMedia(myKey) {
+    return api('media?select=*&order=created_at.desc&limit=300')
+      .then(function (rows) {
+        MEDIA = rows || [];
+        if (myKey && !alive(myKey)) return;
+        paintMedia();
+      })
+      .catch(function (e) {
+        err = e.message;
+        var g = $('#ml-grid');
+        if (g) g.innerHTML = '<div class="muted">تعذّرت القراءة: ' + esc(e.message) + '</div>';
+      });
+  }
+
+  function paintMedia() {
+    var g = $('#ml-grid');
+    if (!g) return;
+    if (!MEDIA.length) {
+      g.innerHTML = '<div class="muted" style="padding:26px;text-align:center">' +
+        'لا صور بعد — ارفع صورةً واحدةً وستظهر هنا وفي كل حقل صورةٍ في اللوحة.</div>';
+      return;
+    }
+    g.innerHTML = '<div class="ml-grid">' + MEDIA.map(function (m) {
+      var u = mediaUrl(m);
+      return '<div class="ml-item">' +
+        '<div class="ml-thumb"><img src="' + esc(u) + '" alt="' + esc(m.alt || m.title || '') +
+          '" loading="lazy"></div>' +
+        '<div class="ml-name" title="' + esc(m.title || m.storage_path) + '">' +
+          esc(m.title || String(m.storage_path).split('/').pop()) + '</div>' +
+        '<div class="ml-meta">' + esc(kb(m.bytes)) + '</div>' +
+        '<div class="ml-acts">' +
+          '<button class="btn ghost sm" data-sc="mlcopy" data-u="' + esc(u) + '">نسخ الرابط</button>' +
+          '<button class="btn danger sm" data-sc="mldel" data-id="' + esc(String(m.id)) + '">حذف</button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  function mlMsg(text, kind) {
+    var el = $('#ml-msg');
+    if (!el) return;
+    el.style.color = kind === 'err' ? '#8c3d1c' : (kind === 'ok' ? '#0c6c6c' : '');
+    el.textContent = text;
+  }
+
+  /* رفعٌ متتابعٌ لا متزامن: عشرُ صورٍ متزامنةٍ تُخفق بعضها على اتصالٍ ضعيف */
+  function mediaUpload(files) {
+    var list = [].slice.call(files || []);
+    if (!list.length) return;
+    var done = 0, fail = 0;
+    function step() {
+      if (!list.length) {
+        mlMsg('رُفعت ' + done + ' صورة' + (fail ? ' · فشلت ' + fail : ''), fail ? 'err' : 'ok');
+        return loadMedia(null);
+      }
+      var f = list.shift();
+      mlMsg('جارٍ رفع ' + f.name + '… (' + (done + fail + 1) + '/' + (done + fail + 1 + list.length) + ')');
+      var stamp = Date.now().toString(36);
+      var path = 'lib/' + stamp + '/' + safeName(f.name);
+      fetch(CFG.url + '/storage/v1/object/' + encodeURI('iaq-media/' + path) + '?upsert=true', {
+        method: 'POST',
+        headers: {
+          apikey: CFG.key,
+          Authorization: 'Bearer ' + tok(),
+          'x-upsert': 'true',
+          'Content-Type': f.type || 'application/octet-stream'
+        },
+        body: f
+      }).then(function (r) {
+        if (!r.ok) {
+          if (r.status === 404) throw new Error('دلو iaq-media غير موجود — شغّل supabase/setup.sql');
+          throw new Error('تعذّر الرفع (' + r.status + ')');
+        }
+        /* السطر بعد الملفّ: لا نُسجّل صورةً لم تصل */
+        return api('media?select=id', {
+          method: 'POST',
+          body: JSON.stringify([{
+            bucket: 'iaq-media', storage_path: path, kind: 'image',
+            title: f.name, bytes: f.size, created_by: (S && S.email) || ''
+          }])
+        });
+      }).then(function () { done++; step(); })
+        .catch(function (e) { fail++; mlMsg(e.message, 'err'); step(); });
+    }
+    step();
+  }
+
+  function mediaDelete(id) {
+    var m = null;
+    MEDIA.forEach(function (x) { if (String(x.id) === String(id)) m = x; });
+    if (!m) return;
+    askPassword('حذف من المكتبة',
+      '<p>حذف <b>' + esc(m.title || m.storage_path) + '</b> من المكتبة؟</p>' +
+      '<p class="muted small">يُحذف سطرها من المكتبة ويبقى الملفّ في التخزين — ' +
+      'فالصفحات التي تستعمل رابطها لا تنكسر. ولن تظهر بعدها في منتقي الصور.</p>',
+      function () {
+        api('media?id=eq.' + Number(id) + '&select=id', { method: 'DELETE' })
+          .then(function () { close(); mlMsg('حُذفت من المكتبة.', 'ok'); return loadMedia(null); })
+          .catch(function (e) { close(); mlMsg(e.message, 'err'); });
+      });
+  }
+
+  /* ---------------- منتقي الصورة ----------------
+     يظهر في كل حقل صورة. يقرأ المكتبة إن لم تُقرأ بعد، فلا يفتح فارغًا. */
+  var pickTarget = null;
+  function openPicker(targetId) {
+    pickTarget = targetId;
+    function draw() {
+      modal('اختر صورةً من المكتبة',
+        MEDIA.length
+          ? '<div class="ml-grid is-pick">' + MEDIA.map(function (m) {
+              var u = mediaUrl(m);
+              return '<button type="button" class="ml-item is-btn" data-sc="mlpick" data-u="' + esc(u) + '">' +
+                '<div class="ml-thumb"><img src="' + esc(u) + '" alt="" loading="lazy"></div>' +
+                '<div class="ml-name">' + esc(m.title || String(m.storage_path).split('/').pop()) + '</div>' +
+                '</button>';
+            }).join('') + '</div>'
+          : '<p class="muted">لا صور في المكتبة بعد. افتح «مكتبة الوسائط» وارفع صورةً أوّلًا.</p>',
+        '<button class="btn ghost" data-sc="close">إلغاء</button>');
+    }
+    if (MEDIA.length) { draw(); return; }
+    modal('اختر صورةً من المكتبة', '<p class="muted">جارٍ قراءة المكتبة…</p>',
+      '<button class="btn ghost" data-sc="close">إلغاء</button>');
+    loadMedia(null).then(draw);
+  }
+  function applyPick(u) {
+    if (!pickTarget) { close(); return; }
+    var el = byId(pickTarget);
+    if (el) {
+      el.value = u;
+      /* المعاينة المجاورة تُحدَّث: حقلٌ يقول رابطًا وصورةٌ تُظهر غيره يُربك */
+      var box = el.parentNode;
+      var img = box ? box.querySelector('img') : null;
+      if (img) img.src = u;
+    }
+    pickTarget = null;
+    close();
+  }
+
   /* ======================== لوحة التحكّم ========================
      الترتيب مقصود: ما يستدعي عملًا أوّلًا (زوّار وطلبات وسرعة ردّ)، والجردُ
      أسفلَه. وكلُّ الأرقام من ثلاث قراءاتٍ لا أكثر. */
@@ -1479,6 +1665,21 @@ window.IAQ_SCREENS = (function () {
   }
   /* شريطُ ترشيحٍ من الفاعلين والأقسام الموجودين فعلًا في المدى المعروض */
   /* مستمعٌ مفوَّضٌ لعناصر الترشيح — يعمل بعد كل إعادة رسم */
+  /* حقل رفع المكتبة ليس داخل نافذةٍ منبثقة، فمستمعه على منطقة العرض */
+  var mlWired = false;
+  function wireMedia() {
+    if (mlWired) return;
+    mlWired = true;
+    var area = document.getElementById('viewArea') || document.body;
+    area.addEventListener('change', function (e) {
+      var el = e.target;
+      if (el && el.id === 'ml-up' && el.files && el.files.length) {
+        mediaUpload(el.files);
+        el.value = '';
+      }
+    });
+  }
+
   var wlWired = false;
   function wireWl() {
     if (wlWired) return;
@@ -1788,7 +1989,10 @@ window.IAQ_SCREENS = (function () {
         '<input type="text" id="' + id + '" value="' + esc(v == null ? '' : v) + '" ' +
         'placeholder="لا شعار مخصّص — يُستخدم المبنيّ" style="margin-block-end:8px">' +
         '<input type="file" id="' + id + '-f" accept="' + esc(r.accept || 'image/*') + '" ' +
-        'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">';
+        'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">' +
+        /* المكتبة تصير مصدرًا للصور لا معرضًا معزولًا */
+        '<button type="button" class="btn ghost sm" data-sc="mlopen" data-t="' + id +
+        '" style="margin-block-start:8px">من المكتبة</button>';
     } else if (r.t === 'color') {
       /* المنتقي والنصّ معًا: المنتقي للاختيار، والنصّ لمن عنده رمز الهوية.
          وقيمةُ الحفظ من النصّ لأنّ منتقي المتصفّح يرفض الفارغ ويُطبّع الحرف. */
@@ -3045,6 +3249,24 @@ window.IAQ_SCREENS = (function () {
     if (a === 'pwyes') { e.preventDefault(); runPasswordGate(); return; }
     if (a === 'undo') { e.preventDefault(); askUndo(id); return; }
     if (a === 'undoyes') { e.preventDefault(); doUndo(id); return; }
+    if (a === 'mlreload') { e.preventDefault(); mlMsg('جارٍ التحديث…'); loadMedia(null); return; }
+    if (a === 'mldel') { e.preventDefault(); mediaDelete(id); return; }
+    if (a === 'mlcopy') {
+      e.preventDefault();
+      var u0 = b.getAttribute('data-u') || '';
+      try {
+        if (navigator.clipboard) navigator.clipboard.writeText(u0);
+        else {
+          var ta = document.createElement('textarea');
+          ta.value = u0; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); ta.remove();
+        }
+        mlMsg('نُسخ الرابط.', 'ok');
+      } catch (e2) { mlMsg('تعذّر النسخ — انسخه يدويًّا: ' + u0, 'err'); }
+      return;
+    }
+    if (a === 'mlopen') { e.preventDefault(); openPicker(b.getAttribute('data-t') || ''); return; }
+    if (a === 'mlpick') { e.preventDefault(); applyPick(b.getAttribute('data-u') || ''); return; }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
     if (a === 'reload') {

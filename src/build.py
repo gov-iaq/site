@@ -913,7 +913,7 @@ PANEL_NAV = [
     ("i", "heroslides", "السلايدر الرئيسي",     "hero"),
     ("i", "newslist",   "الأخبار",              "news"),
     ("i", "docs",       "الوثائق والملفات",     "docs"),
-    ("i", "media",      "مكتبة الوسائط",        "media"),
+    ("i", "medialib",   "مكتبة الوسائط",        "media"),
 
     ("g", "الأشخاص والجهات"),
     ("i", "assembly",   "الجمعية العمومية",     "assembly"),
@@ -1063,7 +1063,7 @@ def build_panel(out_dir, cmap, amap):
     # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
     extra_views = ("".join(
         '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
-        for k in ("visits", "worklog", "footcfg", "blankpages", "syscfg")))
+        for k in ("visits", "worklog", "footcfg", "blankpages", "syscfg", "medialib")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
