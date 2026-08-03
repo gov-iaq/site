@@ -312,6 +312,14 @@ window.IAQ_SCREENS = (function () {
              'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
     },
     adminlist: {
+      settingsTitle: 'أعلام النظام',
+      settings: [
+        { key: 'lists_from_db', l: 'قاعدة البيانات هي مصدر القوائم', t: 'bool', def: false,
+          hint: 'مُطفأ: القائمة المبنيّة تبقى إن خلت القاعدة — وهو الأسلم. ' +
+                'مُشعَل: قائمةٌ فارغة في القاعدة تُفرّغ القائمة في الموقع، ' +
+                'فلا تُشعله إلّا بعد التأكّد من اكتمال البيانات. ' +
+                'علَمٌ تقنيّ — الأصلُ إبقاؤه كما هو إلّا لسببٍ تعرفه.' }
+      ],
       nav: 'المستخدمون والأدوار', h1: 'المستخدمون والأدوار',
       sub: 'من يدخل اللوحة وماذا يستطيع. الإضافة والحذف للمالك وحده.',
       table: 'admins', filter: '', fixed: {}, nosort: 1, selectAll: 1, audit: 0,
@@ -337,30 +345,6 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
-    medialib: {
-      nav: 'مكتبة الوسائط', h1: 'مكتبة الوسائط',
-      sub: 'الصور المرفوعة إلى تخزين الموقع — تُستعمل في الشعار والخلفيات من زرّ «من المكتبة».',
-      kind: 'media',
-      reach: 'الصور تُرفع إلى تخزين الموقع وتبقى. وتظهر في كل حقل صورةٍ في اللوحة ' +
-             'بزرّ «من المكتبة» — الشعار وخلفية الشريط العلويّ وخلفية التذييل وخلفية ' +
-             'السلايدر وخلفية كل شريحة. وحذفُ صورةٍ يحذف سطرها من المكتبة ويُبقي ' +
-             'الملفّ في التخزين، فالصفحات التي تستعملها لا تنكسر.'
-    },
-
-    syscfg: {
-      nav: 'إعدادات النظام', h1: 'إعدادات النظام',
-      sub: 'أعلامُ تشغيلٍ تمسّ سلوك الموقع لا مظهره.',
-      kind: 'settings',
-      reach: 'تسري على كل الصفحات عند أوّل تحميل. وهذه أعلامٌ تقنيّة — الأصلُ ' +
-             'إبقاؤها كما هي إلّا لسببٍ تعرفه.',
-      rows: [
-        { key: 'lists_from_db', l: 'قاعدة البيانات هي مصدر القوائم', t: 'bool', def: false,
-          hint: 'مُطفأ: القائمة المبنيّة تبقى إن خلت القاعدة — وهو الأسلم. ' +
-                'مُشعَل: قائمةٌ فارغة في القاعدة تُفرّغ القائمة في الموقع، ' +
-                'فلا تُشعله إلّا بعد التأكّد من اكتمال البيانات.' }
-      ]
-    },
-
     blankpages: {
       nav: 'الصفحات الجاهزة', h1: 'الصفحات الجاهزة الفارغة',
       sub: 'عشر صفحاتٍ مبنيّةٍ سلفًا وفارغة — املأ ما تحتاجه منها ثم أضفه إلى القائمة.',
@@ -813,7 +797,6 @@ window.IAQ_SCREENS = (function () {
     if (sc.kind === 'dash') return dashView(sc, myKey);
     if (sc.kind === 'visits') return visitsView(sc, myKey);
     if (sc.kind === 'worklog') return worklogView(sc, myKey);
-    if (sc.kind === 'media') return mediaView(sc, myKey);
     setTimeout(function () { load().then(function () { if (alive(myKey)) paint(); }); }, 0);
     /* كتلة الإعدادات — إن كان للشاشة كتلةٌ — تُقرأ وتُرسم مستقلّةً عن الجدول،
        فلا تُسقط قراءةٌ فاشلةٌ منهما الأخرى. */
@@ -1233,23 +1216,6 @@ window.IAQ_SCREENS = (function () {
     return (Math.round(b / 104857.6) / 10) + ' MB';
   }
 
-  function mediaView(sc, myKey) {
-    wireMedia();
-    setTimeout(function () { loadMedia(myKey); }, 0);
-    return head(sc) +
-      '<div id="sc-err"></div>' +
-      '<div class="iaq-card" style="margin-block-end:14px">' +
-        '<div class="addrow" style="flex-wrap:wrap">' +
-          '<label class="btn" style="cursor:pointer;margin:0">' + ico('up') + ' رفع صور' +
-            '<input type="file" id="ml-up" accept="image/*" multiple hidden>' +
-          '</label>' +
-          '<button class="btn ghost" data-sc="mlreload">' + ico('down') + ' تحديث</button>' +
-        '</div>' +
-        '<div id="ml-msg" class="muted small" style="margin-block-start:10px"></div>' +
-      '</div>' +
-      '<div class="iaq-card"><div id="ml-grid" class="muted">جارٍ القراءة…</div>' +
-        '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p></div>';
-  }
 
   function loadMedia(myKey) {
     return api('media?select=*&order=created_at.desc&limit=300')
@@ -1265,27 +1231,32 @@ window.IAQ_SCREENS = (function () {
       });
   }
 
-  function paintMedia() {
-    var g = $('#ml-grid');
-    if (!g) return;
+  /* الشبكة داخل النافذة: كلُّ بطاقةٍ زرُّ اختيارٍ ومعها حذف */
+  function mediaGrid() {
     if (!MEDIA.length) {
-      g.innerHTML = '<div class="muted" style="padding:26px;text-align:center">' +
-        'لا صور بعد — ارفع صورةً واحدةً وستظهر هنا وفي كل حقل صورةٍ في اللوحة.</div>';
-      return;
+      return '<div class="muted" style="padding:26px;text-align:center">' +
+        'لا صور بعد — ارفع صورةً من الزرّ أعلاه وستظهر هنا.</div>';
     }
-    g.innerHTML = '<div class="ml-grid">' + MEDIA.map(function (m) {
+    return '<div class="ml-grid is-pick">' + MEDIA.map(function (m) {
       var u = mediaUrl(m);
       return '<div class="ml-item">' +
-        '<div class="ml-thumb"><img src="' + esc(u) + '" alt="' + esc(m.alt || m.title || '') +
-          '" loading="lazy"></div>' +
-        '<div class="ml-name" title="' + esc(m.title || m.storage_path) + '">' +
-          esc(m.title || String(m.storage_path).split('/').pop()) + '</div>' +
-        '<div class="ml-meta">' + esc(kb(m.bytes)) + '</div>' +
+        '<button type="button" class="ml-hit" data-sc="mlpick" data-u="' + esc(u) + '" ' +
+          'title="اختيار هذه الصورة">' +
+          '<div class="ml-thumb"><img src="' + esc(u) + '" alt="' + esc(m.alt || m.title || '') +
+            '" loading="lazy"></div>' +
+          '<div class="ml-name">' + esc(m.title || String(m.storage_path).split('/').pop()) + '</div>' +
+          '<div class="ml-meta">' + esc(kb(m.bytes)) + '</div>' +
+        '</button>' +
         '<div class="ml-acts">' +
-          '<button class="btn ghost sm" data-sc="mlcopy" data-u="' + esc(u) + '">نسخ الرابط</button>' +
+          '<button class="btn ghost sm" data-sc="mlcopy" data-u="' + esc(u) + '">نسخ</button>' +
           '<button class="btn danger sm" data-sc="mldel" data-id="' + esc(String(m.id)) + '">حذف</button>' +
         '</div></div>';
     }).join('') + '</div>';
+  }
+
+  function paintMedia() {
+    var g = $('#ml-grid');
+    if (g) g.innerHTML = mediaGrid();
   }
 
   function mlMsg(text, kind) {
@@ -1303,7 +1274,10 @@ window.IAQ_SCREENS = (function () {
     function step() {
       if (!list.length) {
         mlMsg('رُفعت ' + done + ' صورة' + (fail ? ' · فشلت ' + fail : ''), fail ? 'err' : 'ok');
-        return loadMedia(null);
+        return loadMedia(null).then(function () {
+          /* الرسالة تُعاد بعد إعادة رسم الشبكة، وإلّا مُحيت قبل أن تُقرأ */
+          mlMsg('رُفعت ' + done + ' صورة' + (fail ? ' · فشلت ' + fail : ''), fail ? 'err' : 'ok');
+        });
       }
       var f = list.shift();
       mlMsg('جارٍ رفع ' + f.name + '… (' + (done + fail + 1) + '/' + (done + fail + 1 + list.length) + ')');
@@ -1347,7 +1321,13 @@ window.IAQ_SCREENS = (function () {
       'فالصفحات التي تستعمل رابطها لا تنكسر. ولن تظهر بعدها في منتقي الصور.</p>',
       function () {
         api('media?id=eq.' + Number(id) + '&select=id', { method: 'DELETE' })
-          .then(function () { close(); mlMsg('حُذفت من المكتبة.', 'ok'); return loadMedia(null); })
+          .then(function () {
+            /* نافذةُ كلمة المرور استبدلت نافذةَ المكتبة، فنُعيد فتحها بعد الحذف */
+            return loadMedia(null).then(function () {
+              openPicker(null);
+              mlMsg('حُذفت من المكتبة.', 'ok');
+            });
+          })
           .catch(function (e) { close(); mlMsg(e.message, 'err'); });
       });
   }
@@ -1355,24 +1335,33 @@ window.IAQ_SCREENS = (function () {
   /* ---------------- منتقي الصورة ----------------
      يظهر في كل حقل صورة. يقرأ المكتبة إن لم تُقرأ بعد، فلا يفتح فارغًا. */
   var pickTarget = null;
+
+  /* المكتبة نافذةٌ لا شاشة: تُفتح من أي حقل صورة، وفيها الشبكةُ والرفعُ والحذف.
+     فتُدار الصور حيث تُستعمل، ولا تبقى شاشةٌ فارغةٌ في القائمة. */
+  function pickerBody() {
+    return '<div class="addrow" style="flex-wrap:wrap;margin-block-end:12px">' +
+        '<label class="btn" style="cursor:pointer;margin:0">' + ico('up') + ' رفع صور' +
+          '<input type="file" id="ml-up" accept="image/*" multiple hidden>' +
+        '</label>' +
+        '<button class="btn ghost" data-sc="mlreload">' + ico('down') + ' تحديث</button>' +
+      '</div>' +
+      '<div id="ml-msg" class="muted small" style="margin-block-end:10px"></div>' +
+      '<div id="ml-grid">' + mediaGrid() + '</div>' +
+      '<p class="muted small" style="margin-block-start:10px">' +
+      'الصور تُرفع إلى تخزين الموقع وتبقى. والحذف يُزيلها من المكتبة ويُبقي الملفّ، ' +
+      'فالصفحات التي تستعملها لا تنكسر.</p>';
+  }
+
   function openPicker(targetId) {
-    pickTarget = targetId;
+    if (targetId) pickTarget = targetId;
+    wireMedia();
     function draw() {
-      modal('اختر صورةً من المكتبة',
-        MEDIA.length
-          ? '<div class="ml-grid is-pick">' + MEDIA.map(function (m) {
-              var u = mediaUrl(m);
-              return '<button type="button" class="ml-item is-btn" data-sc="mlpick" data-u="' + esc(u) + '">' +
-                '<div class="ml-thumb"><img src="' + esc(u) + '" alt="" loading="lazy"></div>' +
-                '<div class="ml-name">' + esc(m.title || String(m.storage_path).split('/').pop()) + '</div>' +
-                '</button>';
-            }).join('') + '</div>'
-          : '<p class="muted">لا صور في المكتبة بعد. افتح «مكتبة الوسائط» وارفع صورةً أوّلًا.</p>',
-        '<button class="btn ghost" data-sc="close">إلغاء</button>');
+      modal('مكتبة الصور', pickerBody(),
+        '<button class="btn ghost" data-sc="close">إغلاق</button>');
     }
     if (MEDIA.length) { draw(); return; }
-    modal('اختر صورةً من المكتبة', '<p class="muted">جارٍ قراءة المكتبة…</p>',
-      '<button class="btn ghost" data-sc="close">إلغاء</button>');
+    modal('مكتبة الصور', '<p class="muted">جارٍ قراءة المكتبة…</p>',
+      '<button class="btn ghost" data-sc="close">إغلاق</button>');
     loadMedia(null).then(draw);
   }
   function applyPick(u) {
@@ -1733,13 +1722,13 @@ window.IAQ_SCREENS = (function () {
   }
   /* شريطُ ترشيحٍ من الفاعلين والأقسام الموجودين فعلًا في المدى المعروض */
   /* مستمعٌ مفوَّضٌ لعناصر الترشيح — يعمل بعد كل إعادة رسم */
-  /* حقل رفع المكتبة ليس داخل نافذةٍ منبثقة، فمستمعه على منطقة العرض */
+  /* المستمعُ على document لا على منطقة العرض: النافذة تُلحَق بجسم الصفحة
+     **خارج** منطقة العرض، فمستمعٌ عليها لا يرى حدث الاختيار أصلًا. */
   var mlWired = false;
   function wireMedia() {
     if (mlWired) return;
     mlWired = true;
-    var area = document.getElementById('viewArea') || document.body;
-    area.addEventListener('change', function (e) {
+    document.addEventListener('change', function (e) {
       var el = e.target;
       if (el && el.id === 'ml-up' && el.files && el.files.length) {
         mediaUpload(el.files);
@@ -2061,7 +2050,7 @@ window.IAQ_SCREENS = (function () {
         'style="width:100%;font:inherit;padding:9px;border:1px dashed var(--line);border-radius:10px">' +
         /* المكتبة تصير مصدرًا للصور لا معرضًا معزولًا */
         '<button type="button" class="btn ghost sm" data-sc="mlopen" data-t="' + id +
-        '" style="margin-block-start:8px">من المكتبة</button>';
+        '" style="margin-block-start:8px">' + ico('img') + ' مكتبة الصور — اختر أو ارفع</button>';
     } else if (r.t === 'color') {
       /* المنتقي والنصّ معًا: المنتقي للاختيار، والنصّ لمن عنده رمز الهوية.
          وقيمةُ الحفظ من النصّ لأنّ منتقي المتصفّح يرفض الفارغ ويُطبّع الحرف. */
@@ -2580,7 +2569,11 @@ window.IAQ_SCREENS = (function () {
       h += '<textarea id="' + id + '" rows="' + (f.t === 'area' ? 3 : 7) +
         '" style="width:100%;font:inherit;line-height:1.9;resize:vertical">' + esc(txt) + '</textarea>';
     } else {
-      h += '<input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '">';
+      h += '<input type="text" id="' + id + '" value="' + esc(val == null ? '' : val) + '">' +
+        /* حقلٌ يملؤه الرفع (viaFile) وصورةٌ: يستحقّ منتقي المكتبة نفسه */
+        (f.viaFile && /image|img|bg/.test(String(f.k))
+          ? '<button type="button" class="btn ghost sm" data-sc="mlopen" data-t="' + id +
+            '" style="margin-block-start:8px">مكتبة الصور — اختر أو ارفع</button>' : '');
     }
     if (f.hint) h += '<div class="muted small" style="margin-block-start:4px">' + esc(f.hint) + '</div>';
     return h + '</div>';

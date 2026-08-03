@@ -38,7 +38,9 @@ a{text-decoration:none;color:inherit}
   padding:10px;display:flex;flex-direction:column;gap:6px;text-align:start;
   transition:border-color .2s,box-shadow .2s}
 .ml-item:hover{border-color:var(--t);box-shadow:0 8px 20px -12px rgba(6,63,54,.4)}
-.ml-item.is-btn{cursor:pointer;font:inherit;color:inherit;width:100%}
+.ml-hit{display:block;width:100%;background:none;border:0;padding:0;font:inherit;
+  color:inherit;text-align:start;cursor:pointer}
+.ml-hit:focus-visible{outline:2px solid var(--t);outline-offset:2px;border-radius:9px}
 .ml-thumb{aspect-ratio:4/3;background:var(--surface-2);border-radius:9px;overflow:hidden;
   display:flex;align-items:center;justify-content:center}
 .ml-thumb img{max-width:100%;max-height:100%;object-fit:contain}
