@@ -3258,9 +3258,18 @@ var IAQ_PATH = (function () {
     function valid(){var ok=true;$$('[required]',form).forEach(function(f){var fld=f.closest('.field')||f.closest('.survey-q');var bad=false;var v=(f.value||'').trim();if(f.type==='checkbox')bad=!f.checked;else if(f.type==='radio')bad=!form.querySelector('input[name="'+f.name+'"]:checked');else if(f.type==='email')bad=!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);else bad=!v;if(fld)fld.classList.toggle('err',bad);if(bad)ok=false;});return ok;}
     /* ===== إرسال حقيقي إلى قاعدة البيانات =====
        لا تُعرض رسالة النجاح إلا بعد تأكيد الخدمة استلام الطلب. */
+    /* مفتاحُ الحقل في الطلب المحفوظ = نصُّ تسميته. فتُنزع منها العلاماتُ
+       المساعدة: نجمةُ «مطلوب» و«(اختياري)» — وإلّا صار المفتاحُ في صندوق
+       الوارد «رقم الهوية الوطنية (اختياري)»، ولاختلفت مفاتيحُ الطلبات
+       القديمة عن الجديدة لمجرّد تغييرِ تسميةٍ في الواجهة. */
     function labelOf(f){
       var fld=f.closest('.field'); var l=fld?$('label',fld):null;
-      var txt=l?l.textContent.replace('*','').trim():'';
+      var txt='';
+      if(l){
+        var c=l.cloneNode(true);
+        $$('.req,.opt',c).forEach(function(x){x.parentNode.removeChild(x);});
+        txt=c.textContent.replace('*','').replace(/\s+/g,' ').trim();
+      }
       return txt||f.getAttribute('name')||f.id||'حقل';
     }
     function payloadOf(){
