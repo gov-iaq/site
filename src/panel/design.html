@@ -864,6 +864,15 @@ function renderSidebar(){$('#sidebarNav').innerHTML=NAV.map(function(n){if(n.gro
 /* حرزُ ما لم يُحفظ قبل أيّ انتقال — من القائمة أو من زرٍّ داخليّ. الحرزُ
    مشتركٌ مع شاشات screens.js فلا يفترق سلوكُ اللوحة بين نصفَيها. */
 function curLabel(){for(var i=0;i<NAV.length;i++){if(NAV[i]&&NAV[i].k===current)return NAV[i].label;}return 'الشاشة الحالية';}
+/* «موافق» على التحذير يُلغي التعديلَ فعلًا: كائنُ اللوحة يُعدَّل في الذاكرة مع
+   كل حرف، فرفعُ الحرز وحده يُبقيه فينشره أوّلُ حفظٍ لاحقٍ لأيّ شاشة. نُعيد
+   الحالةَ إلى آخر ما نُشر (يضبطه الجسر عند الإقلاع وبعد كل حفظٍ ناجح). */
+if(window.IAQ_DIRTY){window.IAQ_DIRTY.onDiscard=function(){
+ var last=window.IAQ_CFG_LAST&&window.IAQ_CFG_LAST();
+ if(!last)return;
+ for(var k in config)if(config.hasOwnProperty(k)&&!last.hasOwnProperty(k))delete config[k];
+ for(var k2 in last)if(last.hasOwnProperty(k2))config[k2]=last[k2];
+};}
 function switchView(k){if(k!==current&&window.IAQ_DIRTY&&!window.IAQ_DIRTY.ok())return;current=k;renderSidebar();$('#viewArea').innerHTML=views[k]();afterRender(k);window.scrollTo(0,0);closeDrawer();}
 /* إغلاقُ التبويب أو تحديثُه: المتصفّح يسأل بنفسه إن كان هناك ما يُفقَد */
 window.addEventListener('beforeunload',function(e){if(window.IAQ_DIRTY&&window.IAQ_DIRTY.has()){e.preventDefault();e.returnValue='';return '';}});
@@ -905,9 +914,12 @@ document.addEventListener('click',function(e){
  switch(act){
   /* الزرّ ينتظر النتيجةَ الحقيقية: كان يُصدر «تم حفظ التغييرات» فورًا، أي قبل
      أن تبدأ الكتابةُ (مُهلة ٧٠٠ مللي) وقبل معرفةِ نجاحها. */
+  /* ok === true نجاحٌ مؤكّد · false فشل · null لم تبدأ الكتابة بعد (حفظٌ جارٍ
+     سلفًا) — والثالثةُ كانت تُقرأ نجاحًا فتُصدر «حُفظ ونُشر» وترفع الحرز. */
   case 'save': {var sb=a;sb.disabled=true;var was=sb.textContent;sb.textContent='جارٍ الحفظ…';
    Promise.resolve(save(true)).then(function(ok){sb.disabled=false;sb.textContent=was;
     if(ok===false){toast('لم يُحفظ — التفصيل في شريط الأسفل');return;}
+    if(ok===null||ok===undefined){toast('حفظٌ جارٍ — انظر شريط الأسفل');return;}
     if(window.IAQ_DIRTY)window.IAQ_DIRTY.clear();toast('حُفظ ونُشر');});break;}
   case 'toggle': setP(config,path,!getP(config,path));if(window.IAQ_DIRTY)window.IAQ_DIRTY.mark(curLabel());rerender();break;
   case 'up': case 'down': {var arr=getP(config,path);var j=act==='up'?i-1:i+1;if(j<0||j>=arr.length)break;var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;if(window.IAQ_DIRTY)window.IAQ_DIRTY.mark(curLabel());rerender();break;}

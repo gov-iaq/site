@@ -148,7 +148,7 @@ window.IAQ_SCREENS = (function () {
         { key: 'board_term.end_h', dyn: 'boardTerm.end_h', compLabel: 'دورة مجلس الإدارة', l: 'نهاية الدورة — هجريّ', t: 'text', half: 1,
           hint: 'منها يُحسب تنبيهُ انتهاء الدورة في لوحة التحكّم' },
         { key: 'board_term.end_g', dyn: 'boardTerm.end_g', compLabel: 'دورة مجلس الإدارة', l: 'نهاية الدورة — ميلاديّ', t: 'text', half: 1,
-          hint: 'بالنمط سنة/شهر/يومم — مثل 2030/1/24م' },
+          hint: 'بالنمط سنة/شهر/يوم — مثل 2030/1/24م' },
         { key: 'board_term.note', dyn: 'boardTerm.note', compLabel: 'دورة مجلس الإدارة', l: 'العبارة التمهيدية', t: 'text',
           hint: 'مثل: أعضاء مجلس الإدارة المعتمدون' }
       ],
@@ -577,7 +577,17 @@ window.IAQ_SCREENS = (function () {
       nameKey: 'title', searchKeys: ['title', 'storage_path'],
       reach: 'التعديل والحذف والإضافة تسري على تبويبات الملفات في صفحة «الحوكمة والإفصاح» وصفحة «قياس الرضا» عند أوّل تحميل، بلا إعادة بناء. ومعرض التراخيص مبنيّ ثابتًا (يحتاج صور الشهادات وجدول بياناتها) فلا تصله هذه الشاشة.',
       fields: [
-        { k: 'category', l: 'التصنيف', t: 'select', o: DOCCAT_PICK, def: 'policies',
+        /* الخياراتُ تُحسب لكلّ سجلّ: لو كان تصنيفُه غيرَ معروضٍ (مثل «تراخيص»
+           المرفوعِ من الخيارات) أُضيف مؤقّتًا كي لا يُعاد تصنيفُه صامتًا عند
+           أوّل حفظ — فالمنسدلةُ بلا قيمةِ الصفّ تُطبّق أوّلَ خيارٍ فيها. */
+        { k: 'category', l: 'التصنيف', t: 'select', oFn: function (row) {
+            var v = row && row.category;
+            if (!v || DOCCAT_PICK.hasOwnProperty(v)) return DOCCAT_PICK;
+            var o = { };
+            o[v] = (DOCCAT[v] || v) + ' — تصنيفٌ قديم لا يظهر في الموقع';
+            for (var k in DOCCAT_PICK) if (DOCCAT_PICK.hasOwnProperty(k)) o[k] = DOCCAT_PICK[k];
+            return o;
+          }, def: 'policies',
           hint: 'يحدّد التبويب الذي يظهر فيه الملف في الموقع' },
         { k: 'title', l: 'عنوان الوثيقة', t: 'text', req: 1 },
         { k: 'file', l: 'ملف PDF جديد (اختياري)', t: 'file',
@@ -661,15 +671,24 @@ window.IAQ_SCREENS = (function () {
     mark: function (what) { DIRTY = what || DIRTY || 'الشاشة الحالية'; },
     clear: function () { DIRTY = null; },
     has: function () { return !!DIRTY; },
+    /* من يملك تعديلًا في الذاكرة يُسجّل هنا كيف يتخلّى عنه. بلا هذا كان
+       «موافق» يرفع الحرزَ ولا يُلغي التعديل: يبقى في كائن اللوحة ويُنشره
+       أوّلُ حفظٍ لاحقٍ لأيّ شاشة — أي أنّ التحذير كان يكذب في نصفه الثاني. */
+    onDiscard: null,
     /* true = تابعْ (ويُرفع الحرزُ فلا يُسأل مرّتين)، false = ابقَ حيث أنت */
     ok: function () {
       if (!DIRTY) return true;
       var yes = window.confirm(
         'في «' + DIRTY + '» تعديلٌ لم يُحفظ.\n\n' +
-        'المتابعةُ تفقده — وما لم يُحفظ لا يُسجَّل ولا يُتراجَع عنه.\n' +
-        'اختر «إلغاء» ثمّ اضغط زرَّ الحفظ، أو «موافق» للمتابعة وفقدِه.');
-      if (yes) DIRTY = null;
-      return yes;
+        'المتابعةُ تُلغيه ويعود ما كان منشورًا — وما لم يُحفظ لا يُسجَّل ولا ' +
+        'يُتراجَع عنه.\n' +
+        'اختر «إلغاء» ثمّ اضغط زرَّ الحفظ، أو «موافق» للمتابعة وإلغائه.');
+      if (!yes) return false;
+      DIRTY = null;
+      if (typeof this.onDiscard === 'function') {
+        try { this.onDiscard(); } catch (e) { }
+      }
+      return true;
     }
   };
   /* التعديلُ يُرصد من الحقل نفسه: شاشةُ إعداداتٍ (#sc-form) أو نموذجٌ في
@@ -749,7 +768,10 @@ window.IAQ_SCREENS = (function () {
     img: '<path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4 4 3 3-2 4 3"/>',
     arrow: '<path d="M14 6l-6 6 6 6"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
-    alert: '<path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4M12 17h.01"/>'
+    alert: '<path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4M12 17h.01"/>',
+    /* سطرُ «وثيقة مسودّة» يطلبها، وبلاها تُرسَم <svg> فارغة */
+    docs: '<path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/>' +
+          '<path d="M14 3v4h4M9 12h6M9 16h4"/>'
   };
   function ico(k) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
@@ -964,6 +986,10 @@ window.IAQ_SCREENS = (function () {
         var pick = document.getElementById('sc-s-theme.' + k + '-p');
         if (pick && /^#[0-9a-fA-F]{6}$/.test(String(p[k]))) pick.value = String(p[k]);
       });
+      /* الملءُ برمجيٌّ فلا يُطلق input: نُعلم الحرزَ صراحةً، وإلّا ضاع نمطٌ
+         مُطبَّقٌ بنقرةٍ في القائمة بلا سؤال. */
+      var scP = S0();
+      window.IAQ_DIRTY.mark(scP && scP.h1 ? scP.h1 : null);
       var m = $('#sc-setmsg');
       if (m) { m.style.color = ''; m.textContent = 'مُلئت الحقول من نمط «' + p.l + '» — اضغط «حفظ الإعدادات» لتطبيقه.'; }
     });
@@ -1081,15 +1107,22 @@ window.IAQ_SCREENS = (function () {
   function healthNotice(h) {
     if (!h) return '';
     var msgs = [];
+    var DAY_F = ['يومٌ واحد', 'يومان', 'أيامٍ', 'يومًا', 'يوم'];
+    var ROW_F = ['سطرٌ واحد', 'سطران', 'أسطرٍ', 'سطرًا', 'سطر'];
     if (Number(h.capped_days) > 0) {
-      msgs.push('<b>' + Number(h.capped_days) + ' يومًا بلغ سقفَ التسجيل (' +
-        Number(h.cap) + ' سطرًا لليوم).</b> أرقامُ تلك الأيام حدٌّ لا قياس: ' +
-        'الحقيقةُ عندها أو أكثر، وقد يكون بعضُها تضخيمًا مقصودًا.');
+      /* المنظرُ يحسب على العمر كلّه لا على المدى المختار: نقولها صريحةً بدل
+         أن يُفهم أنّ العدَّ داخل الفترة المعروضة. */
+      msgs.push('<b>' + arNum(h.capped_days, DAY_F) + ' بلغ سقفَ التسجيل (' +
+        arNum(h.cap, ROW_F) + ' لليوم)' +
+        (h.last_capped_day ? '، آخرها ' + esc(String(h.last_capped_day)) : '') +
+        '.</b> ذلك محسوبٌ على كامل عمر التسجيل لا على المدى المعروض. وأرقامُ ' +
+        'تلك الأيام حدٌّ لا قياس: الحقيقةُ عندها أو أكثر، وقد يكون بعضُها ' +
+        'تضخيمًا مقصودًا.');
     }
     if (Number(h.future_rows) > 0) {
-      msgs.push('<b>' + Number(h.future_rows) + ' سطرًا بتاريخٍ في المستقبل.</b> ' +
+      msgs.push('<b>' + arNum(h.future_rows, ROW_F) + ' بتاريخٍ في المستقبل.</b> ' +
         'أُدرجت قبل ترقية v11 حين كان تلفيقُ التاريخ ممكنًا — احذفها من ' +
-        'قاعدة البيانات كي لا تُسمّم المقارنات.');
+        'قاعدة البيانات كي لا تُسمّم المقارنات (الأمرُ في الصيانة.md).');
     }
     if (!msgs.length) return '';
     return '<div class="notice" style="background:#fdf1ec;border-color:#f0cdbc;color:#8c3d1c;' +
@@ -1110,16 +1143,20 @@ window.IAQ_SCREENS = (function () {
     n = Math.abs(Math.round(n));
     if (n === 1) return f[0];
     if (n === 2) return f[1];
+    /* القاعدة: ٣–١٠ جمعُ قلّةٍ مجرورٌ، و١١–٩٩ مفردٌ منصوب، والمئةُ وما فوقها
+       مفردٌ مجرورٌ بلا تنوين («100 يوم» لا «100 يومًا»). وصفرٌ كالمئة:
+       «0 يوم». وf[4] اختيارية فتعمل النداءاتُ التي لا تُمرّرها كما كانت. */
+    if (n === 0 || n >= 100) return n + ' ' + (f[4] || f[3]);
     return n + ' ' + (n <= 10 ? f[2] : f[3]);
   }
   function daysLabel(n) {
-    return arNum(n, ['يومٍ واحد', 'يومين', 'أيام', 'يومًا']);
+    return arNum(n, ['يومٍ واحد', 'يومين', 'أيام', 'يومًا', 'يوم']);
   }
   function spanLabel(days) {
     days = Math.abs(Math.round(days));
     if (days < 60) return daysLabel(days);
-    if (days < 365) return arNum(Math.round(days / 30), ['شهرٍ واحد', 'شهرين', 'أشهر', 'شهرًا']);
-    return arNum(Math.round(days / 365), ['سنةٍ واحدة', 'سنتين', 'سنوات', 'سنة']);
+    if (days < 365) return arNum(Math.round(days / 30), ['شهرٍ واحد', 'شهرين', 'أشهر', 'شهرًا', 'شهر']);
+    return arNum(Math.round(days / 365), ['سنةٍ واحدة', 'سنتين', 'سنوات', 'سنة', 'سنة']);
   }
   /* تاريخٌ ميلاديٌّ كما يكتبه المدير إلى Date. يتحمّل «2026/1/24م» و
      «24/01/2026م»: الجزءُ ذو الأربع خاناتٍ هو السنة، ويُقرَّر الباقي بموضعه. */
@@ -1132,7 +1169,11 @@ window.IAQ_SCREENS = (function () {
     else return null;
     if (!(y > 1900 && y < 2200 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
     var dt = new Date(y, mo - 1, d);
-    return isFinite(dt.getTime()) ? dt : null;
+    if (!isFinite(dt.getTime())) return null;
+    /* Date يتدحرج: 2026/2/31 تصير 2026/3/3 بلا شكوى — فتاريخٌ لا وجودَ له
+       يُقرأ صحيحًا ويُحسب منه تنبيهُ الدورة. نرفضه بمقابلة ما بُني بما أُدخل. */
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    return dt;
   }
   /* data-nav يعالجه مستمعُ ملفّ التصميم نفسه الذي يعالج القائمة الجانبية،
      فلا نحتاج مسارَ انتقالٍ ثانيًا يفترق عنه. */
@@ -1148,7 +1189,18 @@ window.IAQ_SCREENS = (function () {
   function termNow(term) {
     var end = gDate(term && term.end_g);
     if (!end) return null;
-    var days = Math.round((end.getTime() - Date.now()) / 86400000);
+    /* بالتقويم لا بقسمة المللي: قسمةُ الفرق على 86400000 مع Math.round تجعل
+       يومَ الانتهاء نفسَه يُقرأ «بعد 0 أيام» صباحًا و«انتهت قبل يومٍ» مساءً،
+       ويُخطئ يومًا كاملًا عند تغيّر التوقيت. فنقارن منتصفَ ليلِ اليومين. */
+    var t0 = new Date();
+    t0.setHours(0, 0, 0, 0);
+    var e0 = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    var days = Math.round((e0.getTime() - t0.getTime()) / 86400000);
+    if (days === 0) {
+      return { urgent: 1, icon: 'alert', view: 'board',
+               txt: 'دورةُ مجلس الإدارة تنتهي اليوم',
+               sub: 'حدِّث تاريخَ الدورة من هذه الشاشة بعد اعتماد التجديد' };
+    }
     if (days < 0) {
       return { urgent: 1, icon: 'alert', view: 'board',
                txt: 'دورةُ مجلس الإدارة انتهت قبل ' + spanLabel(-days),
@@ -1169,11 +1221,14 @@ window.IAQ_SCREENS = (function () {
                  sub: subsErr });
     } else if (open) {
       out.push({ urgent: !!late, icon: 'inbox2', view: 'subslist',
+                 /* ١١+ معدودُه مفردٌ منصوب فالفعلُ يُفرَد: «11 طلبًا لم يُفتح».
+                    و٣–١٠ جمعٌ فيُجمَع الفعل: «5 طلباتٍ لم تُفتح». */
                  txt: arNum(open, ['طلبٌ واحدٌ لم يُفتح بعد', 'طلبان لم يُفتحا بعد',
-                                   'طلباتٍ لم تُفتح بعد', 'طلبًا لم تُفتح بعد']),
+                                   'طلباتٍ لم تُفتح بعد', 'طلبًا لم يُفتح بعد',
+                                   'طلبٍ لم يُفتح بعد']),
                  sub: (open === 1 ? 'وصل قبل ' : 'أقدمها وصل قبل ') + ageLabel(oldest) +
-                      (late ? ' · ' + arNum(late, ['واحدٌ منها', 'اثنان منها',
-                                                   'منها', 'منها']) +
+                      (late ? ' · ' + (late === open ? 'كلُّها' : arNum(late,
+                                ['واحدٌ منها', 'اثنان منها', 'منها', 'منها', 'منها'])) +
                               ' فوق ثلاثة أيام' : '') });
     }
     var t = termNow(term);
@@ -1186,8 +1241,8 @@ window.IAQ_SCREENS = (function () {
   function ageLabel(ms) {
     if (ms == null) return '—';
     var h = ms / 3600000;
-    if (h < 1) return arNum(h * 60, ['دقيقةٍ واحدة', 'دقيقتين', 'دقائق', 'دقيقة']);
-    if (h < 48) return arNum(h, ['ساعةٍ واحدة', 'ساعتين', 'ساعات', 'ساعة']);
+    if (h < 1) return arNum(h * 60, ['دقيقةٍ واحدة', 'دقيقتين', 'دقائق', 'دقيقة', 'دقيقة']);
+    if (h < 48) return arNum(h, ['ساعةٍ واحدة', 'ساعتين', 'ساعات', 'ساعة', 'ساعة']);
     return daysLabel(h / 24);
   }
   /* سلسلة يوميّة كاملة — الأيام الخالية أصفار كي لا يكذب الرسم */
@@ -1525,13 +1580,14 @@ window.IAQ_SCREENS = (function () {
       function () {
         api('media?id=eq.' + Number(id) + '&select=id', { method: 'DELETE' })
           .then(function () {
-            /* نافذةُ كلمة المرور استبدلت نافذةَ المكتبة، فنُعيد فتحها بعد الحذف */
+            /* نافذةُ كلمة المرور استبدلت نافذةَ المكتبة، فنُعيد فتحها بعد
+               الحذف — وopenPicker يعرف بنفسه أيَّ طبقةٍ يفتح فيها. */
             return loadMedia(null).then(function () {
               openPicker(null);
               mlMsg('حُذفت من المكتبة.', 'ok');
             });
           })
-          .catch(function (e) { close(); mlMsg(e.message, 'err'); });
+          .catch(function (e) { closeTop(); mlMsg(e.message, 'err'); });
       });
   }
 
@@ -1561,17 +1617,22 @@ window.IAQ_SCREENS = (function () {
   function openPicker(targetId) {
     if (targetId) pickTarget = targetId;
     wireMedia();
+    /* إن كان الهدفُ داخل نافذةٍ مفتوحة (نموذجُ سجلّ) فالمكتبةُ طبقةٌ ثانيةٌ
+       فوقها. وإلّا (شاشةُ إعداداتٍ) فنافذةٌ واحدةٌ كما كانت. */
+    var inModal = !!document.getElementById('sc-modal');
     function draw() {
       modal('مكتبة الصور', pickerBody(),
-        '<button class="btn ghost" data-sc="close">إغلاق</button>');
+        '<button class="btn ghost" data-sc="close">إغلاق</button>', inModal);
     }
     if (MEDIA.length) { draw(); return; }
     modal('مكتبة الصور', '<p class="muted">جارٍ قراءة المكتبة…</p>',
-      '<button class="btn ghost" data-sc="close">إغلاق</button>');
+      '<button class="btn ghost" data-sc="close">إغلاق</button>', inModal);
     loadMedia(null).then(draw);
   }
   function applyPick(u) {
-    if (!pickTarget) { close(); return; }
+    /* تُغلق المكتبةُ وحدها دائمًا: لو نُودي close() هنا لانمحى النموذجُ
+       الذي فُتحت منه — ومعه ما كُتب فيه. */
+    if (!pickTarget) { closeAsk(); return; }
     var el = byId(pickTarget);
     if (el) {
       el.value = u;
@@ -1579,9 +1640,15 @@ window.IAQ_SCREENS = (function () {
       var box = el.parentNode;
       var img = box ? box.querySelector('img') : null;
       if (img) img.src = u;
+      /* حقلٌ مُلئ برمجيًّا لا يُطلق input: نُعلمه الحرزَ صراحةً */
+      if (el.closest && el.closest('#sc-modal')) MODAL_DIRTY = true;
+      else if (el.closest && el.closest('#sc-form')) {
+        var sc0 = S0();
+        window.IAQ_DIRTY.mark(sc0 && sc0.h1 ? sc0.h1 : null);
+      }
     }
     pickTarget = null;
-    close();
+    if (document.getElementById('sc-modal2')) close2(); else close();
   }
 
   /* ======================== لوحة التحكّم ========================
@@ -1654,7 +1721,9 @@ window.IAQ_SCREENS = (function () {
       tabBar() +
       '<div id="dv-range">' + rangeBar(RANGE) + '</div>' +
       '<div id="sc-err"></div>' +
-      '<div id="dash-body" role="tabpanel" aria-labelledby="dtab-' + DASH_TAB + '">' +
+      /* tabindex="-1" كي يُنقل التركيزُ إلى المحتوى بعد اختيار تبويب، ولا يدخل
+   اللوحُ نفسُه ترتيبَ التنقّل */
+      '<div id="dash-body" role="tabpanel" tabindex="-1" aria-labelledby="dtab-' + DASH_TAB + '">' +
       '<div class="iaq-card" id="dv-now" style="margin-block-end:14px">' +
         '<h3 class="card-h">ماذا أفعل الآن؟</h3>' +
         '<div class="muted small">جارٍ الفحص…</div></div>' +
@@ -1789,13 +1858,13 @@ window.IAQ_SCREENS = (function () {
           if (c[0] > 0) {
             more.push({ icon: 'log', view: 'newslist',
                         txt: arNum(c[0], ['خبرٌ واحدٌ مسودّة', 'خبران مسودّة',
-                                          'أخبارٍ مسودّة', 'خبرًا مسودّة']),
+                                          'أخبارٍ مسودّة', 'خبرًا مسودّة', 'خبرٍ مسودّة']),
                         sub: 'مكتوبةٌ ولا يراها الزائر — انشرها أو احذفها' });
           }
           if (c[1] > 0) {
             more.push({ icon: 'docs', view: 'docs',
                         txt: arNum(c[1], ['وثيقةٌ واحدةٌ مسودّة', 'وثيقتان مسودّة',
-                                          'وثائقٍ مسودّة', 'وثيقةً مسودّة']),
+                                          'وثائقٍ مسودّة', 'وثيقةً مسودّة', 'وثيقةٍ مسودّة']),
                         sub: 'مرفوعةٌ ولا تظهر في صفحة الوثائق' });
           }
           var mb = $('#dv-now-more'), nb2 = $('#dv-now-none');
@@ -1836,7 +1905,8 @@ window.IAQ_SCREENS = (function () {
                 sub: subsErr ? 'تعذّرت قراءة الطلبات — الرقم غير معروف'
                    : (late ? ('منها ' + late + ' متأخّرٌ فوق ٣ أيام') : 'لا متأخّر') }) +
           kpi({ v: subsErr || rate == null ? '—' : rate + '%', l: 'من الوارد فُتح وعُومل',
-                icon: 'log', note: subsErr ? '' : (seen ? 'آخر ' + seen + ' طلبًا' : ''),
+                icon: 'log', note: subsErr ? '' : (seen ? 'آخر ' +
+                  arNum(seen, ['طلبٍ واحد', 'طلبين', 'طلباتٍ', 'طلبًا', 'طلب']) : ''),
                 sub: subsErr ? 'تعذّرت قراءة الطلبات — الرقم غير معروف'
                    : (open ? 'أقدمُ طلبٍ بلا ردّ: ' + ageLabel(oldest) : 'لا طلبَ بلا ردّ') }) +
           kpi({ v: String(total(audit, function (x) { return String(x.day) >= FROM; })),
@@ -1850,7 +1920,7 @@ window.IAQ_SCREENS = (function () {
           ? '<div class="notice" style="margin-block-end:14px">' +
             '<b>إحصاءات الزوّار لم تبدأ بعد.</b><br>شغّل <b>supabase/schema-v8.sql</b> ثم انشر الموقع — ' +
             'وتُجمَع الأرقام من أوّل زيارة بعد ذلك.</div>'
-          : card('اتجاه زيارات الصفحات — ' + (RANGE ? 'آخر ' + RANGE + ' يومًا' : 'منذ الإنشاء'),
+          : card('اتجاه زيارات الصفحات — ' + (RANGE ? 'آخر ' + daysLabel(RANGE) : 'منذ الإنشاء'),
               chartLine(series(daily, SPAN, function (x) { return x.kind === 'page'; }),
                         { label: 'زيارات الصفحات', h: 190 }),
               'كل نقطةٍ يومٌ واحد. الأيام الخالية أصفارٌ لا فراغات.') +
@@ -1980,7 +2050,7 @@ window.IAQ_SCREENS = (function () {
         card('الخلاصة',
           grid(6) + box2(pv, 'زيارة صفحة') + box2(dl, 'تنزيل ملفّ') + box2(fv, 'معاينة ملفّ') +
           box2(cta, 'نقر زرّ') + box2(ct, 'نقر تواصل') + box2(fm, 'إرسال نموذج') + '</div>',
-          'المدى: ' + (RANGE ? 'آخر ' + d + ' يومًا' : 'منذ الإنشاء — ' + d + ' يومًا') +
+          'المدى: ' + (RANGE ? 'آخر ' + daysLabel(d) : 'منذ الإنشاء — ' + daysLabel(d)) +
           ' بتوقيت الرياض، وهو المدى نفسه وبالحساب نفسه في تبويب «نظرة عامّة». ' +
           'ولا نحسب زوّارًا فريدين — لا معرّف زائر ولا كوكيز. والتسجيل مفتوحٌ للزائر ' +
           'بالضرورة، ' +
@@ -2241,13 +2311,16 @@ window.IAQ_SCREENS = (function () {
         card('مؤشّرات الردّ على الوارد',
           grid(5) +
             box2(subsErr || rate == null ? '—' : rate + '%', 'من الوارد فُتح وعُومل') +
-            box2(subsErr ? '—' : ageLabel(oldest), 'عمرُ أقدمِ طلبٍ بلا ردّ') +
+            /* هنا رفعٌ لا جرّ: «العمرُ» خبرُه مرفوع. وageLabel مصوغةٌ لِما بعد
+               «قبل» (مجرورة)، فنُسمّي البطاقةَ بما يستقيم مع صيغتها. */
+            box2(subsErr ? '—' : ageLabel(oldest), 'مضى على أقدمِ طلبٍ بلا ردّ') +
             box2(q(open), 'لم يُفتح بعد') +
             box2(q(late), 'متأخّر فوق ٣ أيام') +
             box2(q(closed), 'مُغلق') + '</div>',
           subsErr
             ? 'تعذّرت قراءة الطلبات: ' + subsErr + ' — الأرقام أعلاه غير معروفة، وليست أصفارًا.'
-            : 'المدى: آخر ' + seen + ' طلبًا وصلت، بحالتها في جدول الطلبات. ' +
+            : 'المدى: آخر ' + arNum(seen, ['طلبٍ واحد', 'طلبين', 'طلباتٍ', 'طلبًا', 'طلب']) +
+              ' وصلت، بحالتها في جدول الطلبات. ' +
               'ولا نعرض متوسّطَ زمنِ الردّ: كان يحسب المُجاب عليه وحده فيَجمُل كلّما زاد ' +
               'الإهمال، ومصدرُه سجلٌّ يُفرَّغ بعد ثلاثين يومًا.') +
 
@@ -2404,7 +2477,13 @@ window.IAQ_SCREENS = (function () {
         try { localStorage.setItem('iaq_blank_pick', blankPick); } catch (e2) { }
         var sc0 = S0();
         setVals = {};
-        loadSettings(sc0).then(function () { paintSettings(sc0); });
+        /* اختيارُ عرضٍ لا تعديلَ محتوى: الحقولُ تُعاد من القاعدة فورًا، فلا شيءَ
+           يُفقَد. والمستمعُ العامُّ رفع الحرزَ لمجرّد أنّ الحقلَ في #sc-form —
+           فيُسأل المديرُ عن عملٍ لم يوجد. يُرفع بعد إعادة الرسم لا قبلها. */
+        loadSettings(sc0).then(function () {
+          paintSettings(sc0);
+          window.IAQ_DIRTY.clear();
+        });
         return;
       }
       if (el.type === 'color' && /^sc-s-.+-p$/.test(el.id)) {
@@ -2744,11 +2823,17 @@ window.IAQ_SCREENS = (function () {
   }
 
   /* ---------------------------- نافذة منبثقة ---------------------------- */
-  function modal(title, bodyHtml, footHtml) {
-    close();
+  /* modal2 = طبقةٌ ثانيةٌ فوق نافذةٍ مفتوحة، ولا تُغلقها.
+     كانت مكتبةُ الصور تُفتح بـmodal() وهي تبدأ بـclose() — فينمحي نموذجُ
+     السجلّ الذي فُتحت منه، ويُصبح هدفُ الاختيار عقدةً لا وجودَ لها: النموذجُ
+     المكتوبُ يُفقَد والصورةُ لا تُوضَع. كان يعمل في شاشات الإعدادات وحدها
+     لأنّ حقولها في #sc-form لا في نافذة. */
+  function modal(title, bodyHtml, footHtml, second) {
+    if (!second) close(); else close2();
     var ov = document.createElement('div');
-    ov.id = 'sc-modal';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,52,44,.46);z-index:600;display:flex;' +
+    ov.id = second ? 'sc-modal2' : 'sc-modal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,52,44,.46);z-index:' +
+      (second ? '640' : '600') + ';display:flex;' +
       'align-items:center;justify-content:center;padding:20px;direction:rtl';
     ov.innerHTML = '<div role="dialog" aria-modal="true" aria-label="' + esc(title) + '" ' +
       'style="background:#fff;border-radius:16px;max-width:660px;width:100%;max-height:88vh;overflow:auto;' +
@@ -2759,7 +2844,9 @@ window.IAQ_SCREENS = (function () {
       '<div style="padding:20px 22px">' + bodyHtml + '</div>' +
       (footHtml ? '<div class="btnbar" style="padding:0 22px 20px">' + footHtml + '</div>' : '') + '</div>';
     document.body.appendChild(ov);
-    MODAL_DIRTY = false;
+    /* الطبقةُ الثانية لا تصفّر الحرز: النموذجُ المكتوبُ تحتها ما زال قائمًا،
+       وتصفيرُه هنا يجعل إغلاقَه بعدها يمحوه بلا سؤال. */
+    if (!second) MODAL_DIRTY = false;
     /* النقرُ خارج النافذة كان يمحو نموذجًا مكتوبًا بلا سؤال — وهو أسهلُ خطأٍ
        يقع: النافذةُ ضيّقةٌ وما حولها كلُّه مساحةُ إغلاق. */
     ov.addEventListener('click', function (e) { if (e.target === ov) closeAsk(); });
@@ -2784,11 +2871,25 @@ window.IAQ_SCREENS = (function () {
   /* close() للنداء الداخليّ بعد نجاحٍ أو انتقالٍ مقصود — لا يسأل.
      closeAsk() لكل إغلاقٍ يبدأه المدير: Escape، وزرُّ الإغلاق، والنقرُ خارجها. */
   function close() {
+    close2();
     var m = document.getElementById('sc-modal');
     if (m) m.remove();
     MODAL_DIRTY = false;
   }
+  /* الطبقةُ الثانية تُغلق وحدها فيبقى ما تحتها. ولا تمسّ MODAL_DIRTY:
+     الحرزُ يخصّ النموذجَ الذي تحتها لا المكتبةَ فوقه. */
+  function close2() {
+    var m = document.getElementById('sc-modal2');
+    if (m) m.remove();
+  }
+  /* يُغلق الطبقةَ العليا وحدها. كلُّ close() في مسارٍ قد يجري فوق نموذجٍ
+     مفتوحٍ يجب أن يكون هذا، وإلّا انمحى النموذجُ وما كُتب فيه. */
+  function closeTop() {
+    if (document.getElementById('sc-modal2')) close2(); else close();
+  }
   function closeAsk() {
+    /* الأعلى يُغلق أوّلًا: Escape داخل المكتبة يُغلق المكتبةَ لا النموذج */
+    if (document.getElementById('sc-modal2')) { close2(); return; }
     if (MODAL_DIRTY && !window.confirm(
         'في هذا النموذج ما لم يُحفظ — والإغلاقُ يفقده.\n\n' +
         '«إلغاء» للعودة إليه، و«موافق» لإغلاقه وفقدِ ما كُتب.')) return;
@@ -2843,14 +2944,26 @@ window.IAQ_SCREENS = (function () {
     return out;
   }
 
-  function control(f, val) {
+  function control(f, val, row) {
     var id = 'sc-f-' + f.k;
     var h = '<div class="fld"><label for="' + id + '">' + esc(f.l) +
       (f.req ? ' <span style="color:#c0603a">*</span>' : '') + '</label>';
     if (f.t === 'select') {
+      /* oFn: خياراتٌ تُحسب لهذا السجلّ. وحرزٌ عامٌّ فوقها: منسدلةٌ لا تحوي
+         قيمةَ الصفّ تُظهر أوّلَ خيارٍ فيها فيُكتب عند الحفظ — أي تغييرُ قيمةٍ
+         لم يطلبه أحد. فالقيمةُ الحاليّةُ تُضمَن دائمًا، مُعلَّمةً بأنّها خارج
+         الخيارات المعتادة. */
+      var opts = f.oFn ? f.oFn(row || {}) : f.o;
+      var cv = (val == null) ? '' : String(val);
+      if (cv && !opts.hasOwnProperty(cv)) {
+        var o2 = {};
+        o2[cv] = cv + ' — قيمةٌ قائمةٌ خارج الخيارات';
+        for (var k0 in opts) if (opts.hasOwnProperty(k0)) o2[k0] = opts[k0];
+        opts = o2;
+      }
       h += '<select id="' + id + '">';
-      for (var k in f.o) if (f.o.hasOwnProperty(k)) {
-        h += '<option value="' + esc(k) + '"' + (String(val) === k ? ' selected' : '') + '>' + esc(f.o[k]) + '</option>';
+      for (var k in opts) if (opts.hasOwnProperty(k)) {
+        h += '<option value="' + esc(k) + '"' + (cv === k ? ' selected' : '') + '>' + esc(opts[k]) + '</option>';
       }
       h += '</select>';
     } else if (f.t === 'date') {
@@ -2936,11 +3049,11 @@ window.IAQ_SCREENS = (function () {
     while (i < fs.length) {
       var f = fs[i];
       if (f.half && fs[i + 1] && fs[i + 1].half) {
-        h += '<div class="grid2">' + control(f, data[f.k]) +
+        h += '<div class="grid2">' + control(f, data[f.k], data) +
              control(fs[i + 1], data[fs[i + 1].k]) + '</div>';
         i += 2;
       } else {
-        h += control(f, data[f.k]);
+        h += control(f, data[f.k], data);
         i++;
       }
     }
@@ -3095,6 +3208,10 @@ window.IAQ_SCREENS = (function () {
 
   function askPassword(title, body, onOk) {
     pendingDelete = onOk;
+    /* إن كانت الطبقةُ الثانيةُ مفتوحةً (مكتبةُ الصور فوق نموذجِ سجلّ) فسؤالُ
+       كلمة المرور يحلُّ محلَّها لا محلَّ النموذج تحتها. وبلا هذا كان حذفُ صورةٍ
+       من المكتبة يمحو النموذجَ المكتوبَ الذي فُتحت منه. */
+    var second = !!document.getElementById('sc-modal2');
     modal(title,
       body +
       '<div class="fld" style="margin-block-start:14px">' +
@@ -3105,7 +3222,7 @@ window.IAQ_SCREENS = (function () {
       esc((window.IAQ_AUTH && window.IAQ_AUTH.email()) || (S && S.email) || '') + '</div>' +
       '</div><div id="sc-pwerr" class="small" style="color:#8c3d1c;margin-block-start:8px"></div>',
       '<button class="btn ghost" data-sc="close">إلغاء</button>' +
-      '<button class="btn danger" data-sc="pwyes">تأكيد الحذف</button>');
+      '<button class="btn danger" data-sc="pwyes">تأكيد الحذف</button>', second);
     setTimeout(function () { var el = $('#sc-pw'); if (el) el.focus(); }, 60);
   }
 

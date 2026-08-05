@@ -43,7 +43,20 @@ returns int language sql immutable as $$ select 5000 $$;
 
 --  الفحصُ بـ exists/offset لا بـ count(*): يتوقّف عند الصفّ رقم السقف+١ فلا
 --  يمسح الجدولَ كلَّه في كل إدراج.
-create or replace function public.views_rate_ok()
+--  السقفُ **لكلّ نوعٍ** لا للجدول كلّه: بلا معرّفِ زائرٍ لا يمكن أن يصير
+--  الرقمُ غيرَ قابلٍ للتلفيق، لكنّ فصلَ الأنواع يمنع أن يُسكِت سيلٌ من نوعٍ
+--  واحدٍ بقيّةَ الأنواع. فمن يُغرق 'page' لا يمنع تسجيلَ 'form' ولا 'file_dl'
+--  — وهي الأحداثُ التي تُتّخذ بها قرارات.
+--
+--  والقيدُ الباقي يُقال صريحًا ولا يُخفى: يومٌ أُغرق يُعرض رقمُه حدًّا لا
+--  قياسًا، واللوحةُ تُعلن ذلك من v_views_health. والحلُّ التامُّ يحتاج مَن
+--  يرى عنوانَ الزائر — أي مُستقبِلًا في عامل Cloudflare لا في القاعدة.
+--  السياسةُ تُسقَط أوّلًا: على إعادة التشغيل تكون السياسةُ القائمةُ مُعتمِدةً
+--  على التوقيع القديم بلا معامل، فلا يُسقَط ذلك التوقيعُ وهي قائمة.
+drop policy if exists "views public insert" on public.page_views;
+drop function if exists public.views_rate_ok();
+
+create or replace function public.views_rate_ok(k text)
 returns boolean
 language sql
 volatile
@@ -57,19 +70,20 @@ as $$
      and not exists (
            select 1 from public.page_views
             where day = (now() at time zone 'Asia/Riyadh')::date
+              and kind = k
             offset public.views_day_cap() limit 1);
 $$;
 
-grant execute on function public.views_rate_ok()  to anon, authenticated;
+grant execute on function public.views_rate_ok(text) to anon, authenticated;
 grant execute on function public.views_day_cap()  to anon, authenticated, service_role;
 
---  الفهرسان اللذان يجعلان الفحصَ رخيصًا: ts للدفعة، وday موجودٌ سلفًا للسقف
+--  فهرسُ ts للدفعة. وفحصُ السقف اليوميّ يستعمل page_views_kind_idx (kind, day)
+--  المُنشأ في schema-v8 — فلا فهرسَ جديدٌ له.
 create index if not exists page_views_ts_idx on public.page_views (ts desc);
 
-drop policy if exists "views public insert" on public.page_views;
 create policy "views public insert" on public.page_views
   for insert to anon, authenticated
-  with check (public.views_rate_ok());
+  with check (public.views_rate_ok(kind));
 
 -- ═════════ ٣) الاحتفاظ: التخزين محدودٌ بزمنٍ لا بحسنِ النيّة ═════════
 --  نظيرةُ purge_audit. تُنادى يدويًّا أو من مهمّةٍ مجدولة (لا pg_cron هنا).
@@ -83,6 +97,11 @@ declare n bigint;
 begin
   if not public.is_owner() then
     raise exception 'لصاحب الموقع وحده';
+  end if;
+  --  حدٌّ أدنى صارم: purge_views(0) كانت تمحو تاريخَ الإحصاء كلَّه بلا رجعةٍ
+  --  ولا تأكيد — وصفرٌ يُكتب سهوًا. والدالّةُ للاحتفاظ لا للتصفير.
+  if keep_days is null or keep_days < 30 then
+    raise exception 'أقلُّ مدّةِ احتفاظٍ ٣٠ يومًا (طُلب: %). ولتصفيرِ الجدول اكتب delete صريحًا.', keep_days;
   end if;
   delete from public.page_views
    where day < ((now() at time zone 'Asia/Riyadh')::date - keep_days);
@@ -108,10 +127,19 @@ create view public.v_views_health with (security_invoker = true) as
          (select min(day)  from public.page_views)                     as since_day,
          (select count(*)  from public.page_views p
            where p.day > (now() at time zone 'Asia/Riyadh')::date)     as future_rows,
-         (select count(*) from (
+         --  السقفُ لكلّ نوعٍ، فاليومُ «بلغ السقف» إن بلغه أيُّ نوعٍ فيه.
+         --  واللوحةُ تقول صريحًا أنّ هذا محسوبٌ على كامل العمر لا على المدى
+         --  المعروض، ومعه آخرُ يومٍ بلغه كي يُعرف موضعُه.
+         --  distinct day: السقفُ لكلّ نوعٍ فقد يبلغه نوعان في يومٍ واحد،
+         --  وعدُّ الأزواج كان يجعل يومًا واحدًا «يومين».
+         (select count(distinct day) from (
             select day from public.page_views
-             group by day having count(*) >= public.views_day_cap()
-          ) q)                                                        as capped_days;
+             group by day, kind having count(*) >= public.views_day_cap()
+          ) q)                                                        as capped_days,
+         (select max(day) from (
+            select day from public.page_views
+             group by day, kind having count(*) >= public.views_day_cap()
+          ) q2)                                                       as last_capped_day;
 
 grant select on public.v_views_health to authenticated;
 

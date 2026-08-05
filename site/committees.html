@@ -2805,18 +2805,26 @@ var IAQ_PATH = (function () {
        ويُعيد التمهيدَ إن حُدِّثت الصفحة بعد أن كتب الزائرُ نصَّه. */
     try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { }
 
-    /* إعلانٌ يُسمَع: من يعتمد على قارئ شاشةٍ لا يرى الحقولَ مُلئت */
+    /* إعلانٌ يُسمَع: من يعتمد على قارئ شاشةٍ لا يرى الحقولَ مُلئت.
+       ومنطقةُ الإعلان يجب أن تكون في الصفحة **قبل** أن يتغيّر نصُّها، وإلّا
+       أُدرجت مكتوبةً فلم تُقرأ — فنُدرجها فارغةً ثمّ نكتب فيها. */
     var note = document.createElement('p');
     note.className = 'fhint';
     note.setAttribute('role', 'status');
+    note.setAttribute('aria-live', 'polite');
     note.style.marginBlockEnd = '14px';
-    note.textContent = 'هُيّئ النموذجُ لسؤالك عن برنامج «' + prog +
-      '» — عدّل ما تشاء قبل الإرسال.';
+    var msg = 'هُيّئ النموذجُ لسؤالك عن برنامج «' + prog + '» — عدّل ما تشاء قبل الإرسال.';
     var box = form.querySelector('.form-fields');
-    if (box) box.insertBefore(note, box.firstChild);
-    /* التركيزُ على أوّل حقلٍ فارغٍ يحتاجه الزائر: الاسم لا الموضوعَ المُهيَّأ */
+    if (box) {
+      box.insertBefore(note, box.firstChild);
+      setTimeout(function () { note.textContent = msg; }, 120);
+    }
+    /* التركيزُ على أوّل حقلٍ فارغٍ يحتاجه الزائر: الاسم لا الموضوعَ المُهيَّأ.
+       ويُؤخَّر عن كتابة الإعلان كي لا يقطعَ نقلُ التركيزِ قراءتَه. */
     var first = form.querySelector('#name');
-    if (first) { try { first.focus({ preventScroll: true }); } catch (e) { } }
+    if (first) setTimeout(function () {
+      try { first.focus({ preventScroll: true }); } catch (e) { first.focus(); }
+    }, 700);
   });
 })();
 </script>

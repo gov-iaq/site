@@ -33,7 +33,6 @@
          على قارئ شاشةٍ لا يسمع «حُفظ» ولا «فشل الحفظ» — فيُعيد الضغطَ أو
          يظنّ العملَ منشورًا. polite للحفظ الناجح، وatomic كي يُقرأ النصُّ
          كاملًا لا الحرفَ المتغيّر منه. */
-      bar.setAttribute('aria-live', 'polite');
       bar.setAttribute('aria-atomic', 'true');
       bar.style.cssText = 'position:fixed;inset-block-end:0;inset-inline:0;z-index:400;padding:9px 16px;' +
         'font-family:Tajawal,sans-serif;font-size:13px;line-height:1.7;text-align:center;' +
@@ -44,8 +43,13 @@
     var c = kind === 'err' ? ['#fdf1ec', '#8c3d1c'] : (kind === 'warn' ? ['#fff8ec', '#7a5518'] : ['#eef4f3', '#0c6c6c']);
     bar.style.background = c[0];
     bar.style.color = c[1];
-    /* الخطأ يقطع القراءةَ الجارية؛ وغيرُه ينتظر دورَه */
+    /* الخطأ يقطع القراءةَ الجارية؛ وغيرُه ينتظر دورَه.
+       و aria-live الصريحةُ تغلب الدلالةَ الضِمنيّةَ لـrole: وضعُ polite ثابتةً
+       كان يُبطل assertive التي يعنيها role="alert" فلا يُقطَع شيء. فنكتب
+       الاثنين معًا في كل نداء. */
+    var live = (kind === 'err') ? 'assertive' : 'polite';
     bar.setAttribute('role', kind === 'err' ? 'alert' : 'status');
+    bar.setAttribute('aria-live', live);
     bar.textContent = msg;
   }
 
@@ -415,6 +419,14 @@
      الحقيقية. وبلاه كانت اللوحة تُصدر «تم حفظ التغييرات» في اللحظة نفسها،
      أي قبل ٧٠٠ مللي من بدء الكتابة وقبل معرفة نجاحها — رسالةُ نجاحٍ لا
      تعرف أنجحت. */
+  /* آخرُ حالةٍ نُشرت فعلًا — يُستعمل للتخلّي عن تعديلٍ لم يُحفظ.
+     كائنُ اللوحة يُعدَّل في الذاكرة مع كلّ حرف، فرفعُ الحرز وحده لا يُلغي
+     التعديل: يبقى في config ويُنشره أوّلُ حفظٍ لاحقٍ لأيّ شاشة. */
+  window.IAQ_CFG_LAST = function () {
+    if (!lastJson) return null;
+    try { return JSON.parse(lastJson); } catch (e) { return null; }
+  };
+
   window.IAQ_CFG_SAVE = function (config, now) {
     if (timer) { clearTimeout(timer); timer = null; }
     if (now) return flush(config);
@@ -436,11 +448,15 @@
     return upsert('settings', [{ key: BLOB, value: config, label: 'حالة لوحة التحكّم', is_public: false,
                           updated_by: (S && S.email) || '' }], 'key')
       .then(function () {
-        lastJson = body;
         return Promise.all([syncPublic(config), applySite(config)]);
       })
       .then(function (r) {
         var pub = r[0], live = r[1];
+        /* بعد نجاح الثلاثة جميعًا، لا قبلها: كان يُسجَّل بعد كتابة الكائن وحده،
+           فلو فشل نشرُ المظهر أو نصوص الموقع بعده، قرأت إعادةُ الضغط على
+           «حفظ» أنّ الحالةَ نفسُها فأجابت «لا تغييرات جديدة» بلون النجاح —
+           فيُقرأ فشلٌ مستمرٌّ نجاحًا، ولا يُعاد المحاولة أبدًا. */
+        lastJson = body;
         status('حُفظ في قاعدة البيانات' +
                (live ? ' · سرى ' + live + ' تعديلًا على الموقع (يظهر للزائر عند أوّل تحميل)' : '') +
                (pub ? ' · حُدِّث المظهر والأقسام' : ''), 'ok');
