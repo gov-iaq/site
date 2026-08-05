@@ -515,6 +515,11 @@ html[data-font-wide] .nav-link{padding:9px 6px;gap:4px}
 .form textarea{min-height:130px;resize:vertical}
 .form .field.err input,.form .field.err select,.form .field.err textarea{border-color:#d0653f;box-shadow:0 0 0 3px rgba(208,101,63,.12)}
 .form .fmsg{display:none;color:#c0603a;font-size:13px;margin-block-start:6px}
+/* تلميحٌ تحت الحقل: يقول لماذا يُطلب الحقلُ قبل أن يُكتب فيه — والحقلُ
+   الوحيدُ الذي يحتاجه اليوم رقمُ الهوية في نموذج العضوية. */
+.fhint{color:var(--body);font-size:12.5px;line-height:1.75;margin:6px 0 0}
+.fhint a{color:var(--teal);text-decoration:underline}
+.opt{color:var(--body);font-weight:400;font-size:12.5px}
 .form .field.err .fmsg{display:block}
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
 @media(max-width:640px){.form-2{grid-template-columns:1fr}.form-wrap{padding:26px}}

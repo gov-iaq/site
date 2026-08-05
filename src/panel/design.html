@@ -867,15 +867,22 @@ function curLabel(){for(var i=0;i<NAV.length;i++){if(NAV[i]&&NAV[i].k===current)
 function switchView(k){if(k!==current&&window.IAQ_DIRTY&&!window.IAQ_DIRTY.ok())return;current=k;renderSidebar();$('#viewArea').innerHTML=views[k]();afterRender(k);window.scrollTo(0,0);closeDrawer();}
 /* إغلاقُ التبويب أو تحديثُه: المتصفّح يسأل بنفسه إن كان هناك ما يُفقَد */
 window.addEventListener('beforeunload',function(e){if(window.IAQ_DIRTY&&window.IAQ_DIRTY.has()){e.preventDefault();e.returnValue='';return '';}});
-function afterRender(k){ if(k==="theme")applyPreview(); startLive(k==="dashboard"); }
+/* بعد كل انتقال: التركيزُ ينزل إلى عنوان الشاشة الجديدة. كان يسقط إلى جسم
+   الصفحة، فمن يتنقّل بلوحة المفاتيح يبدأ من رأس الصفحة كلَّ مرّة — إحدى
+   وعشرون ضغطةَ Tab قبل أوّل حقل. و tabindex="-1" يجعل العنوان قابلًا للتركيز
+   برمجيًّا وحده فلا يدخل ترتيبَ التنقّل.
+   وأُسقط startLive: مُحاكي «زوّار الآن» بأرقام Math.random من النموذج الأوّلي،
+   ومفتاحُ dashboard صار يعرض لوحةً تقرأ أرقامًا حقيقية. */
+function afterRender(k){
+ if(k==="theme")applyPreview();
+ var h=$('#viewArea').querySelector('h1');
+ if(h){h.setAttribute('tabindex','-1');try{h.focus({preventScroll:true});}catch(e){h.focus();}}
+}
 
 function applyPreview(){var el=$('#themePreview');if(!el)return;var t=config.theme;el.style.setProperty('--pp',t.primary);el.style.setProperty('--pa',t.accent);el.style.setProperty('--pbg',t.bg);el.style.setProperty('--psurf',t.surface);el.style.setProperty('--psurf2',t.surface2);el.style.setProperty('--pink',t.ink);el.style.setProperty('--pbody',t.body);el.style.setProperty('--phero',t.heroBg);el.style.setProperty('--prad',t.radius+'px');el.style.setProperty('--phead',"'"+t.headFont+"'");el.style.setProperty('--pbodyf',"'"+t.bodyFont+"'");el.classList.toggle('pat',!!t.pattern);}
 
-/* live visitors sim */
-var spark=[]; for(var i=0;i<24;i++)spark.push(18+Math.round(Math.random()*20));
-function startLive(on){ if(liveTimer){clearInterval(liveTimer);liveTimer=null;} if(!on)return; drawSpark(); liveTimer=setInterval(function(){ var el=$('#liveNow'); if(!el){clearInterval(liveTimer);liveTimer=null;return;} var v=config.analytics.liveNow+Math.round((Math.random()-0.5)*6); v=Math.max(6,Math.min(70,v)); config.analytics.liveNow=v; el.textContent=nf(v); spark.push(v); spark.shift(); drawSpark(); },2600); }
-function drawSpark(){var f=$('#liveSpark');if(!f)return;var W=120,H=40,max=Math.max.apply(null,spark)*1.1,min=Math.min.apply(null,spark)*0.9;var pts=spark.map(function(v,i){var x=i*(W/(spark.length-1));var y=H-((v-min)/(max-min||1))*(H-6)-3;return x.toFixed(1)+','+y.toFixed(1);});f.innerHTML='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#0f8f56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';}
-
+/* حُذف مُحاكي «الزوّار الآن»: أرقامُ Math.random من النموذج الأوّلي،
+   ولوحةُ التحكّم صارت تقرأ الإحصاءَ الحقيقيَّ من v_views_daily. */
 var PRESETS={
  hybrid:{primary:"#007878",accent:"#c09048",deep:"#063f36",bg:"#ffffff",surface:"#ffffff",surface2:"#f5f8f8",ink:"#0f2a2a",body:"#47534f",heroBg:"#edf6f5",headFont:"El Messiri",bodyFont:"Tajawal",radius:12,pattern:true},
  editorial:{primary:"#007878",accent:"#d9a441",deep:"#1c1a15",bg:"#faf7f1",surface:"#fffdf9",surface2:"#f3efe6",ink:"#1c1a15",body:"#403d34",heroBg:"#1c1a15",headFont:"Amiri",bodyFont:"Tajawal",radius:0,pattern:false},

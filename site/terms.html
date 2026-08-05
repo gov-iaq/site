@@ -555,6 +555,11 @@ html[data-font-wide] .nav-link{padding:9px 6px;gap:4px}
 .form textarea{min-height:130px;resize:vertical}
 .form .field.err input,.form .field.err select,.form .field.err textarea{border-color:#d0653f;box-shadow:0 0 0 3px rgba(208,101,63,.12)}
 .form .fmsg{display:none;color:#c0603a;font-size:13px;margin-block-start:6px}
+/* تلميحٌ تحت الحقل: يقول لماذا يُطلب الحقلُ قبل أن يُكتب فيه — والحقلُ
+   الوحيدُ الذي يحتاجه اليوم رقمُ الهوية في نموذج العضوية. */
+.fhint{color:var(--body);font-size:12.5px;line-height:1.75;margin:6px 0 0}
+.fhint a{color:var(--teal);text-decoration:underline}
+.opt{color:var(--body);font-weight:400;font-size:12.5px}
 .form .field.err .fmsg{display:block}
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
 @media(max-width:640px){.form-2{grid-template-columns:1fr}.form-wrap{padding:26px}}
@@ -2725,6 +2730,95 @@ var IAQ_PATH = (function () {
     if (nb) nb.addEventListener('click', function () { send('form', 'newsletter'); });
   });
 })();
+
+/* ============================================================================
+   تمهيدُ نموذج التواصل من معامل العنوان.
+
+   صفحةُ البرامج فيها ستُّ بطاقات، وكان في كلٍّ منها رابط «تفاصيل البرنامج»
+   إلى href="#" — وعدٌ بصفحةٍ لا وجودَ لها. صارت «اسأل عن هذا البرنامج» إلى
+   نموذج التواصل مع اسم البرنامج في العنوان، وهذه الوحدةُ تُنزل الاسمَ في
+   الحقول: فيعرف المستقبِلُ عمّاذا يُسأل، ولا يُعيد الزائرُ كتابةَ ما نعرفه.
+
+   ومعاملُ العنوان لا يُدخل الصفحةَ نصًّا: يُقرأ ويُطابَق على قائمةِ سماحٍ من
+   عناوين البطاقات الموجودة في الصفحة نفسها، فما لا يُطابق يُهمَل. لا حقنَ
+   نصٍّ من العنوان أصلًا.
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  /* أسماءُ البرامج كما هي مبنيّةٌ في صفحة البرامج — قائمةُ السماح.
+     يُقرأ الاسمُ من الرابط، وإن لم يكن في القائمة أُهمِل. */
+  var ALLOW = ['تأسيس الجمعيات', 'بناء القدرات المؤسسية', 'الحوكمة والامتثال',
+               'الاستدامة المالية والأوقاف', 'التحول الرقمي', 'قياس الأثر'];
+
+  function param(name) {
+    try {
+      var q = String(location.search || '').replace(/^\?/, '');
+      if (!q) return '';
+      var out = '';
+      q.split('&').forEach(function (kv) {
+        var i = kv.indexOf('=');
+        if (i < 0) return;
+        if (decodeURIComponent(kv.slice(0, i)) !== name) return;
+        out = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' '));
+      });
+      return out;
+    } catch (e) { return ''; }
+  }
+
+  function ready(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else { fn(); }
+  }
+
+  ready(function () {
+    var prog = param('program').replace(/\s+/g, ' ').trim();
+    if (!prog || ALLOW.indexOf(prog) < 0) return;
+
+    var form = document.querySelector('form.js-form[data-kind="contact"]');
+    if (!form) return;
+
+    /* الحقلان منسدلان لا مُدخلَين نصّيَّين: إسنادُ نصٍّ حرٍّ إلى <select> لا
+       يفعل شيئًا بصمت. فنختار خيارًا موجودًا بمطابقةِ نصِّه، ولا نخترع خيارًا
+       ولا نُدخل قيمةً لا تعرفها القائمة. */
+    function pickOption(sel, re) {
+      if (!sel || sel.tagName !== 'SELECT') return false;
+      if (sel.selectedIndex > 0) return false;            /* اختار المستخدمُ سلفًا */
+      for (var i = 0; i < sel.options.length; i++) {
+        if (re.test(sel.options[i].textContent || '')) { sel.selectedIndex = i; return true; }
+      }
+      return false;
+    }
+    var ct = form.querySelector('#ctype');
+    pickOption(ct, /استفسار/);
+    var subj = form.querySelector('#subject');
+    pickOption(subj, /استفسار عام|استفسار/);
+
+    /* واسمُ البرنامج يُحمَل في نصّ الرسالة: هو الحقلُ الحرُّ الوحيد */
+    var msg = form.querySelector('#message');
+    if (msg && !String(msg.value || '').trim()) {
+      msg.value = 'أرغب في معرفة المزيد عن برنامج «' + prog + '».\n';
+    }
+
+    /* والعنوانُ يُنظَّف: معاملٌ في شريط العنوان يُنسخ ويُشارَك بلا داعٍ،
+       ويُعيد التمهيدَ إن حُدِّثت الصفحة بعد أن كتب الزائرُ نصَّه. */
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { }
+
+    /* إعلانٌ يُسمَع: من يعتمد على قارئ شاشةٍ لا يرى الحقولَ مُلئت */
+    var note = document.createElement('p');
+    note.className = 'fhint';
+    note.setAttribute('role', 'status');
+    note.style.marginBlockEnd = '14px';
+    note.textContent = 'هُيّئ النموذجُ لسؤالك عن برنامج «' + prog +
+      '» — عدّل ما تشاء قبل الإرسال.';
+    var box = form.querySelector('.form-fields');
+    if (box) box.insertBefore(note, box.firstChild);
+    /* التركيزُ على أوّل حقلٍ فارغٍ يحتاجه الزائر: الاسم لا الموضوعَ المُهيَّأ */
+    var first = form.querySelector('#name');
+    if (first) { try { first.focus({ preventScroll: true }); } catch (e) { } }
+  });
+})();
 </script>
 </head>
 <body class="hybrid" data-page="terms">
@@ -2857,7 +2951,7 @@ var IAQ_PATH = (function () {
     <div class="lg-card reveal">
       <p class="lg-eyebrow"><i aria-hidden="true"></i>أحكام الاستخدام</p>
       <h2>شروط الاستخدام</h2>
-      <p class="lg-updated">آخر تحديث: يوليو 2026</p>
+      <p class="lg-updated">آخر تحديث: أغسطس 2026</p>
       <p class="lg-intro">يخضع استخدامك لموقع جمعية حاضنة الجمعيات للشروط الموضّحة أدناه، ويُعدّ استمرارك في استخدام الموقع موافقةً عليها.</p>
       <section class="lg-sec" id="terms-s1"><h3><span class="n">1</span>الغرض من الموقع</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>يهدف الموقع إلى التعريف بالجمعية وبرامجها، وإتاحة وثائق الحوكمة والتراخيص للاطلاع، وتقديم خدمات إلكترونية للجمهور مثل التطوّع والعضوية والتوظيف وقياس الرضا.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>المحتوى المنشور لأغراض التعريف والتوعية، ولا يُعدّ استشارة مهنية أو نظامية مُلزِمة.</span></li></ul></section><section class="lg-sec" id="terms-s2"><h3><span class="n">2</span>الملكية الفكرية</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>جميع المحتويات والعلامات والشعارات والتصاميم والوثائق المنشورة مملوكة للجمعية أو مستخدمة بترخيص.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>يُسمح بالاطلاع والاقتباس مع الإشارة إلى المصدر، ولا يجوز إعادة النشر التجاري أو التعديل دون إذن كتابي مسبق.</span></li></ul></section><section class="lg-sec" id="terms-s3"><h3><span class="n">3</span>الاستخدام المقبول</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>تقديم بيانات صحيحة ودقيقة في النماذج، وعدم انتحال شخصية غيرك.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>الامتناع عن أي محاولة للإضرار بالموقع أو اختراقه أو تعطيل خدماته أو الوصول غير المصرّح به إلى أنظمته.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>عدم استخدام الموقع في أي غرض مخالف لأنظمة المملكة العربية السعودية.</span></li></ul></section><section class="lg-sec" id="terms-s4"><h3><span class="n">4</span>التبرعات</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>تُجمع التبرعات عبر القنوات المرخّصة للجمعية فقط، ووفق تصاريح جمع التبرعات الصادرة عن المركز الوطني لتنمية القطاع غير الربحي.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>متجر التبرعات الإلكتروني للجمعية على النطاق المرخّص، ويُنصح بالتحقّق من الرابط قبل أي عملية تبرّع.</span></li></ul></section><section class="lg-sec" id="terms-s5"><h3><span class="n">5</span>الروابط والجهات الأخرى</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>قد يحتوي الموقع على روابط لجهات خارجية لأغراض تعريفية، والجمعية غير مسؤولة عن محتوى تلك الجهات أو سياساتها.</span></li></ul></section><section class="lg-sec" id="terms-s6"><h3><span class="n">6</span>حدود المسؤولية والتعديلات</h3><ul><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>تبذل الجمعية جهدًا معقولًا لضمان دقة المعلومات وتحديثها، دون ضمان خلوّها من الأخطاء أو استمرار توفّر الخدمة بلا انقطاع.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>يحقّ للجمعية تعديل هذه الشروط أو محتوى الموقع في أي وقت، ويُعمل بالنسخة المنشورة على الموقع.</span></li><li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span>تخضع هذه الشروط لأنظمة المملكة العربية السعودية، وتختصّ الجهات القضائية المختصة فيها بأي نزاع.</span></li></ul></section>
       <p class="lg-note">هذه صياغة مختصرة لأغراض العرض على الموقع، وليست استشارة قانونية. يُنصح بمراجعتها من المختص النظامي في الجمعية قبل الاعتماد النهائي.</p>

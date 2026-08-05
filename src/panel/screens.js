@@ -78,6 +78,14 @@ window.IAQ_SCREENS = (function () {
   var DOCCAT = { policies: 'اللوائح والسياسات', minutes: 'محاضر الاجتماعات',
                  financials: 'القوائم المالية', annual: 'التقارير السنوية',
                  surveys: 'قياس الرضا', licenses: 'التراخيص' };
+  /* ما يُختار لوثيقةٍ جديدة. «التراخيص» ليس فيه: معرضُ التراخيص في الموقع
+     صورُ شهاداتٍ لا قائمةَ ملفّات، فلا يُبنى من هذا الجدول (iaq-lists.js:
+     DOC_BOX بلا licenses). فكان الخيارُ فخًّا: ملفٌّ يُرفع ويُحفظ بنجاح ولا
+     يظهر في الموقع أبدًا. والتسميةُ تبقى في DOCCAT كي تُقرأ في الجدول
+     وثيقةٌ صُنّفت هكذا قبل الآن. */
+  var DOCCAT_PICK = { policies: DOCCAT.policies, minutes: DOCCAT.minutes,
+                      financials: DOCCAT.financials, annual: DOCCAT.annual,
+                      surveys: DOCCAT.surveys };
   var MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
                 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   /* «2026-06-22» ← «22 يونيو 2026» بنفس صياغة البنّاء، بلا Date كي لا تتدخّل
@@ -569,8 +577,8 @@ window.IAQ_SCREENS = (function () {
       nameKey: 'title', searchKeys: ['title', 'storage_path'],
       reach: 'التعديل والحذف والإضافة تسري على تبويبات الملفات في صفحة «الحوكمة والإفصاح» وصفحة «قياس الرضا» عند أوّل تحميل، بلا إعادة بناء. ومعرض التراخيص مبنيّ ثابتًا (يحتاج صور الشهادات وجدول بياناتها) فلا تصله هذه الشاشة.',
       fields: [
-        { k: 'category', l: 'التصنيف', t: 'select', o: DOCCAT, def: 'policies',
-          hint: 'يحدّد التبويب الذي يظهر فيه الملف' },
+        { k: 'category', l: 'التصنيف', t: 'select', o: DOCCAT_PICK, def: 'policies',
+          hint: 'يحدّد التبويب الذي يظهر فيه الملف في الموقع' },
         { k: 'title', l: 'عنوان الوثيقة', t: 'text', req: 1 },
         { k: 'file', l: 'ملف PDF جديد (اختياري)', t: 'file',
           hint: 'اختر ملفًا فيُرفع إلى تخزين الموقع ويحلّ محلّ الرابط أدناه. واتركه فارغًا فيبقى الرابط كما هو.' },
@@ -592,7 +600,9 @@ window.IAQ_SCREENS = (function () {
              { k: 'status', l: 'الحالة', f: 'status' }],
       stats: [{ l: 'إجمالي الوثائق' }, { l: 'ظاهر', c: 'status', v: 'published' },
               { l: DOCCAT.policies, c: 'category', v: 'policies' },
-              { l: DOCCAT.minutes, c: 'category', v: 'minutes' }]
+              /* عدّادٌ يُظهر ما صُنّف «تراخيص» قبل رفع الخيار: تلك لا تظهر في
+                 الموقع، فبقاؤها صامتةً هو المشكلة. */
+              { l: 'مصنّفةٌ «تراخيص» — لا تظهر في الموقع', c: 'category', v: 'licenses' }]
     },
     partnerlist: {
       settingsTitle: 'طريقة عرض شريط الشركاء',
@@ -1323,7 +1333,7 @@ window.IAQ_SCREENS = (function () {
     });
     if (!max) return '<div class="muted" style="padding:22px;text-align:center">لا بيانات بعد.</div>';
     var out = '<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:2px;direction:rtl">' +
-      '<thead><tr><th></th>';
+      '<thead><tr><th scope="col"></th>';
     for (var h = 0; h < 24; h += 2) {
       out += '<th colspan="2" style="font-size:9px;font-weight:500;color:var(--muted)">' + h + '</th>';
     }
@@ -1625,10 +1635,16 @@ window.IAQ_SCREENS = (function () {
                    ['work', 'سجلّ العمل والتراجع']];
 
   function tabBar() {
-    return '<div class="dash-tabs">' + DASH_TABS.map(function (o) {
-      return '<button class="dash-tab' + (DASH_TAB === o[0] ? ' is-on' : '') +
-        '" data-sc="dtab" data-t="' + o[0] + '">' + esc(o[1]) + '</button>';
-    }).join('') + '</div>';
+    /* tablist حقيقيّ: من يسمع يعرف أنّها ثلاثةٌ وأيُّها المختار، والسهمان
+       يتنقّلان بينها (مستمعٌ في مُوزّع المفاتيح). وكانت أزرارًا بحتة. */
+    return '<div class="dash-tabs" role="tablist" aria-label="أقسام لوحة التحكّم">' +
+      DASH_TABS.map(function (o) {
+        var on = DASH_TAB === o[0];
+        return '<button class="dash-tab' + (on ? ' is-on' : '') + '" role="tab" ' +
+          'id="dtab-' + o[0] + '" aria-selected="' + (on ? 'true' : 'false') + '" ' +
+          'aria-controls="dash-body" tabindex="' + (on ? '0' : '-1') + '" ' +
+          'data-sc="dtab" data-t="' + o[0] + '">' + esc(o[1]) + '</button>';
+      }).join('') + '</div>';
   }
 
   function dashView(sc, myKey) {
@@ -1638,7 +1654,7 @@ window.IAQ_SCREENS = (function () {
       tabBar() +
       '<div id="dv-range">' + rangeBar(RANGE) + '</div>' +
       '<div id="sc-err"></div>' +
-      '<div id="dash-body">' +
+      '<div id="dash-body" role="tabpanel" aria-labelledby="dtab-' + DASH_TAB + '">' +
       '<div class="iaq-card" id="dv-now" style="margin-block-end:14px">' +
         '<h3 class="card-h">ماذا أفعل الآن؟</h3>' +
         '<div class="muted small">جارٍ الفحص…</div></div>' +
@@ -1878,7 +1894,7 @@ window.IAQ_SCREENS = (function () {
         if (!box) return;
         if (!rows || !rows.length) { box.textContent = 'لا طلبات بعد.'; return; }
         box.innerHTML = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
-          '<th>وصل في</th><th>النموذج</th><th>المُرسِل</th><th>الحالة</th></tr></thead><tbody>' +
+          '<th scope="col">وصل في</th><th scope="col">النموذج</th><th scope="col">المُرسِل</th><th scope="col">الحالة</th></tr></thead><tbody>' +
           rows.map(function (r) {
             return '<tr><td class="small" style="white-space:nowrap">' + esc(dtLabel(r.created_at)) + '</td>' +
               '<td>' + chipOf(r.kind, KIND) + '</td>' +
@@ -2234,7 +2250,7 @@ window.IAQ_SCREENS = (function () {
           wlMsgHtml() +
           (recent && recent.length
             ? '<div style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>' +
-              '<th>الوقت</th><th>من</th><th>العمل</th><th>القسم</th><th>التفصيل</th><th>التراجع</th>' +
+              '<th scope="col">الوقت</th><th scope="col">من</th><th scope="col">العمل</th><th scope="col">القسم</th><th scope="col">التفصيل</th><th scope="col">التراجع</th>' +
               '</tr></thead><tbody>' + recent.map(function (a) {
                 var det = '';
                 if (a.detail && a.detail.from) det = esc(a.detail.from) + ' ← ' + esc(a.detail.to);
@@ -2276,8 +2292,8 @@ window.IAQ_SCREENS = (function () {
         '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:16px">' +
           box(pages.length, 'صفحة مبنيّة') + box(1, 'لوحة تحكّم') + '</div>' +
         (pages.length
-          ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>العنوان</th>' +
-            '<th>الملف</th><th>النوع</th><th></th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+          ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th scope="col">#</th><th scope="col">العنوان</th>' +
+            '<th scope="col">الملف</th><th scope="col">النوع</th><th scope="col"></th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
           : '<div class="muted" style="padding:28px;text-align:center">لم تُقرأ قائمة الصفحات.</div>') +
         '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p>' +
       '</div>';
@@ -2694,9 +2710,9 @@ window.IAQ_SCREENS = (function () {
     }).join('');
 
     ls.innerHTML = list.length
-      ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th>' +
-        sc.list.map(function (c) { return '<th>' + esc(c.l) + '</th>'; }).join('') +
-        '<th></th></tr></thead><tbody>' + body + '</tbody></table></div>'
+      ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th scope="col">#</th>' +
+        sc.list.map(function (c) { return '<th scope="col">' + esc(c.l) + '</th>'; }).join('') +
+        '<th scope="col"></th></tr></thead><tbody>' + body + '</tbody></table></div>'
       : '<div class="muted" style="padding:28px;text-align:center">' +
         (rows.length ? 'لا نتائج مطابقة للبحث.' : 'لا سجلّات بعد — أضِف واحدًا أو استورد ملفًا.') + '</div>';
 
@@ -2762,6 +2778,26 @@ window.IAQ_SCREENS = (function () {
     close();
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAsk(); });
+
+  /* السهمان بين التبويبات — ما يتوقّعه من يعرف نمطَ tablist. وفي RTL يُقلَب
+     معنى السهمين: «يمين» يعني التالي بصريًّا وهو السابق في المصفوفة. */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' &&
+        e.key !== 'Home' && e.key !== 'End') return;
+    var b = e.target.closest ? e.target.closest('.dash-tab[role="tab"]') : null;
+    if (!b) return;
+    var tabs = [].slice.call(document.querySelectorAll('.dash-tabs .dash-tab[role="tab"]'));
+    var i = tabs.indexOf(b);
+    if (i < 0) return;
+    var j = e.key === 'Home' ? 0
+          : e.key === 'End' ? tabs.length - 1
+          : e.key === 'ArrowLeft' ? i + 1 : i - 1;
+    if (j < 0) j = tabs.length - 1;
+    if (j >= tabs.length) j = 0;
+    e.preventDefault();
+    tabs[j].focus();
+    tabs[j].click();
+  });
 
   /* --- تحويل بين قيمة القاعدة ونصّ الحقل، للنوعين المركّبين --- */
   function linesToText(v) {
@@ -3531,8 +3567,8 @@ window.IAQ_SCREENS = (function () {
     var h = '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:12px">' +
       box(ok.length, 'جاهز للإضافة') + box(bad.length, 'سطر متجاوَز') + '</div>';
     if (ok.length) {
-      h += '<div style="max-height:220px;overflow:auto"><table class="tbl"><thead><tr><th>#</th>' +
-        '<th>' + esc(c1.l) + '</th><th>' + esc(c2.l) + '</th></tr></thead><tbody>' +
+      h += '<div style="max-height:220px;overflow:auto"><table class="tbl"><thead><tr><th scope="col">#</th>' +
+        '<th scope="col">' + esc(c1.l) + '</th><th scope="col">' + esc(c2.l) + '</th></tr></thead><tbody>' +
         ok.map(function (r, i) {
           var shown = c2.o ? chipOf(r[c2.k], c2.o, r[c2.k] === 'founder') : esc(r[c2.k] || '—');
           return '<tr><td class="mono small">' + (i + 1) + '</td><td>' + esc(r.name) + '</td><td>' + shown + '</td></tr>';
@@ -3639,9 +3675,15 @@ window.IAQ_SCREENS = (function () {
       var tb = document.querySelector('.dash-tabs');
       if (tb) {
         [].slice.call(tb.querySelectorAll('.dash-tab')).forEach(function (x) {
-          x.classList.toggle('is-on', x.getAttribute('data-t') === DASH_TAB);
+          var on = x.getAttribute('data-t') === DASH_TAB;
+          x.classList.toggle('is-on', on);
+          /* الصنفُ وحده كان يُبدَّل: من يسمع يبقى يسمع التبويبَ القديم مختارًا */
+          x.setAttribute('aria-selected', on ? 'true' : 'false');
+          x.setAttribute('tabindex', on ? '0' : '-1');
         });
       }
+      var pnl = document.getElementById('dash-body');
+      if (pnl) pnl.setAttribute('aria-labelledby', 'dtab-' + DASH_TAB);
       paintTab(cur);
       return;
     }

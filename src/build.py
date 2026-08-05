@@ -604,6 +604,10 @@ def runtime_script(slug):
     # ما يُعاد بناؤه من القاعدة سواءً.
     if os.path.exists(track):
         extra = extra + b"\n" + rb(track)
+    #  تمهيدُ نموذج التواصل من معامل العنوان — بعد المنارة فلا يُحسب تمهيدٌ حدثًا
+    forms = os.path.join(TEMPLATES, "iaq-forms.js")
+    if os.path.exists(forms):
+        extra = extra + b"\n" + rb(forms)
     # المظهر قبل القوائم: يضبط متغيّرات CSS فورًا فلا يقع وميض لونيّ
     if os.path.exists(skin):
         extra = rb(skin) + b"\n" + extra
@@ -1144,6 +1148,32 @@ def build_panel(out_dir, cmap, amap):
         "if(window.IAQ_LOGOUT)window.IAQ_LOGOUT();});" + NLS +
         "</script>" + NLS) + page[bi:]
     steps.append("logout")
+
+    # 7) الشاشات الميّتة تُفرَّغ. إحدى عشرة دالّةَ عرضٍ في ملفّ التصميم رُفعت
+    #    من القائمة وحلّت شاشاتُ screens.js مكانها، ولا مسارَ إليها — ومع ذلك
+    #    تُشحَن مع كلّ فتحةٍ للوحة. وفيها آخرُ الترويسات بلا scope، وحقولُ رفعٍ
+    #    مغلقةٌ على لوحة المفاتيح، وأزرارٌ تكتب في مخزنٍ لا يقرؤه الموقع.
+    #
+    #    تُفرَّغ ولا تُحذف: مفاتيحُها باقيةٌ في خريطة views، وبعضُ معالجات
+    #    النقر تُنادي switchView('menu') وأمثالَه. فلو غاب المفتاح لَرمى
+    #    views[k]() خطأً. والبديلُ نصٌّ يقول أين ذهبت الشاشة — لا صفحةٌ بيضاء.
+    #
+    #    وvSections وvCode تبقيان: هما الشاشتان الحيّتان الوحيدتان في الملفّ.
+    DEAD_VIEWS = ("vDashboard", "vTheme", "vLogo", "vMenu", "vPages",
+                  "vContent", "vMedia", "vNews", "vSubs", "vUsers", "vSettings")
+    freed = 0
+    for fn in DEAD_VIEWS:
+        m = re.search(r"(?m)^function " + fn + r"\s*\(\s*\)\s*\{", page)
+        assert m, "dead view: " + fn
+        end = re.search(r"(?m)^\}[ \t]*$", page[m.end():])
+        assert end, "dead view close: " + fn
+        body_len = end.start()
+        stub = (NLS + ' return \'<div class="view-head"><h1>هذه الشاشة انتقلت</h1>'
+                '<p>حلَّت محلَّها شاشةٌ تكتب في قاعدة البيانات فيقرؤها الموقع. '
+                'اختَرها من القائمة الجانبية.</p></div>\';' + NLS)
+        page = page[:m.end()] + stub + page[m.end() + body_len:]
+        freed += body_len - len(stub)
+    steps.append("dead(%d/%dك)" % (len(DEAD_VIEWS), freed // 1024))
 
     # 6) اسم الصنف ad-card تحجبه مانعات الإعلانات (يبدأ بـ ad-)، وهو الحاوية
     #    الوحيدة لكل بطاقات اللوحة — فكانت الشاشات تبدو فارغة تمامًا للمدير.
