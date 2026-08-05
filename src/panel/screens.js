@@ -139,17 +139,17 @@ window.IAQ_SCREENS = (function () {
          هنا لا في شاشة إعداداتٍ بعيدة: من يُجدّد الأعضاء يُجدّد الدورة. */
       settingsTitle: 'دورة المجلس المعتمدة',
       settings: [
-        { key: 'board_term.label', dyn: 'boardTerm.label', l: 'اسم الدورة', t: 'text',
+        { key: 'board_term.label', dyn: 'boardTerm.label', compLabel: 'دورة مجلس الإدارة', l: 'اسم الدورة', t: 'text',
           hint: 'مثل: دورة المجلس الثانية. اتركه فارغًا فيبقى المبنيّ في الموقع' },
-        { key: 'board_term.start_h', dyn: 'boardTerm.start_h', l: 'بداية الدورة — هجريّ', t: 'text', half: 1,
+        { key: 'board_term.start_h', dyn: 'boardTerm.start_h', compLabel: 'دورة مجلس الإدارة', l: 'بداية الدورة — هجريّ', t: 'text', half: 1,
           hint: 'مثل: 1447/8/7هـ' },
-        { key: 'board_term.start_g', dyn: 'boardTerm.start_g', l: 'بداية الدورة — ميلاديّ', t: 'text', half: 1,
+        { key: 'board_term.start_g', dyn: 'boardTerm.start_g', compLabel: 'دورة مجلس الإدارة', l: 'بداية الدورة — ميلاديّ', t: 'text', half: 1,
           hint: 'مثل: 2026/1/25م' },
-        { key: 'board_term.end_h', dyn: 'boardTerm.end_h', l: 'نهاية الدورة — هجريّ', t: 'text', half: 1,
+        { key: 'board_term.end_h', dyn: 'boardTerm.end_h', compLabel: 'دورة مجلس الإدارة', l: 'نهاية الدورة — هجريّ', t: 'text', half: 1,
           hint: 'منها يُحسب تنبيهُ انتهاء الدورة في لوحة التحكّم' },
-        { key: 'board_term.end_g', dyn: 'boardTerm.end_g', l: 'نهاية الدورة — ميلاديّ', t: 'text', half: 1,
+        { key: 'board_term.end_g', dyn: 'boardTerm.end_g', compLabel: 'دورة مجلس الإدارة', l: 'نهاية الدورة — ميلاديّ', t: 'text', half: 1,
           hint: 'بالنمط سنة/شهر/يومم — مثل 2030/1/24م' },
-        { key: 'board_term.note', dyn: 'boardTerm.note', l: 'العبارة التمهيدية', t: 'text',
+        { key: 'board_term.note', dyn: 'boardTerm.note', compLabel: 'دورة مجلس الإدارة', l: 'العبارة التمهيدية', t: 'text',
           hint: 'مثل: أعضاء مجلس الإدارة المعتمدون' }
       ],
       nav: 'مجلس الإدارة', h1: 'أعضاء مجلس الإدارة',
