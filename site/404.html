@@ -1048,8 +1048,12 @@ var IAQ_PATH = (function () {
       set('--icon-bg', 'linear-gradient(135deg,' + rgb2hex(p) + ',' + rgb2hex(p6) + ')');
       set('--btn1-shadow', '0 10px 24px ' + rgba(p, '.22'));
       set('--icon-shadow', '0 10px 22px ' + rgba(p, '.24'));
-      /* كتلة :root ثانية في أنماط الأقسام تعرّف هذين أيضًا بلون الأساس */
-      set('--icon-ink', rgb2hex(p6));
+      /* حبرُ الأيقونة أبيضُ لأنّ خلفيّتَها أعلاه تدرّجٌ غامقٌ من لون الأساس.
+         كان rgb2hex(p6) — أي الغامقَ نفسَه على الغامق، تضادًّا ١:١، فأيقوناتُ
+         «من نحن» تختفي تمامًا. والمبنيّ سليمٌ (--icon-ink:#fff مع التدرّج في
+         الكتلة الأولى، و#0c6c6c مع خلفيّةٍ فاتحة في الثانية) — فالعطبُ كان
+         يظهر لحظةَ حفظِ أيّ ثيمٍ لأنّ النمطَ السطريَّ يغلب الكتلتين. */
+      set('--icon-ink', '#fff');
       set('--card-bd-h', rgb2hex(p));
       set('--picon-bg', rgb2hex(light(p, 0.93)));
     }
@@ -1080,9 +1084,13 @@ var IAQ_PATH = (function () {
       set('--card-shadow', '0 2px 12px ' + rgba(dp, '.06'));
       set('--card-shadow-h', '0 18px 46px ' + rgba(dp, '.12'));
     }
-    /* خلفية الترويسة حقلٌ مستقلّ في اللوحة، وإلا فلون العمق */
+    /* خلفيةُ صدر الصفحة حقلٌ مستقلٌّ في اللوحة، والفارغُ يعني «كما بُني».
+       كان يرتدّ إلى لون العمق الغامق، فلم يكن للمدير سبيلٌ من اللوحة إلى
+       إعادة الخلفية الفاتحة المبنيّة (#edf6f5) أصلًا: تفريغُ الحقل يُعطيه
+       غامقًا آخر. والصمتُ هنا هو الصواب — ما لا يُحدّده المدير يبقى كما بُني. */
     var hb = hex2rgb(th.heroBg);
-    if (hb) set('--hero-bg', rgb2hex(hb)); else if (dp) set('--hero-bg', rgb2hex(dp));
+    if (hb) set('--hero-bg', rgb2hex(hb));
+    else root.style.removeProperty('--hero-bg');
 
     if (hex2rgb(th.bg)) set('--bg', rgb2hex(hex2rgb(th.bg)));
     if (hex2rgb(th.surface)) set('--surface', rgb2hex(hex2rgb(th.surface)));
@@ -1591,10 +1599,16 @@ var IAQ_PATH = (function () {
     var t = applyTheme(th);
     var done = { theme: t, secVars: 0, font: 0, logo: 0, contact: 0, hero: 0,
                  sections: 0, chrome: 0, code: 0, boardTerm: 0 };
+    /* الخطُّ متزامنٌ كالألوان — لا في later.
+       كان داخل later التي تنتظر DOMContentLoaded، فيقع أوّلُ رسمٍ بالخطّ
+       المبنيّ ثمّ يُستبدَل: وميضٌ يراه المدير في كل فتحةٍ للموقع. والدالّةُ
+       لا تحتاج شجرةً أصلًا — تضبط متغيّرًا على :root وسمةً عليه، وكلاهما
+       متاحٌ لحظةَ تحليل <head>. والألوانُ تُطبَّق متزامنةً سلفًا (applyTheme
+       أعلاه)، فلهذا لم يكن للّون وميضٌ وكان للخطّ. */
+    done.font = applyFont(IAQ.setting('site_font'));
     function later() {
       /* رموز الأقسام تُضبط على عناصرها، فتحتاج شجرةً جاهزة */
       done.secVars = th ? applySecVars(hex2rgb(th.primary), hex2rgb(th.accent), hex2rgb(th.deep)) : 0;
-      done.font = applyFont(IAQ.setting('site_font'));
       done.logo = applyLogo(IAQ.setting('site_logo'));
       done.contact = applyContact();
       /* شفافية الشعار إعدادٌ عامّ، والخلفية من الشريحة النشطة */

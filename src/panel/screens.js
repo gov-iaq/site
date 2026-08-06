@@ -962,8 +962,18 @@ window.IAQ_SCREENS = (function () {
           esc(BRAND_PRESETS[k].l) + '</button>';
       }).join('') + '</div>' +
       '<div class="muted small" style="margin-block-start:6px">' +
-      'يملأ حقول الألوان والحواف أدناه، ولا يُحفظ حتى تضغط «حفظ الإعدادات» — ' +
-      'فتستطيع التعديل عليه قبل الحفظ.</div></div>';
+      'يملأ <b>اثني عشر حقلًا</b> من حقول الألوان والحواف أدناه — منها خلفيةُ ' +
+      'صدر الصفحة وسطحُ البطاقات ولونُ الصفحة، وقد لا تكون قصدتها. ولا يُحفظ ' +
+      'حتى تضغط «حفظ الإعدادات»، فراجعها قبل الحفظ.</div>' +
+      /* سبيلُ الرجوع: نمطٌ واحدٌ يكتب اثني عشر قيمةً، وبلا هذا الزرّ لا سبيلَ
+         من اللوحة إلى إعادة ما بُني — فيبقى المديرُ يُقارب اللونَ بالتخمين. */
+      '<div class="addrow" style="margin-block-start:12px;flex-wrap:wrap">' +
+      '<button type="button" class="btn ghost sm" data-sc="themereset">' +
+      ico('down') + ' عُد إلى الألوان المبنيّة</button></div>' +
+      '<div class="muted small" style="margin-block-start:6px">' +
+      'يحذف الثيمَ المحفوظ فيعود الموقعُ إلى ألوانه وخطوطه كما بُنيت — ' +
+      'ومنها خلفيةُ صدر الصفحة الفاتحة والسطحُ الأبيض. ولا يمسّ الشعارَ ولا ' +
+      'الخطَّ المختار ولا أيَّ إعدادٍ آخر.</div></div>';
   }
 
   /* مستمعٌ مفوَّضٌ للأنماط: يعمل بعد كل إعادة رسم */
@@ -2705,6 +2715,38 @@ window.IAQ_SCREENS = (function () {
       .then(function () { busy = false; });
   }
 
+  /* حذفُ صفّ الثيم يُعيد الموقعَ إلى ألوانه المبنيّة: طبقةُ المظهر لا تضبط
+     شيئًا حين لا يوجد ثيمٌ محفوظ، فتحكم ورقةُ الأنماط المبنيّة. وهذا هو
+     «الافتراضيّ» الحقيقيّ — لا نمطٌ نُسمّيه افتراضيًّا ونكتبه صفًّا. */
+  function resetTheme() {
+    var msg = $('#sc-setmsg');
+    if (!window.confirm(
+        'إعادةُ الألوان المبنيّة تحذف الثيمَ المحفوظ.\n\n' +
+        'يعود الموقعُ إلى ألوانه وحوافّه كما بُنيت — ومنها خلفيةُ صدر الصفحة ' +
+        'الفاتحة وسطحُ البطاقات الأبيض.\n' +
+        'ولا يمسّ ذلك الشعارَ ولا الخطَّ ولا أيَّ إعدادٍ آخر، ويمكنك تطبيقُ ' +
+        'نمطٍ من جديدٍ في أيّ وقت.')) return;
+    if (msg) { msg.style.color = ''; msg.textContent = 'جارٍ الحذف…'; }
+    api('settings?key=eq.theme&select=key', { method: 'DELETE' })
+      .then(function () {
+        var sc = S0();
+        window.IAQ_DIRTY.clear();
+        return loadSettings(sc).then(function () {
+          paintSettings(sc);
+          var m2 = $('#sc-setmsg');
+          if (m2) {
+            m2.style.color = '#0c6c6c';
+            m2.textContent = 'حُذف الثيمُ المحفوظ. يعود الموقعُ إلى ألوانه المبنيّة ' +
+              'عند أوّل تحميلٍ لصفحة الزائر.';
+          }
+        });
+      })
+      .catch(function (e) {
+        var m3 = $('#sc-setmsg');
+        if (m3) { m3.style.color = '#8c3d1c'; m3.textContent = e.message; }
+      });
+  }
+
   /* ---------------- «جرّب ولا تنشر» ----------------
      تُكتب القيمُ في تخزين المتصفّح لا في القاعدة، فتُرجّحها طبقةُ التشغيل فوق
      المنشور — في متصفّح المدير وحده. ولها مهلةُ صلاحية، ولا تعمل إلّا مع
@@ -3943,6 +3985,7 @@ window.IAQ_SCREENS = (function () {
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
     if (a === 'setprev') { e.preventDefault(); previewSettings(S0()); return; }
+    if (a === 'themereset') { e.preventDefault(); resetTheme(); return; }
     if (a === 'blankedit') {
       e.preventDefault();
       var pg = b.getAttribute('data-p') || '';
