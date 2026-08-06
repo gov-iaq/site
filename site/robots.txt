@@ -1,8 +1,9 @@
-# التشغيل التجريبي (بيتا) — الفهرسة ممنوعة.
-# للإطلاق: اجعل production = true في src/data/pages.json ثم أعد البناء.
+# الإطلاق الرسمي — الفهرسة مسموحة.
 User-agent: *
-Disallow: /
+Allow: /
 
 # لوحة التحكّم — لا تُفهرَس في الحالين
 Disallow: /iaq-cp-9f4b21.html
 Disallow: /iaq-cp-9f4b21-panel.html
+
+Sitemap: https://iaq.org.sa/sitemap.xml
