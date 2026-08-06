@@ -234,6 +234,7 @@ window.IAQ_SCREENS = (function () {
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بصورة', has: 'image' }]
     },
     heroslides: {
+      previewOn: 'index.html',
       settingsTitle: 'الخلفية العامّة للسلايدر',
       settings: [
         { key: 'hero_bg_image', l: 'صورة الخلفية لكل الشرائح', t: 'img',
@@ -284,6 +285,7 @@ window.IAQ_SCREENS = (function () {
               { l: 'مسودّة', c: 'status', v: 'draft' }, { l: 'بزرّ ثانٍ', has: 'cta2_label' }]
     },
     menuitems: {
+      previewOn: 'index.html',
       settingsTitle: 'خلفية الشريط العلويّ وألوانه',
       settings: [
         { key: 'header_mode', l: 'نمط الخلفية', t: 'select',
@@ -336,11 +338,18 @@ window.IAQ_SCREENS = (function () {
               { l: 'ظاهرة', boolTrue: 'visible' }, { l: 'مخفيّة', boolFalse: 'visible' }]
     },
     pagelist: {
-      nav: 'صفحات الموقع', h1: 'جرد صفحات الموقع',
-      sub: 'الصفحات المبنيّة فعلًا وروابطها — للاطّلاع والمعاينة.',
+      nav: 'صفحات الموقع', h1: 'صفحات الموقع',
+      sub: 'جردُ الصفحات المبنيّة، وتحريرُ الصفحات الجاهزة الفارغة منها.',
       kind: 'pages',
-      reach: 'إنشاء صفحة جديدة أو تغيير عنوانها يحتاج إعادة بناء — لا تُولَّد صفحة في المتصفّح. ' +
-             'وإخفاء صفحة من التنقّل يُعمل من شاشة «القوائم الرئيسية».'
+      rows: function () { return blankRows(); },
+      previewOn: function () { return blankPick + '.html'; },
+      reach: 'تسري على الصفحة المختارة عند أوّل تحميل بلا إعادة بناء: عنوانها ونصوصها ' +
+             'وعنوان تبويب المتصفّح. والكتلة التي يخلو عنوانها ونصُّها تُخفى تلقائيًّا. ' +
+             'ولإظهارها للزوّار أضف عنصرًا إلى «القائمة العلوية» يشير إليها. ' +
+             'وحدٌّ صريح: الصفحة الفارغة لا تُفهرَس في محرّكات البحث ولا تدخل خريطة ' +
+             'الموقع — فلإدخالها يلزم إعادة نشرٍ واحدة بعد أن تملأها. ' +
+             'وإنشاءُ صفحةٍ جديدةٍ غيرِ الجاهزة، أو تغييرُ عنوان صفحةٍ مبنيّة، ' +
+             'يحتاج إعادةَ بناء — لا تُولَّد صفحةٌ في المتصفّح.'
     },
     adminlist: {
       settingsTitle: 'أعلام النظام',
@@ -376,19 +385,10 @@ window.IAQ_SCREENS = (function () {
       stats: [{ l: 'إجمالي الحسابات' }, { l: 'مالك', c: 'role', v: 'admin' },
               { l: 'محرّر', c: 'role', v: 'editor' }, { l: 'قارئ', c: 'role', v: 'viewer' }]
     },
-    blankpages: {
-      nav: 'الصفحات الجاهزة', h1: 'الصفحات الجاهزة الفارغة',
-      sub: 'عشر صفحاتٍ مبنيّةٍ سلفًا وفارغة — املأ ما تحتاجه منها ثم أضفه إلى القائمة.',
-      kind: 'settings',
-      reach: 'تسري على الصفحة المختارة عند أوّل تحميل بلا إعادة بناء: عنوانها ونصوصها ' +
-             'وعنوان تبويب المتصفّح. والكتلة التي يخلو عنوانها ونصُّها تُخفى تلقائيًّا. ' +
-             'ولإظهارها للزوّار أضف عنصرًا إلى «القائمة العلوية» يشير إليها. ' +
-             'وحدٌّ صريح: الصفحة الفارغة لا تُفهرَس في محرّكات البحث ولا تدخل خريطة ' +
-             'الموقع — فلإدخالها يلزم إعادة نشرٍ واحدة بعد أن تملأها.',
-      rows: function () { return blankRows(); }
-    },
+
 
     footcfg: {
+      previewOn: 'index.html',
       nav: 'التذييل', h1: 'التذييل — الخلفية والنصوص',
       sub: 'خلفية شريط التذييل وألوانه ونصوصه الثابتة — تسري على كل صفحات الموقع.',
       kind: 'settings',
@@ -418,6 +418,7 @@ window.IAQ_SCREENS = (function () {
     },
 
     contactcfg: {
+      previewOn: 'contact.html',
       nav: 'التواصل والروابط', h1: 'بيانات التواصل والروابط الاجتماعية',
       sub: 'الهاتف والبريد وروابط المنصّات — تسري على كل صفحات الموقع.',
       kind: 'settings',
@@ -450,6 +451,7 @@ window.IAQ_SCREENS = (function () {
       ]
     },
     sitecfg: {
+      previewOn: 'index.html',
       nav: 'إعدادات الهوية البصرية', h1: 'إعدادات الهوية البصرية',
       sub: 'الألوان والحواف والشعار والخطّ — أساسُ مظهر الموقع كلّه في مكانٍ واحد.',
       kind: 'settings',
@@ -896,7 +898,7 @@ window.IAQ_SCREENS = (function () {
     epoch++;
     var myKey = cur, sc = S0();
     if (sc.kind === 'settings') return settingsView(sc, myKey);
-    if (sc.kind === 'pages') return pagesView(sc);
+    if (sc.kind === 'pages') return pagesView(sc, myKey);
     if (sc.kind === 'dash') return dashView(sc, myKey);
     if (sc.kind === 'visits') return visitsView(sc, myKey);
     if (sc.kind === 'worklog') return worklogView(sc, myKey);
@@ -2364,28 +2366,89 @@ window.IAQ_SCREENS = (function () {
     });
   }
 
-  /* ---------------------- شاشة جرد الصفحات (للاطّلاع) ---------------------- */
-  function pagesView(sc) {
+  /* ------------------------- شاشة صفحات الموقع -------------------------
+     جردٌ فوق ومُحرّرٌ تحت. كانت شاشتين: «صفحات الموقع» جردًا لا يُفعَل منه
+     شيء، و«الصفحات الجاهزة» مُحرّرًا لعشرِ صفحاتٍ هي أصلًا في ذلك الجرد —
+     ولا رابطَ بينهما. فمن أراد أن يعرف ما لديه فتح واحدةً، ومن أراد أن
+     يملأ فتح الأخرى. والزرُّ «حرّرها» في الجرد هو الرابطُ الذي كان مفقودًا
+     وهو مبرّرُ الدمج. */
+  /* أيُّ الصفحات الجاهزة مملوءةٌ فعلًا — قراءةٌ واحدةٌ لكلّ عناوينها */
+  var blankFilled = null;
+  function loadBlankMarks() {
+    return api('settings?select=key,value&key=like.page_page-*_title')
+      .then(function (r) {
+        blankFilled = {};
+        (r || []).forEach(function (row) {
+          var m = /^page_(page-(?:[1-9]|10))_title$/.exec(String(row.key));
+          if (m && String(row.value == null ? '' : row.value).trim()) blankFilled[m[1]] = true;
+        });
+      })
+      .catch(function () { blankFilled = null; });   /* null = لا نعرف، فلا نزعم */
+  }
+
+  function pagesRows() {
     var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
-    var rowsHtml = pages.map(function (p, i) {
+    return pages.map(function (p, i) {
       var f = p.slug + '.html';
-      return '<tr><td class="mono small">' + (i + 1) + '</td>' +
+      var mark, act = '';
+      if (p.blank) {
+        var known = blankFilled !== null;
+        var full = known && !!blankFilled[p.slug];
+        mark = '<span class="chip"' + (known && !full ? ' style="background:#fdf1ec;color:#8c3d1c"' : '') +
+          '>' + (known ? (full ? 'جاهزة — مملوءة' : 'جاهزة — فارغة') : 'جاهزة') + '</span>';
+        act = '<button class="btn ghost sm" data-sc="blankedit" data-p="' + esc(p.slug) + '">' +
+          ico('pen') + ' حرّرها</button> ';
+      } else {
+        mark = '<span class="chip">' + esc(p.type || 'محتوى') + '</span>';
+      }
+      return '<tr' + (p.blank && p.slug === blankPick ? ' style="background:#f4f9f8"' : '') + '>' +
+        '<td class="mono small">' + (i + 1) + '</td>' +
         '<td><b>' + esc(p.title || p.slug) + '</b></td>' +
         '<td class="mono small">' + esc(f) + '</td>' +
-        '<td>' + (p.type ? '<span class="chip">' + esc(p.type) + '</span>' : '—') + '</td>' +
-        '<td><a href="' + esc(f) + '" target="_blank" rel="noopener" class="mono small">معاينة</a></td></tr>';
+        '<td>' + mark + '</td>' +
+        '<td style="white-space:nowrap">' + act +
+          '<a href="' + esc(f) + '" target="_blank" rel="noopener" class="mono small">فتحها</a></td></tr>';
     }).join('');
-    return '<div class="view-head"><h1>' + esc(sc.h1) +
-      '</h1>' +
+  }
+
+  function paintPagesTable() {
+    var box2El = $('#sc-pages');
+    if (!box2El) return;
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    if (!pages.length) {
+      box2El.innerHTML = '<div class="muted" style="padding:28px;text-align:center">لم تُقرأ قائمة الصفحات.</div>';
+      return;
+    }
+    box2El.innerHTML = '<div style="overflow-x:auto"><table class="tbl"><thead><tr>' +
+      '<th scope="col">#</th><th scope="col">العنوان</th><th scope="col">الملف</th>' +
+      '<th scope="col">النوع</th><th scope="col"></th></tr></thead><tbody>' +
+      pagesRows() + '</tbody></table></div>';
+  }
+
+  function pagesView(sc, myKey) {
+    var pages = (window.IAQ_REAL && window.IAQ_REAL.pages) || [];
+    var nBlank = pages.filter(function (p) { return p.blank; }).length;
+    setVals = {};
+    setTimeout(function () {
+      loadBlankMarks().then(function () {
+        if (alive(myKey)) paintPagesTable();
+        return loadSettings(sc);
+      }).then(function () { if (alive(myKey)) paintSettings(sc); });
+    }, 0);
+    return '<div class="view-head"><h1>' + esc(sc.h1) + '</h1>' +
       '<p>' + esc(sc.sub) + '</p></div>' +
+      '<div id="sc-err"></div>' +
+      '<div class="iaq-card" style="margin-block-end:14px">' +
+        '<h3 class="card-h">جرد الصفحات المبنيّة</h3>' +
+        '<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-block-end:16px">' +
+          box(pages.length, 'صفحة مبنيّة') +
+          box(pages.length - nBlank, 'صفحة محتوى') +
+          box(nBlank, 'صفحة جاهزة للملء') + '</div>' +
+        '<div id="sc-pages"><div class="muted">جارٍ القراءة…</div></div>' +
+      '</div>' +
       '<div class="iaq-card">' +
-        '<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-block-end:16px">' +
-          box(pages.length, 'صفحة مبنيّة') + box(1, 'لوحة تحكّم') + '</div>' +
-        (pages.length
-          ? '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th scope="col">#</th><th scope="col">العنوان</th>' +
-            '<th scope="col">الملف</th><th scope="col">النوع</th><th scope="col"></th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
-          : '<div class="muted" style="padding:28px;text-align:center">لم تُقرأ قائمة الصفحات.</div>') +
-        '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach) + '</p>' +
+        '<h3 class="card-h">تحرير صفحةٍ جاهزة</h3>' +
+        '<div id="sc-form"><div class="muted">جارٍ التحميل…</div></div>' +
       '</div>';
   }
 
@@ -2482,6 +2545,7 @@ window.IAQ_SCREENS = (function () {
            فيُسأل المديرُ عن عملٍ لم يوجد. يُرفع بعد إعادة الرسم لا قبلها. */
         loadSettings(sc0).then(function () {
           paintSettings(sc0);
+          paintPagesTable();      /* الجردُ فوقه يُبرز الصفحةَ المختارة */
           window.IAQ_DIRTY.clear();
         });
         return;
@@ -2522,7 +2586,15 @@ window.IAQ_SCREENS = (function () {
       '<div id="sc-setmsg" class="muted small" style="margin-block-end:10px"></div>' +
       '<div class="btnbar" style="justify-content:flex-start">' +
       '<button class="btn" data-sc="setsave">حفظ الإعدادات</button>' +
+      (sc.previewOn
+        ? '<button class="btn ghost" data-sc="setprev">' + ico('eye') +
+          ' جرّب ولا تنشر</button>' : '') +
       '<button class="btn ghost" data-sc="reload">استرجاع المحفوظ</button></div>' +
+      (sc.previewOn
+        ? '<p class="muted small" style="margin-block-start:10px">' +
+          '«جرّب ولا تنشر» يفتح الموقعَ بهذه القيم في متصفّحك وحده — لا يراها ' +
+          'زائرٌ ولا تُكتب في قاعدة البيانات. ولإلغائها اضغط «إنهاء المعاينة» ' +
+          'في الشريط أسفل الصفحة، أو انتظر ثلاثين دقيقة.</p>' : '') +
       '<p class="muted small" style="margin-block-start:12px">' + esc(sc.reach ||
         'يسري على الموقع عند أوّل تحميل لصفحة الزائر — وقد يظهر بعد تحديث الصفحة إن كانت نسخةٌ محفوظة في متصفّحه.') +
       '</p>';
@@ -2556,6 +2628,19 @@ window.IAQ_SCREENS = (function () {
       });
       return;
     }
+    var c0 = collectSettings(sc);
+    var out = c0.out, bad = c0.bad;
+    var msg = $('#sc-setmsg');
+    if (bad) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = bad; } return; }
+    if (!out.length) return;
+    busy = true;
+    if (msg) { msg.style.color = ''; msg.textContent = 'جارٍ الحفظ…'; }
+    saveRows(sc, out, msg);
+  }
+
+  /* يقرأ حقولَ الشاشة ويُخرج صفوفَ settings الجاهزةَ للكتابة — أو سببَ الرفض.
+     تستعملها الحفظُ والمعاينةُ معًا، فلا يفترق ما يُعايَن عمّا يُنشَر. */
+  function collectSettings(sc) {
     var out = [], bad = null, comp = {}, compLabel = {};
     setRows(sc).forEach(function (r) {
       if (bad) return;
@@ -2601,11 +2686,10 @@ window.IAQ_SCREENS = (function () {
       out.push({ key: b, value: comp[b], label: compLabel[b], is_public: true,
                  updated_by: (S && S.email) || '' });
     });
-    var msg = $('#sc-setmsg');
-    if (bad) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = bad; } return; }
-    if (!out.length) return;
-    busy = true;
-    if (msg) { msg.style.color = ''; msg.textContent = 'جارٍ الحفظ…'; }
+    return { out: out, bad: bad };
+  }
+
+  function saveRows(sc, out, msg) {
     api('settings?on_conflict=key&select=key', {
       method: 'POST',
       headers: null,
@@ -2619,6 +2703,41 @@ window.IAQ_SCREENS = (function () {
       })
       .catch(function (e) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = e.message; } })
       .then(function () { busy = false; });
+  }
+
+  /* ---------------- «جرّب ولا تنشر» ----------------
+     تُكتب القيمُ في تخزين المتصفّح لا في القاعدة، فتُرجّحها طبقةُ التشغيل فوق
+     المنشور — في متصفّح المدير وحده. ولها مهلةُ صلاحية، ولا تعمل إلّا مع
+     جلسةِ لوحةٍ قائمة، ويُعلَن عنها شريطٌ ثابتٌ فيه زرُّ إنهاء. */
+  var PREV_KEY = 'iaq_preview';
+
+  function previewSettings(sc) {
+    var msg = $('#sc-setmsg');
+    var c = collectSettings(sc);
+    if (c.bad) { if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = c.bad; } return; }
+    if (!c.out.length) {
+      if (msg) { msg.style.color = '#8c3d1c'; msg.textContent = 'لا حقولَ لمعاينتها.'; }
+      return;
+    }
+    var vals = {};
+    c.out.forEach(function (r) { vals[r.key] = r.value; });
+    var pack = { at: Date.now(), by: (S && S.email) || '',
+                 screen: sc.h1 || '', vals: vals };
+    try {
+      localStorage.setItem(PREV_KEY, JSON.stringify(pack));
+    } catch (e) {
+      if (msg) { msg.style.color = '#8c3d1c';
+                 msg.textContent = 'تعذّر تجهيز المعاينة: تخزينُ المتصفّح معطَّل.'; }
+      return;
+    }
+    var target = (typeof sc.previewOn === 'function' ? sc.previewOn() : sc.previewOn) || 'index.html';
+    if (msg) {
+      msg.style.color = '#0c6c6c';
+      msg.textContent = 'فُتحت المعاينة في تبويبٍ جديد — لم يُنشَر شيء. ' +
+        'وتبقى سارِيةً في متصفّحك ثلاثين دقيقةً أو حتى تُنهيها من الشريط أسفل الصفحة.';
+    }
+    window.open(target, '_blank', 'noopener');
+    window.IAQ_DIRTY.mark(sc.h1 || null);   /* معاينةٌ ليست حفظًا: الحرزُ باقٍ */
   }
 
   function toolbar(sc) {
@@ -3823,6 +3942,29 @@ window.IAQ_SCREENS = (function () {
     }
     if (a === 'delyes') { e.preventDefault(); doDelete(id); return; }
     if (a === 'setsave') { e.preventDefault(); saveSettings(S0()); return; }
+    if (a === 'setprev') { e.preventDefault(); previewSettings(S0()); return; }
+    if (a === 'blankedit') {
+      e.preventDefault();
+      var pg = b.getAttribute('data-p') || '';
+      if (!/^page-([1-9]|10)$/.test(pg)) return;
+      if (!window.IAQ_DIRTY.ok()) return;      /* لا يُمحى مُحرّرٌ فيه ما لم يُحفظ */
+      blankPick = pg;
+      try { localStorage.setItem('iaq_blank_pick', blankPick); } catch (e2) { }
+      var scB = S0();
+      setVals = {};
+      loadSettings(scB).then(function () {
+        paintSettings(scB);
+        paintPagesTable();                     /* السطرُ المختارُ يُبرَز */
+        window.IAQ_DIRTY.clear();
+        var f = $('#sc-form');
+        if (f) {
+          f.scrollIntoView({ block: 'start' });
+          var first = f.querySelector('input,select,textarea');
+          if (first) { try { first.focus({ preventScroll: true }); } catch (e3) { } }
+        }
+      });
+      return;
+    }
     if (a === 'reload') {
       e.preventDefault();
       var sc0 = S0();

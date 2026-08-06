@@ -26,9 +26,63 @@
     if (raw) { var p = JSON.parse(raw); if (p && p.settings) store = p; }
   } catch (e) { /* تخزين محليّ معطَّل — نكمل بالافتراضيات */ }
 
+  /* ------------------- «جرّب ولا تنشر»: طبقةُ معاينةٍ محليّة -------------------
+     لوحةُ التحكّم تكتب قيمًا مُقترَحةً في تخزين هذا المتصفّح، فتُرجَّح هنا فوق
+     المنشور — في متصفّح المدير وحده، بلا كتابةٍ في قاعدة البيانات وبلا أن
+     يراها زائر. وهذا يُسقط الخوفَ من لمس شاشة الهوية: كان كلُّ حفظٍ نشرًا
+     فوريًّا، فمن أراد أن يرى أثرَ لونٍ جرّبه على أعين الناس.
+
+     ثلاثةُ شروطٍ صارمة، وإلّا فلا معاينة:
+       • مهلةُ صلاحيةٍ ثلاثون دقيقة، ويُمحى المفتاحُ بعدها.
+       • جلسةُ لوحةٍ قائمةٌ في هذا المتصفّح — فلا يعلق زائرٌ في معاينةٍ أبدًا،
+         وتنتهي المعاينةُ حتمًا عند الخروج من اللوحة.
+       • ليس في إطار التحرير (?iaq-edit=1): ذاك يقرأ النصوصَ الأصلية للوحة،
+         وترجيحُ قيمٍ فيه يُفسد ما تقرؤه. */
+  var PREV = null;
+  (function readPreview() {
+    if (EDIT) return;
+    var raw, p;
+    try { raw = localStorage.getItem('iaq_preview'); } catch (e) { return; }
+    if (!raw) return;
+    try { p = JSON.parse(raw); } catch (e) { p = null; }
+    var age = p && p.vals && typeof p.vals === 'object'
+            ? (Date.now() - Number(p.at || 0)) : Infinity;
+    if (!(age >= 0 && age < 1800000)) {
+      try { localStorage.removeItem('iaq_preview'); } catch (e) { }
+      return;
+    }
+    var signedIn = false;
+    try {
+      signedIn = !!(localStorage.getItem('iaq_session') || sessionStorage.getItem('iaq_session'));
+    } catch (e) { signedIn = false; }
+    /* الجلسةُ في sessionStorage إن لم يُختَر «ابقني داخلًا»، وهي لكلّ تبويبٍ
+       على حدة — فالتبويبُ الذي يفتحه زرُّ المعاينة قد لا يرثها. فنقبل أيضًا
+       حزمةً عمرُها أقلُّ من دقيقتين: تلك لحظةُ الضغط على الزرّ نفسها، ولا
+       سبيلَ إلى وجودها إلّا من لوحةٍ مفتوحةٍ في هذا المتصفّح. */
+    if (!signedIn && age > 120000) {
+      try { localStorage.removeItem('iaq_preview'); } catch (e) { }
+      return;
+    }
+    PREV = p;
+  })();
+
   var IAQ = window.IAQ = window.IAQ || {};
-  IAQ.setting  = function (k, d) { var v = store.settings ? store.settings[k] : undefined; return (v === undefined || v === null) ? d : v; };
-  IAQ.settings = function () { return store.settings || {}; };
+  function rawSetting(k) {
+    if (PREV && PREV.vals.hasOwnProperty(k)) return PREV.vals[k];
+    return store.settings ? store.settings[k] : undefined;
+  }
+  IAQ.setting  = function (k, d) { var v = rawSetting(k); return (v === undefined || v === null) ? d : v; };
+  IAQ.settings = function () {
+    var s = store.settings || {};
+    if (!PREV) return s;
+    /* نسخةٌ مدموجة: المعاينةُ فوق المنشور. ولا نُعدّل store كي لا تُكتب
+       قيمُ المعاينة في التخزين المحليّ فتبقى بعد انتهائها. */
+    var out = {}, k;
+    for (k in s) if (s.hasOwnProperty(k)) out[k] = s[k];
+    for (k in PREV.vals) if (PREV.vals.hasOwnProperty(k)) out[k] = PREV.vals[k];
+    return out;
+  };
+  IAQ.previewing = !!PREV;
   IAQ.path     = IAQ_PATH;
   IAQ.editing  = EDIT;
 
@@ -167,6 +221,52 @@
 
   IAQ.refresh = function () { store.at = 0; return refresh(); };
   if (!fresh()) refresh(); else setTimeout(refresh, 1500);
+
+  /* ------------------- شريطُ المعاينة -------------------
+     معاينةٌ صامتةٌ أسوأ من لا معاينة: يظنُّ المديرُ ما يرى منشورًا فيُطمئنّ،
+     أو يظنُّ ما نشره غيرَ ظاهرٍ فيُعيد النشر. فالشريطُ يقول ما يجري ومن أين
+     جاء ومتى ينتهي، وفيه زرُّ إنهاءٍ واحد.
+     ولا يُسمّى بما تحجبه مانعاتُ الإعلانات، وأنماطُه سطريّةٌ فلا يعتمد على
+     ورقة أنماطٍ قد لا تُحمَّل. */
+  if (PREV) {
+    (function previewBar() {
+      function build() {
+        if (document.getElementById('iaqPreviewNote')) return;
+        var left = Math.max(0, 1800000 - (Date.now() - Number(PREV.at || 0)));
+        var mins = Math.max(1, Math.round(left / 60000));
+        var bar = document.createElement('div');
+        bar.id = 'iaqPreviewNote';
+        bar.setAttribute('role', 'status');
+        bar.style.cssText = 'position:fixed;inset-block-end:0;inset-inline:0;z-index:9999;' +
+          'display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;' +
+          'padding:11px 16px;background:#fff8ec;color:#6d4a14;direction:rtl;' +
+          'border-block-start:2px solid #d9a441;font:600 13.5px/1.7 Tajawal,sans-serif;' +
+          'box-shadow:0 -6px 20px -10px rgba(0,0,0,.25)';
+        var txt = document.createElement('span');
+        txt.textContent = 'معاينة: ما تراه لم يُنشَر' +
+          (PREV.screen ? ' — قيمُ شاشة «' + PREV.screen + '»' : '') +
+          '. يراه متصفّحُك وحده، وينتهي بعد ' + mins + ' دقيقة.';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'إنهاء المعاينة';
+        btn.style.cssText = 'font:inherit;cursor:pointer;padding:7px 15px;border-radius:9px;' +
+          'border:1.5px solid #b98a34;background:#fff;color:#6d4a14';
+        btn.addEventListener('click', function () {
+          try { localStorage.removeItem('iaq_preview'); } catch (e) { }
+          location.reload();
+        });
+        bar.appendChild(txt);
+        bar.appendChild(btn);
+        document.body.appendChild(bar);
+        /* كي لا يحجب الشريطُ آخرَ سطرٍ في التذييل */
+        var pad = bar.offsetHeight || 46;
+        document.body.style.paddingBottom = pad + 'px';
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', build, { once: true });
+      } else { build(); }
+    })();
+  }
 
   /* ------------------------- إرسال نماذج الزوّار -------------------------
      سياسات RLS تسمح للزائر بالإدراج فقط في submissions و survey_responses،

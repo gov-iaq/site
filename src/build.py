@@ -804,8 +804,11 @@ def panel_real():
     real["footer"] = foot
     with io.open(DATA, encoding="utf-8") as f:
         pages = json.load(f)["pages"]
+    #  blank يُمرَّر كي تُميّز اللوحةُ الصفحاتَ الجاهزةَ الفارغةَ في جردها
+    #  وتصلَ إليها بزرّ تحرير — فشاشتان متشابهتان صارتا واحدة.
     real["pages"] = [{"id": "p" + pg["slug"], "title": pg["title"].split("|")[-1].strip(),
                       "slug": pg["slug"], "type": "محتوى",
+                      "blank": bool(pg.get("blank")),
                       "status": "منشورة"} for pg in pages]
     real["seoTitle"] = pages[0]["title"].split("|")[0].strip() if pages else ""
     # أقسام الرئيسية الفعلية بعنوانها ووصفها كما هي في المصدر
@@ -957,7 +960,6 @@ PANEL_NAV = [
     ("i", "footcfg",    "التذييل",              "foot"),
     ("i", "sections",   "أقسام الرئيسية",       "sections"),
     ("i", "pagelist",   "صفحات الموقع",         "pages2"),
-    ("i", "blankpages", "الصفحات الجاهزة",      "pages2"),
 
     ("g", "الهوية والمظهر"),
     ("i", "sitecfg",    "إعدادات الهوية البصرية", "theme"),
@@ -1086,10 +1088,10 @@ def build_panel(out_dir, cmap, amap):
 
     a = "var views={dashboard:vDashboard,"
     assert page.count(a) == 1, "views map"
-    # الشاشتان الجديدتان بلا جدول، فليستا في SCREEN_NAV — تُضافان صراحةً
+    # الشاشات بلا جدولٍ ليست في SCREEN_NAV — تُضاف صراحةً
     extra_views = ("".join(
         '%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
-        for k in ("visits", "worklog", "footcfg", "blankpages")))
+        for k in ("visits", "worklog", "footcfg")))
     view_add = "".join('%s:function(){return window.IAQ_SCREENS.view("%s");},' % (k, k)
                        for k, _lbl, _ic in SCREEN_NAV)
     # لوحة التصميم أرقامٌ تجريبية مكتوبة في الملف — تُستبدل بلوحةٍ تقرأ
